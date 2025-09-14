@@ -1,11 +1,12 @@
 package com.judge.myojudge.controller;
 
 import com.judge.myojudge.model.dto.ProblemDTO;
+import com.judge.myojudge.model.dto.ProblemDetailWithSample;
+import com.judge.myojudge.model.dto.TestcaseDTO;
 import com.judge.myojudge.service.AuthService;
 import com.judge.myojudge.service.ProblemService;
 import com.judge.myojudge.service.TestCaseService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -17,41 +18,29 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/admin")
+@RequestMapping("/api/problem")
 @RequiredArgsConstructor
-public class AdminController {
+public class ProblemController {
 
     private final ProblemService problemService;
     private final TestCaseService testCaseService;
     private final AuthService authService;
 
-    @GetMapping("/dashboard")
-    @PreAuthorize("hasRole('ADMIN')")
-    public String adminDashboard() {
-        return "Welcome to the Admin Dashboard!";
-    }
-
-    @GetMapping("/test")
-    @PreAuthorize("hasRole('ADMIN')")
-    public String Test() {
-        return "I am a Admin!";
-    }
-
-    @DeleteMapping(value="/problems/remove/all")
+    @DeleteMapping(value="/v1/remove/all")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> removeAllProblem(
     ) throws IOException {
-        String  message=problemService.deleteEachProblem();
+        String  message= problemService.deleteEachProblem();
         return  ResponseEntity.ok().body(message);
     }
-    @DeleteMapping(value="/problems/remove/{handle}")
+    @DeleteMapping(value="/v1/remove/{handle}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?>removeProblem(@PathVariable String handle
     ) throws IOException {
         return  ResponseEntity.ok().body(problemService.deleteProblemByHandle( handle));
     }
 
-    @GetMapping(value="/problem/{id}")
+    @GetMapping(value="/v1/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Map<String,ProblemDTO>>fetchOneProblem(@PathVariable String id
     ) throws IOException {
@@ -66,7 +55,34 @@ public class AdminController {
         return  ResponseEntity.ok(Map.of("problem",problem));
     }
 
-    @PostMapping(value="/problem/save" )
+    @GetMapping(value="/v1/all")
+    public ResponseEntity<?>findAllProblem(
+    )  {
+        List<TestcaseDTO> testcaseDTOList = problemService.findProblemAll();
+        return new ResponseEntity<>(testcaseDTOList,HttpStatus.OK);
+    }
+    @GetMapping(value="/v1/{category}")
+    public ResponseEntity<?>searchAllProblemWithCategory(
+            @PathVariable String category
+    )  {
+        List<TestcaseDTO> testcaseDTOList = problemService.findProblemAllByCategory(category);
+        return new ResponseEntity<>(testcaseDTOList,HttpStatus.OK);
+    }
+    @GetMapping(value="/v2/{id}")
+    public ResponseEntity<Map<String, ProblemDetailWithSample>>searchSingleProblem(@PathVariable String id
+    )  {
+        long idd = 0;
+        try {
+            idd = Long.parseLong(id);
+
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid number format!");
+        }
+        ProblemDetailWithSample problem= problemService.findProblemByID(idd);
+        return ResponseEntity.ok(Map.of("problem",problem));
+    }
+
+    @PostMapping(value="/v1/save" )
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> createProblemDetails(
             @RequestParam("title") String title,
@@ -89,7 +105,7 @@ public class AdminController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", e.getMessage()));
         }
     }
-    @PutMapping(value="/problem/update/{id}")
+    @PutMapping(value="/v1/update/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> updateProblemDetails(
             @PathVariable("id") String id,
@@ -111,30 +127,4 @@ public class AdminController {
         }
     }
 
-
-//    @PutMapping(value="/problem/update/{id}" )
-//    @PreAuthorize("hasRole('ADMIN')")
-//    public ResponseEntity<?> updateProblemDetails(
-//            @PathVariable("id") String id,
-//            @RequestParam("title") String title,
-//            @RequestParam("handle")String handle,
-//            @RequestParam("difficulty")String difficulty,
-//            @RequestParam("type")String type,
-//            @RequestParam("problemStatement") String problemStatement,
-//            @RequestParam("testCaseFile") List<MultipartFile> multipartFiles
-//
-//    ) throws IOException {
-//            long idd=0;
-//        System.out.println("Number format: "+id);
-//            try
-//            {
-//                idd = Long.parseLong(id);
-//            }catch (NumberFormatException e) {
-//                System.out.println("Invalid number format!");
-//            }
-//
-//            problemService.saveProblemWithId(idd,title,handle,difficulty,type,problemStatement,multipartFiles);
-//            return ResponseEntity.ok(Map.of("message", "Problem details updated successfully!"));
-//
-//    }
 }

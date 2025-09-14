@@ -1,6 +1,6 @@
 package com.judge.myojudge.jwt;
 
-import com.judge.myojudge.config.CustomUserDetailsService;
+import com.judge.myojudge.service.imp.CustomUserDetailsService;
 import com.judge.myojudge.model.entity.User;
 import com.judge.myojudge.repository.UserRepo;
 import jakarta.servlet.FilterChain;
@@ -11,12 +11,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.Map;
 
 public class JwtAuthFilter extends OncePerRequestFilter {
 

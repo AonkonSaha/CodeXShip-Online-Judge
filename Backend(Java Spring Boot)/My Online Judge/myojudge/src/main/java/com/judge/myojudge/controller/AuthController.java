@@ -2,10 +2,12 @@ package com.judge.myojudge.controller;
 
 import com.judge.myojudge.model.dto.*;
 import com.judge.myojudge.model.mapper.UserMapper;
+import com.judge.myojudge.response.ApiResponse;
 import com.judge.myojudge.service.AuthService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.apache.coyote.BadRequestException;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
@@ -21,47 +23,63 @@ public class AuthController {
     private final UserMapper userMapper;
 
     @PostMapping("/v1/register")
-    public ResponseEntity<RegisterDTO> register(@RequestBody RegisterDTO registerDTO) {
-        System.out.println(registerDTO);
-        return ResponseEntity.ok(userMapper.toUserRegisterDTO(
-                authService.saveUser(userMapper.toUser(registerDTO))));
+    public ResponseEntity<ApiResponse<RegisterDTO>> register(@RequestBody RegisterDTO registerDTO) {
+
+        ApiResponse<RegisterDTO> apiResponse= ApiResponse.<RegisterDTO>builder()
+                .success(true)
+                .statusCode(HttpStatus.CREATED.value())
+                .message("Registration Success..!")
+                .data(userMapper.toUserRegisterDTO
+                        (authService.saveUser(userMapper.toUser(registerDTO))))
+                .build();
+        return ResponseEntity.status(HttpStatus.CREATED).body(apiResponse);
+
     }
     @PostMapping("/v1/login")
-    public  ResponseEntity<Map<String,String>> login(@RequestBody LoginDTO userDTO) {
-        System.out.println(userDTO);
-        return ResponseEntity.ok(Map.of("token",authService.login(userDTO)));
+    public  ResponseEntity<ApiResponse<Map<String,String>>> login(@RequestBody LoginDTO userDTO) {
+
+        ApiResponse<Map<String,String>> apiResponse=ApiResponse.<Map<String,String>>builder()
+                .success(true)
+                .statusCode(HttpStatus.OK.value())
+                .message("Login Success..!")
+                .data(Map.of("token", authService.login(userDTO)))
+                .build();
+        return ResponseEntity.ok(apiResponse);
     }
     @PostMapping("/v1/logout")
-    public ResponseEntity<String> logout(HttpServletRequest request){
+    public ResponseEntity<Void> logout(HttpServletRequest request){
         String token = request.getHeader("token").substring(7);
         authService.logout(token);
-        return ResponseEntity.ok("Logout successful");
+        return  ResponseEntity.noContent().build() ;
     }
 
-    @PostMapping("/v1/update/user")
-    public ResponseEntity<UpdateUserDTO> updateUser(@RequestBody UpdateUserDTO updateUserDTO) {
+    @PostMapping("/v1/update")
+    public ResponseEntity<Void> updateUser(@RequestBody UpdateUserDTO updateUserDTO) {
         String mobile= SecurityContextHolder.getContext().getAuthentication().getName();
         authService.updateUserDetails(mobile,updateUserDTO);
-        return ResponseEntity.ok(updateUserDTO);
+        return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/v1/update/password")
-    public ResponseEntity<String> updatePassword(@RequestBody PasswordDTO passwordDTO) throws BadRequestException {
+    public ResponseEntity<Void> updatePassword(@RequestBody PasswordDTO passwordDTO) throws BadRequestException {
         if(!Objects.equals(passwordDTO.getNewPassword(), passwordDTO.getConfirmPassword())){
             throw new BadRequestException("Passwords don't match");
         }
         String mobile= SecurityContextHolder.getContext().getAuthentication().getName();
         authService.updateUserPassword(mobile,passwordDTO);
-        return ResponseEntity.ok("Password Changed Successfully");
+        return ResponseEntity.noContent().build();
     }
 
-    @GetMapping("/v1/get/user/details")
-    public ResponseEntity<UserDTO> getUserDetails(){
+    @GetMapping("/v1/profile")
+    public ResponseEntity<ApiResponse<UserDTO>> getUserDetails(){
      String mobile = SecurityContextHolder.getContext().getAuthentication().getName();
-        System.out.println("Controller mobile: "+mobile);
-     return ResponseEntity.ok(userMapper.toUpdateUserDTO(authService.fetchUserDetails(mobile)));
+     ApiResponse<UserDTO> apiResponse=ApiResponse.<UserDTO>builder()
+             .success(true)
+             .statusCode(HttpStatus.OK.value())
+             .message("User Data Fetched Successfully..!")
+             .data(userMapper.toUpdateUserDTO(authService.fetchUserDetails(mobile)))
+             .build();
+     return ResponseEntity.ok(apiResponse);
     }
-    
-
 
 }

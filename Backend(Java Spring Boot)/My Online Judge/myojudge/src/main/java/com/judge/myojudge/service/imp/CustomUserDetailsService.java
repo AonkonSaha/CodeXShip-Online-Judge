@@ -1,8 +1,7 @@
-package com.judge.myojudge.config;
+package com.judge.myojudge.service.imp;
 
 import com.judge.myojudge.model.entity.UserRole;
 import com.judge.myojudge.repository.UserRepo;
-import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
@@ -13,7 +12,6 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
