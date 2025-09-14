@@ -1,4 +1,4 @@
-package com.judge.myojudge.dto;
+package com.judge.myojudge.model.dto;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -8,7 +8,7 @@ import java.util.List;
 
 @Data @AllArgsConstructor @NoArgsConstructor
 @Builder
-public class ProblemWithTestCases {
+public class TestcaseDTO {
 
     private Long id;
     private String handle;

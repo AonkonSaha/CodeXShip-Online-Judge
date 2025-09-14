@@ -1,4 +1,4 @@
-package com.judge.myojudge.cusconfig;
+package com.judge.myojudge.config;
 
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;

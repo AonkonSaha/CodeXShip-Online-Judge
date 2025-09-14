@@ -1,7 +1,8 @@
 package com.judge.myojudge.jwt;
 
-import com.judge.myojudge.model.User;
-import com.judge.myojudge.repo.UserRepo;
+import com.judge.myojudge.config.CustomUserDetailsService;
+import com.judge.myojudge.model.entity.User;
+import com.judge.myojudge.repository.UserRepo;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -12,18 +13,17 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
-import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.Optional;
+import java.util.Map;
 
 public class JwtAuthFilter extends OncePerRequestFilter {
 
     @Autowired
     private  JwtUtil jwtUtil;
     @Autowired
-    private   UserDetailsService userDetailsService;
+    private CustomUserDetailsService customUserDetailsService;
     @Autowired
     private UserRepo userRepo;
 
@@ -37,28 +37,19 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         String authHeader = request.getHeader("Authorization");
         String requestURI = request.getRequestURI();
-        System.out.println(" "+requestURI);
-//        if (requestURI.startsWith("/api/")) {
-//            filterChain.doFilter(request, response); // Skip JWT validation for public endpoints
-//            return;
-//        }
-        System.out.println("I am in Filter");
-
+        System.out.println("I am in filter: "+requestURI);
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            System.out.println("ami khane");
             filterChain.doFilter(request, response);
             return;
         }
 
         String token = authHeader.substring(7);
         String username = jwtUtil.extractUsername(token);
-        System.out.println("token: "+token);
-
 
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-           User user=userRepo.findByUsername(username).orElseThrow();
-            if (user.getActivityStatus() && jwtUtil.validateToken(token, username)) {
+           UserDetails userDetails = customUserDetailsService.loadUserByUsername(username);
+           User user=userRepo.findByMobileNumber(username).get();
+            if (jwtUtil.validateToken(token, username)) {
 
                 UsernamePasswordAuthenticationToken authToken =
                         new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
@@ -69,4 +60,5 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         }
         filterChain.doFilter(request, response);
     }
+
 }

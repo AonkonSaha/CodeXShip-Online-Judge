@@ -1,7 +1,6 @@
 package com.judge.myojudge.controller;
 
-import com.judge.myojudge.dto.ProblemDTO;
-import com.judge.myojudge.model.Problem;
+import com.judge.myojudge.model.dto.ProblemDTO;
 import com.judge.myojudge.service.AuthService;
 import com.judge.myojudge.service.ProblemService;
 import com.judge.myojudge.service.TestCaseService;
@@ -24,8 +23,7 @@ public class AdminController {
 
     private final ProblemService problemService;
     private final TestCaseService testCaseService;
-    @Autowired
-    private AuthService authService;
+    private final AuthService authService;
 
     @GetMapping("/dashboard")
     @PreAuthorize("hasRole('ADMIN')")

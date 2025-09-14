@@ -1,4 +1,4 @@
-package com.judge.myojudge.dto;
+package com.judge.myojudge.model.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -6,7 +6,9 @@ import lombok.NoArgsConstructor;
 
 import java.util.List;
 
-@Data @AllArgsConstructor @NoArgsConstructor
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class ProblemDetailWithSample {
     Long id;
     String  name;

@@ -25,11 +25,11 @@ public class JwtUtil {
         return Keys.hmacShaKeyFor(secret.getBytes());
     }
 
-    public String generateToken(String username,boolean isActive,String role) {
+    public String generateToken(String username,boolean isActive) {
 
         Map<String,Object>claims=new HashMap<>();
         claims.put("active",isActive);
-        claims.put("role",role);
+        claims.put("role","USER");
        return createToken(claims,username);
     }
     private String createToken(Map<String, Object> claims, String username) {

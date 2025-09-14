@@ -3,10 +3,9 @@ package com.judge.myojudge.service;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
-import com.amazonaws.services.s3.model.S3Object;
-import com.judge.myojudge.model.Problem;
-import com.judge.myojudge.model.TestCase;
-import com.judge.myojudge.repo.TestCaseRepo;
+import com.judge.myojudge.model.entity.Problem;
+import com.judge.myojudge.model.entity.TestCase;
+import com.judge.myojudge.repository.TestCaseRepo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -14,9 +13,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.UUID;
 
@@ -26,8 +22,7 @@ public class TestCaseService {
 
     @Value("${testcase.folder.path}")
     public String testCaseFolderPath;
-    @Autowired
-    TestCaseRepo testCaseRepo;
+    private final TestCaseRepo testCaseRepo;
     private final ProblemService problemService;
     @Autowired
     AmazonS3 s3Client;

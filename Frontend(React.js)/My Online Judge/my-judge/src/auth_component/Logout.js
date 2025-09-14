@@ -14,7 +14,7 @@ const Logout = () => {
       try {
         
         const response = await axios.post(
-            `${baseURL}/api/logout`,
+            `${baseURL}/api/auth/v1/logout`,
             {}, // Empty body
             {
                 headers: { Authorization: `Bearer ${token}` },

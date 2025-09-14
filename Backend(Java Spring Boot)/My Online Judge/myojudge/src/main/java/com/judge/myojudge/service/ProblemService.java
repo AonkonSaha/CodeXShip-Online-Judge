@@ -5,13 +5,13 @@ import com.amazonaws.services.s3.model.DeleteObjectRequest;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.amazonaws.services.s3.model.S3Object;
-import com.judge.myojudge.dto.ProblemDTO;
-import com.judge.myojudge.dto.ProblemDetailWithSample;
-import com.judge.myojudge.dto.ProblemWithTestCases;
-import com.judge.myojudge.model.Problem;
-import com.judge.myojudge.model.TestCase;
-import com.judge.myojudge.repo.ProblemRepo;
-import com.judge.myojudge.repo.TestCaseRepo;
+import com.judge.myojudge.model.dto.ProblemDTO;
+import com.judge.myojudge.model.dto.ProblemDetailWithSample;
+import com.judge.myojudge.model.dto.TestcaseDTO;
+import com.judge.myojudge.model.entity.Problem;
+import com.judge.myojudge.model.entity.TestCase;
+import com.judge.myojudge.repository.ProblemRepo;
+import com.judge.myojudge.repository.TestCaseRepo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,9 +24,6 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.UUID;
 
 @Service
@@ -41,24 +38,24 @@ public class ProblemService {
     @Autowired
     TestCaseRepo testCaseRepo;
     @Autowired
-     AmazonS3 s3Client;
+    AmazonS3 s3Client;
     @Value("${aws.s3.bucket-name}")
     private String bucketName;
 
 
 
-    public List<ProblemWithTestCases> findProblemAll() {
-        List<ProblemWithTestCases> problemList = new ArrayList<>();
+    public List<TestcaseDTO> findProblemAll() {
+        List<TestcaseDTO> problemList = new ArrayList<>();
         List<Problem> problems = problemRepo.findAll();
 
         for (Problem problem : problems) {
-            ProblemWithTestCases problemWithTestCases = new ProblemWithTestCases();
-            problemWithTestCases.setId(problem.getId());
-            problemWithTestCases.setTitle(problem.getTitle());
-            problemWithTestCases.setHandle(problem.getHandle());
-            problemWithTestCases.setProblemStatement(problem.getProblemStatement());
-            problemWithTestCases.setType(problem.getType());
-            problemWithTestCases.setDifficulty(problem.getDifficulty());
+            TestcaseDTO testcaseDTO = new TestcaseDTO();
+            testcaseDTO.setId(problem.getId());
+            testcaseDTO.setTitle(problem.getTitle());
+            testcaseDTO.setHandle(problem.getHandleName());
+            testcaseDTO.setProblemStatement(problem.getProblemStatement());
+            testcaseDTO.setType(problem.getType());
+            testcaseDTO.setDifficulty(problem.getDifficulty());
 
             TestCase sampleTestcase = null;
             TestCase sampleOutput = null;
@@ -76,10 +73,10 @@ public class ProblemService {
             List<String> sampleTestcaseContent = readS3File(sampleTestcase);
             List<String> sampleOutputContent = readS3File(sampleOutput);
 
-            problemWithTestCases.setSampleTestcase(sampleTestcaseContent);
-            problemWithTestCases.setSampleOutput(sampleOutputContent);
+            testcaseDTO.setSampleTestcase(sampleTestcaseContent);
+            testcaseDTO.setSampleOutput(sampleOutputContent);
 
-            problemList.add(problemWithTestCases);
+            problemList.add(testcaseDTO);
         }
         return problemList;
     }
@@ -117,7 +114,7 @@ public class ProblemService {
                             )  {
         Problem problem=new Problem();
         problem.setTitle(title);
-        problem.setHandle(handle);
+        problem.setHandleName(handle);
         problem.setDifficulty(difficulty);
         problem.setType(type);
         problem.setProblemStatement(problemStatement);
@@ -125,10 +122,10 @@ public class ProblemService {
     }
 
     public boolean findProblemByHandleExit(String handle) {
-        return problemRepo.existsByHandle(handle);
+        return problemRepo.existsByHandleName(handle);
     }
     public Problem findProblemByHandle(String handle) {
-        return problemRepo.findByHandle(handle);
+        return problemRepo.findByHandleName(handle);
     }
 
     public String deleteEachProblem() throws IOException {
@@ -154,8 +151,8 @@ public class ProblemService {
     }
 
     public String deleteProblemByHandle(String handle) throws IOException {
-        if(!problemRepo.existsByHandle(handle))return "Problem doesn't exit";
-        Problem problem=problemRepo.findByHandle(handle);
+        if(!problemRepo.existsByHandleName(handle))return "Problem doesn't exit";
+        Problem problem=problemRepo.findByHandleName(handle);
         for(TestCase testCase:problem.getTestcases())
         {
             s3Client.deleteObject(new DeleteObjectRequest(bucketName, testCase.getFileKey()));
@@ -215,7 +212,7 @@ public class ProblemService {
         problemDTO.setTitle(problem.getTitle());
         problemDTO.setDifficulty(problem.getDifficulty());
         problemDTO.setType(problem.getType());
-        problemDTO.setHandle(problem.getHandle());
+        problemDTO.setHandle(problem.getHandleName());
         problemDTO.setProblemStatement(problem.getProblemStatement());
         problemDTO.setTestcases(problem.getTestcases());
         return problemDTO;
@@ -231,7 +228,7 @@ public class ProblemService {
 
         // Update problem details
         problem.setTitle(title);
-        problem.setHandle(handle);
+        problem.setHandleName(handle);
         problem.setDifficulty(difficulty);
         problem.setType(type);
         problem.setProblemStatement(problemStatement);
@@ -239,7 +236,7 @@ public class ProblemService {
 
         // Save Test Case Files if provided
         if (multipartFiles != null && !multipartFiles.isEmpty()) {
-            Problem tempProblem = problemRepo.findByHandle(handle);  // Find the problem by handle
+            Problem tempProblem = problemRepo.findByHandleName(handle);  // Find the problem by handle
             for (MultipartFile testCaseFile : multipartFiles) {
                 if (!testCaseFile.isEmpty()) {
                     // Generate a unique file name using UUID
@@ -270,8 +267,8 @@ public class ProblemService {
         return uniqueFileName;
     }
 
-    public List<ProblemWithTestCases> findProblemAllByCategory(String category) {
-        List<ProblemWithTestCases>problemsWithTestCases=new ArrayList<>();
+    public List<TestcaseDTO> findProblemAllByCategory(String category) {
+        List<TestcaseDTO>problemsWithTestCases=new ArrayList<>();
         List<Problem> problems=problemRepo.findByType(category);
         for(Problem problem:problems)
         {
@@ -291,17 +288,17 @@ public class ProblemService {
             List<String> sampleTestcaseContent = readS3File(sampleTestcase);
             List<String> sampleOutputContent = readS3File(sampleOutput);
 
-            ProblemWithTestCases problemWithTestCases=ProblemWithTestCases.builder()
+            TestcaseDTO testcaseDTO = TestcaseDTO.builder()
                     .id(problem.getId())
                     .problemStatement(problem.getProblemStatement())
                     .title(problem.getTitle())
-                    .handle(problem.getHandle())
+                    .handle(problem.getHandleName())
                     .type(problem.getType())
                     .difficulty(problem.getDifficulty())
                     .sampleTestcase(sampleTestcaseContent)
                     .sampleOutput(sampleOutputContent)
                     .build();
-            problemsWithTestCases.add(problemWithTestCases);
+            problemsWithTestCases.add(testcaseDTO);
 
         }
         return problemsWithTestCases;

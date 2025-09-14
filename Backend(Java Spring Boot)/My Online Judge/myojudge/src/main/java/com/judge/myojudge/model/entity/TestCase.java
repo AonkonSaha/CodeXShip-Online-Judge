@@ -1,11 +1,13 @@
-package com.judge.myojudge.model;
+package com.judge.myojudge.model.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
 @Table(name = "test_cases")
-@Data @AllArgsConstructor @NoArgsConstructor
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
 @Builder
 public class TestCase{
 

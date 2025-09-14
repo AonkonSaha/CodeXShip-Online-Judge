@@ -17,7 +17,7 @@ const Login = () => {
     setError("");
 
     try {
-      const response = await fetch(`${baseURL}/api/login`, {
+      const response = await fetch(`${baseURL}/api/auth/v1/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(credentials),
@@ -49,15 +49,15 @@ const Login = () => {
 
           <form onSubmit={handleLogin} className="mt-6 space-y-6">
             <div>
-              <label htmlFor="username" className="block text-sm font-medium">Username</label>
+              <label htmlFor="mobile" className="block text-sm font-medium">Mobile Number</label>
               <input
                 type="text"
-                id="username"
-                value={credentials.username}
-                onChange={(e) => setCredentials({ ...credentials, username: e.target.value })}
+                id="mobile"
+                value={credentials.mobile}
+                onChange={(e) => setCredentials({ ...credentials, mobile: e.target.value })}
                 required
                 className={`w-full px-4 py-3 border rounded-lg shadow-sm focus:outline-none focus:ring-2 ${darkMode ? "bg-gray-700 border-gray-600 text-white focus:ring-blue-400" : "bg-white border-gray-300 text-gray-900 focus:ring-blue-500"}`}
-                placeholder="Enter your username"
+                placeholder="Enter your mobile number"
               />
             </div>
 

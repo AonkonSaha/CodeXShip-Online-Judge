@@ -1,16 +1,40 @@
-import React, { useContext, useState } from "react";
-import { NavLink } from "react-router-dom";
+import React, { useContext, useState, useRef, useEffect } from "react";
+import { NavLink, useNavigate } from "react-router-dom";
 import { Menu, X, Moon, Sun } from "lucide-react"; // Icons
 import { AuthContext } from "../auth_component/AuthContext";
 import Button from "../components/button";
 import { Avatar, AvatarImage, AvatarFallback } from "../components/avatar";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../components/dropdown-menu";
+import {
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "../components/dropdown-menu";
 
 const NavBar = () => {
   const { user, logout, darkMode, toggleDarkMode } = useContext(AuthContext);
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false); // Mobile menu
+  const [isProfileOpen, setIsProfileOpen] = useState(false); // Profile dropdown
+  const profileRef = useRef(null);
+  const navigate = useNavigate();
 
   const toggleMenu = () => setIsOpen(!isOpen);
+  const toggleProfile = () => setIsProfileOpen(!isProfileOpen);
+
+  // Navigate to profile on avatar click
+  const handleProfileClick = () => {
+    navigate("/profile");
+    setIsProfileOpen(false);
+  };
+
+  // Close profile dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (profileRef.current && !profileRef.current.contains(event.target)) {
+        setIsProfileOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   return (
     <header className={`sticky top-0 z-50 border-b transition-all duration-300 ${darkMode ? "bg-gray-900 text-white" : "bg-white text-gray-800"}`}>
@@ -26,9 +50,8 @@ const NavBar = () => {
           <NavLink to="/leaderboard" className="hover:text-blue-500">Leaderboard</NavLink>
         </div>
 
-        {/* Right Section (Auth & Theme Toggle) */}
+        {/* Right Section */}
         <div className="hidden md:flex items-center space-x-4">
-          {/* Dark Mode Toggle */}
           <Button variant="ghost" onClick={toggleDarkMode} className="p-1">
             {darkMode ? <Sun size={18} className="text-yellow-400" /> : <Moon size={18} />}
           </Button>
@@ -39,30 +62,36 @@ const NavBar = () => {
               <NavLink to="/register" className="text-sm hover:text-blue-500">Register</NavLink>
             </>
           ) : (
-            <DropdownMenu>
-              <DropdownMenuTrigger>
+            <div ref={profileRef} className="relative">
+              <button onClick={toggleProfile}>
                 <Avatar className="w-8 h-8">
-                  <AvatarImage src={user.profilePic || "https://via.placeholder.com/40"} />
-                  <AvatarFallback>{user?.username?.charAt(0) || "U"}</AvatarFallback>
+                  {user?.profilePic ? (
+                    <AvatarImage src={user.profilePic} alt={user.username} />
+                  ) : (
+                    <AvatarFallback>{user?.username?.charAt(0).toUpperCase() || "U"}</AvatarFallback>
+                  )}
                 </Avatar>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className={`bg-gray-800 ${darkMode ? 'text-white' : 'text-gray-800'}`}>
-                <DropdownMenuItem asChild>
-                  <NavLink to="/profile">Profile</NavLink>
-                </DropdownMenuItem>
-                {user.role === "ADMIN" && (
-                  <>
-                    <DropdownMenuItem asChild>
-                      <NavLink to={`/editproblem/${null}`}>Create Problem</NavLink>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <NavLink to="/deleteproblem">Delete Problem</NavLink>
-                    </DropdownMenuItem>
-                  </>
-                )}
-                <DropdownMenuItem onClick={logout}>Logout</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+              </button>
+
+              {isProfileOpen && (
+                <div className={`absolute right-0 mt-2 w-48 rounded-md shadow-lg z-50 ${darkMode ? "bg-gray-900 text-white" : "bg-white text-gray-800"}`}>
+                  <DropdownMenuContent>
+                    <DropdownMenuItem onClick={handleProfileClick}>Profile</DropdownMenuItem>
+                    {user.role === "ADMIN" && (
+                      <>
+                        <DropdownMenuItem asChild>
+                          <NavLink to={`/editproblem/${null}`} onClick={() => setIsProfileOpen(false)}>Create Problem</NavLink>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <NavLink to="/deleteproblem" onClick={() => setIsProfileOpen(false)}>Delete Problem</NavLink>
+                        </DropdownMenuItem>
+                      </>
+                    )}
+                    <DropdownMenuItem onClick={() => { logout(); setIsProfileOpen(false); }}>Logout</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </div>
+              )}
+            </div>
           )}
         </div>
 
@@ -79,9 +108,11 @@ const NavBar = () => {
           <NavLink to="/problem/category" className="hover:text-blue-500" onClick={toggleMenu}>Problems</NavLink>
           <NavLink to="/contests" className="hover:text-blue-500" onClick={toggleMenu}>Contests</NavLink>
           <NavLink to="/leaderboard" className="hover:text-blue-500" onClick={toggleMenu}>Leaderboard</NavLink>
+
           <Button variant="ghost" onClick={toggleDarkMode} className="text-sm">
             {darkMode ? <Sun size={18} className="text-yellow-400" /> : <Moon size={18} />} Toggle Theme
           </Button>
+
           {!user ? (
             <>
               <NavLink to="/login" className="hover:text-blue-500" onClick={toggleMenu}>Login</NavLink>

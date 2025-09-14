@@ -4,9 +4,9 @@ import com.judge.myojudge.execution_validations_code.ev_model.CodeSubmission;
 import com.judge.myojudge.execution_validations_code.ev_model.ExecutionResult;
 import com.judge.myojudge.execution_validations_code.ev_model.TestCaseResult;
 import com.judge.myojudge.execution_validations_code.ev_repo.CodeSubmissionRepository;
-import com.judge.myojudge.model.Problem;
-import com.judge.myojudge.model.TestCase;
-import com.judge.myojudge.repo.ProblemRepo;
+import com.judge.myojudge.model.entity.Problem;
+import com.judge.myojudge.model.entity.TestCase;
+import com.judge.myojudge.repository.ProblemRepo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

@@ -1,4 +1,4 @@
-package com.judge.myojudge.cusconfig;
+package com.judge.myojudge.config;
 
 import com.judge.myojudge.jwt.JwtAuthFilter;
 
@@ -26,17 +26,11 @@ import java.util.List;
 @EnableWebSecurity
 public class SecurityConfig  {
 
-
-
     @Bean
     public JwtAuthFilter jwtAuthFilter() {
         return new JwtAuthFilter();
     }
 
-    @Bean
-    public UserDetailsService userDetailsService(CustomUserDetailsService customUserDetailsService) {
-        return customUserDetailsService;
-    }
 
     @Bean
     public PasswordEncoder passwordEncoder() {

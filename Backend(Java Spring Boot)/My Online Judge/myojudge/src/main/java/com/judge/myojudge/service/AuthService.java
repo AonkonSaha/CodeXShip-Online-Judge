@@ -1,65 +1,83 @@
 package com.judge.myojudge.service;
 
-import com.fasterxml.jackson.databind.annotation.EnumNaming;
-import com.judge.myojudge.dto.UserLogin;
-import com.judge.myojudge.dto.UserRegister;
+import com.judge.myojudge.model.dto.LoginDTO;
+import com.judge.myojudge.model.dto.PasswordDTO;
+import com.judge.myojudge.model.dto.RegisterDTO;
 import com.judge.myojudge.enums.Role;
 import com.judge.myojudge.jwt.JwtUtil;
-import com.judge.myojudge.model.User;
-import com.judge.myojudge.repo.UserRepo;
-import jakarta.persistence.Enumerated;
+import com.judge.myojudge.model.dto.UpdateUserDTO;
+import com.judge.myojudge.model.entity.BlockedToken;
+import com.judge.myojudge.model.entity.User;
+import com.judge.myojudge.repository.BlockedTokenRepo;
+import com.judge.myojudge.repository.UserRepo;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
+
 @Service
+@RequiredArgsConstructor
 public class AuthService {
+    private final UserRepo userRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final JwtUtil jwtUtil;
+    private final BlockedTokenRepo blockedTokenRepo;
 
-    @Autowired
-    private UserRepo userRepository;
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-    @Autowired
-    private JwtUtil jwtUtil;
 
-    public String register(UserRegister userRegister) {
-        if (userRepository.findByUsername(userRegister.getUsername()).isPresent()) {
-            throw new RuntimeException("User already exists");
-        }
-        if (userRepository.findByEmail(userRegister.getEmail()).isPresent()) {
-            throw new RuntimeException("email already exists");
-        }
-        User user = new User(null, userRegister.getUsername(),userRegister.getEmail(), passwordEncoder.encode(userRegister.getPassword()), Role.USER,false);
-//        User user = new User(null, userRegister.getUsername(),userRegister.getEmail(), passwordEncoder.encode(userRegister.getPassword()), Role.ADMIN,false);
-        userRepository.save(user);
-        return "User registered successfully!";
+    public User register(User user) {
+        return userRepository.save(user);
     }
 
-    public String login(UserLogin userLogin) {
-
-
-        User user = userRepository.findByUsername(userLogin.getUsername())
-                .orElseThrow(() -> new RuntimeException("User not found"));
-        if (!passwordEncoder.matches(userLogin.getPassword(), user.getPassword())) {
-            throw new RuntimeException("Invalid credentials");
+    public String login(LoginDTO loginDTO) {
+        User user = userRepository.findByMobileNumber(loginDTO.getMobile()).get();
+        if(!passwordEncoder.matches(loginDTO.getPassword(), user.getPassword())) {
+           throw new BadCredentialsException("Password incorrect");
         }
         user.setActivityStatus(true);
         userRepository.save(user);
-        return jwtUtil.generateToken(user.getUsername(),user.getActivityStatus(),user.getRole().toString());
+        return jwtUtil.generateToken(user.getMobileNumber(),user.getActivityStatus());
     }
-    public String logout(HttpServletRequest request)
+    public void logout(String token)
     {
-        String authHeader = request.getHeader("Authorization");
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            return "Invalid token";
-        }
-        String token = authHeader.substring(7);
         String username=jwtUtil.extractUsername(token);
-        User user=userRepository.findByUsername(username).orElseThrow();
-        user.setActivityStatus(false);
-        userRepository.save(user);
-        return "Logout Successfully!";
+        Optional<User> user=userRepository.findByUsername(username);
+        if(user.isEmpty()){
+          throw new RuntimeException("User not found");
+        }
+        user.get().setActivityStatus(false);
+        blockedTokenRepo.save(new BlockedToken(token));
+        userRepository.save(user.get());
+    }
+
+    public User saveUser(User user) {
+        return userRepository.save(user);
+    }
+
+    public User updateUserDetails(String mobile,UpdateUserDTO updateUserDTO) {
+        User user = userRepository.findByMobileNumber(mobile).get();
+        user.setMobileNumber(updateUserDTO.getMobileNumber());
+        user.setEmail(updateUserDTO.getEmail());
+        user.setCountry(updateUserDTO.getCountry());
+        user.setCity(updateUserDTO.getCity());
+        user.setPostalCode(updateUserDTO.getPostalCode());
+        user.setGender(updateUserDTO.getGender());
+        return userRepository.save(user);
+
+    }
+
+    public void updateUserPassword(String mobile,PasswordDTO passwordDTO) {
+        User user = userRepository.findByMobileNumber(mobile).get();
+        if(!passwordEncoder.matches(passwordDTO.getNewPassword(), user.getPassword())){
+            throw new BadCredentialsException("Password incorrect");
+        }
+        user.setPassword(passwordEncoder.encode(passwordDTO.getNewPassword()));
+    }
+
+    public User fetchUserDetails(String mobile) {
+        return userRepository.findByMobileNumber(mobile).get();
     }
 }

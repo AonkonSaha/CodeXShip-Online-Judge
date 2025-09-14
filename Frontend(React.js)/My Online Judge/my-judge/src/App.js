@@ -11,11 +11,13 @@ import ProtectedRoute from './auth_component/ProtectedRoute';
 import { AuthProvider } from './auth_component/AuthContext';
 import Login from './auth_component/Login';
 import Register from './auth_component/Register';
+
 import Logout from './auth_component/Logout';
 import ProblemEditor from './problem_creator_delete/ProblemEditor';
 import ProblemCategoryList from './problemlist/ProblemCategoryList';
 import ProblemCategoryPage from './problemlist/ProblemCategoryPage';
 import SubmissionHistory from './problem_page_code_editor/SubmissionHistory';
+import Profile from './components/profile';
 
 
 function App() {
@@ -31,10 +33,11 @@ function App() {
         <Route path="/register" element={<Register/>} />
         <Route path="/login" element={<Login/>} />
         <Route path="/verify-email" element={<VerifyEmail/>} />
+
          {/* Protected Routes */}
          <Route element={<ProtectedRoute roles={["USER"]} />}>
-            {/* <Route path="/profile" element={<Profile />} /> */}
-            
+          <Route path="/profile" element={<Profile/>} />
+
             <Route path="/submissions/history" element={ <SubmissionHistory/> }/>
             <Route path="/logout" element={<Logout/>}/>
           </Route>
