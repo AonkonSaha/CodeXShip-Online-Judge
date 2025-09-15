@@ -31,9 +31,9 @@ public interface ProblemService {
 
     public Problem findProblemByHandle(String handle);
 
-    public String deleteEachProblem();
+    public void deleteEachProblem();
 
-    public String deleteProblemByHandle(String handle);
+    public void deleteProblemByHandle(String handle);
 
     public ProblemDetailWithSample findProblemByID(Long id);
 

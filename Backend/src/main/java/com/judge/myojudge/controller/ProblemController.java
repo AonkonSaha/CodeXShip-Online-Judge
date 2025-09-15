@@ -30,14 +30,15 @@ public class ProblemController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> removeAllProblem(
     ) throws IOException {
-        String  message= problemService.deleteEachProblem();
-        return  ResponseEntity.ok().body(message);
+        problemService.deleteEachProblem();
+        return ResponseEntity.noContent().build();
     }
     @DeleteMapping(value="/v1/remove/{handle}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?>removeProblem(@PathVariable String handle
     ) throws IOException {
-        return  ResponseEntity.ok().body(problemService.deleteProblemByHandle( handle));
+        problemService.deleteProblemByHandle( handle);
+        return ResponseEntity.noContent().build() ;
     }
 
     @GetMapping(value="/v1/{id}")

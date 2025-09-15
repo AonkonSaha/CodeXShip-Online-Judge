@@ -127,8 +127,7 @@ public class ProblemServiceImp implements ProblemService {
     }
 
     @Override
-    public String deleteEachProblem() {
-        if(problemRepo.count()==0)return "Problem doesn't exit";
+    public void deleteEachProblem() {
         List<Problem>problems=problemRepo.findAll();
         for(Problem problem:problems)
         {
@@ -140,12 +139,10 @@ public class ProblemServiceImp implements ProblemService {
         }
 
         problemRepo.deleteAll();
-        return "ProblemsDeleted";
     }
 
     @Override
-    public String deleteProblemByHandle(String handle){
-        if(!problemRepo.existsByHandleName(handle))return "Problem doesn't exit";
+    public void deleteProblemByHandle(String handle){
         Problem problem=problemRepo.findByHandleName(handle);
         for(TestCase testCase:problem.getTestcases())
         {
@@ -156,7 +153,6 @@ public class ProblemServiceImp implements ProblemService {
 //            }
         }
         problemRepo.delete(problem);
-        return "ProblemDelete";
     }
 
 
