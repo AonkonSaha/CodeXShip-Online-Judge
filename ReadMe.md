@@ -17,16 +17,19 @@ It’s designed for **competitive programming, coding contests, and practice pla
 - 💻 **Code Submission & Evaluation**  
   - Supports multiple programming languages  
   - Secure Docker-based execution sandbox  
-  - Instant feedback with verdicts (AC, WA, TLE, RE, CE)  
+  - Instant feedback with verdicts (AC, WA, TLE, RE, CE)
+  - Under Development  
 
 - 🎯 **Gamification (Coin System)**  
   - Earn **coins** by solving problems successfully  
   - Redeem coins for **rewards** like T-shirts, bags, and other goodies 🎁  
-  - Motivates users to solve more problems and participate in contests  
+  - Motivates users to solve more problems and participate in contests
+  - Under Development  
 
 - 📊 **Contest & Ranking System**  
   - Create and manage contests  
   - Real-time leaderboard and user standings  
+  - Under Development
 
 - 🖥️ **Modern Frontend (React + Tailwind CSS)**  
   - Responsive UI with smooth navigation  
