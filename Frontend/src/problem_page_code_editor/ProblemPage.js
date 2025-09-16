@@ -41,7 +41,7 @@ const ProblemDetail = () => {
   useEffect(() => {
     const fetchFileContent = async () => {
       try {
-        const response = await fetch(`${baseURL}/api/problems/${id}`);
+        const response = await fetch(`${baseURL}/api/problem/v2/${id}`);
         const data = await response.json();
         setFileContent(data.problem);
       } catch (err) {

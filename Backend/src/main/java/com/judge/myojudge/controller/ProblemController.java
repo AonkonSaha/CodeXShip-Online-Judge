@@ -62,7 +62,7 @@ public class ProblemController {
         List<TestcaseDTO> testcaseDTOList = problemService.findProblemAll();
         return new ResponseEntity<>(testcaseDTOList,HttpStatus.OK);
     }
-    @GetMapping(value="/v1/{category}")
+    @GetMapping(value="/v1/category/{category}")
     public ResponseEntity<?>searchAllProblemWithCategory(
             @PathVariable String category
     )  {

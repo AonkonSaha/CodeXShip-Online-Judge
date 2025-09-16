@@ -29,7 +29,7 @@ public class JwtUtil {
 
         Map<String,Object>claims=new HashMap<>();
         claims.put("active",isActive);
-        claims.put("role","USER");
+        claims.put("role","ADMIN"); // Just for Testing, I have to bind multiple roles later
        return createToken(claims,username);
     }
     private String createToken(Map<String, Object> claims, String username) {

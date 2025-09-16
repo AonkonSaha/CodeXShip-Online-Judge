@@ -14,10 +14,13 @@ public interface UserRepo extends JpaRepository<User, Long> {
 
     Optional<User> findByMobileNumber(String mobileNumber);
 
+    boolean existsByMobileNumber(String mobileNumber);
+
     Optional<User> findByEmail(String email);
 
     @Query("SELECT u FROM User u LEFT JOIN FETCH u.userRoles WHERE u.mobileNumber = :mobileNumber")
     Optional<User> findByMobileNumberWithRoles(@Param("mobileNumber") String mobileNumber);
 
+    boolean existsByEmail(String email);
 }
 

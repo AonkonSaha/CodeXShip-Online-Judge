@@ -4,6 +4,8 @@ import com.judge.myojudge.model.dto.*;
 import com.judge.myojudge.model.mapper.UserMapper;
 import com.judge.myojudge.response.ApiResponse;
 import com.judge.myojudge.service.AuthService;
+import com.judge.myojudge.validation.UserValidation;
+import com.judge.myojudge.validation.ValidationService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.apache.coyote.BadRequestException;
@@ -21,10 +23,11 @@ import java.util.Objects;
 public class AuthController {
     private final AuthService authService;
     private final UserMapper userMapper;
+    private final ValidationService validationService;
 
     @PostMapping("/v1/register")
     public ResponseEntity<ApiResponse<RegisterDTO>> register(@RequestBody RegisterDTO registerDTO) {
-
+        validationService.validateUserDetails(registerDTO);
         ApiResponse<RegisterDTO> apiResponse= ApiResponse.<RegisterDTO>builder()
                 .success(true)
                 .statusCode(HttpStatus.CREATED.value())
@@ -36,13 +39,13 @@ public class AuthController {
 
     }
     @PostMapping("/v1/login")
-    public  ResponseEntity<ApiResponse<Map<String,String>>> login(@RequestBody LoginDTO userDTO) {
-
+    public  ResponseEntity<ApiResponse<Map<String,String>>> login(@RequestBody LoginDTO loginDTO) {
+        validationService.validateLoginDetails(loginDTO);
         ApiResponse<Map<String,String>> apiResponse=ApiResponse.<Map<String,String>>builder()
                 .success(true)
                 .statusCode(HttpStatus.OK.value())
                 .message("Login Success..!")
-                .data(Map.of("token", authService.login(userDTO)))
+                .data(Map.of("token", authService.login(loginDTO)))
                 .build();
         return ResponseEntity.ok(apiResponse);
     }
@@ -56,16 +59,15 @@ public class AuthController {
     @PostMapping("/v1/update")
     public ResponseEntity<Void> updateUser(@RequestBody UpdateUserDTO updateUserDTO) {
         String mobile= SecurityContextHolder.getContext().getAuthentication().getName();
+        validationService.validateUserDetails(updateUserDTO);
         authService.updateUserDetails(mobile,updateUserDTO);
         return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/v1/update/password")
     public ResponseEntity<Void> updatePassword(@RequestBody PasswordDTO passwordDTO) throws BadRequestException {
-        if(!Objects.equals(passwordDTO.getNewPassword(), passwordDTO.getConfirmPassword())){
-            throw new BadRequestException("Passwords don't match");
-        }
         String mobile= SecurityContextHolder.getContext().getAuthentication().getName();
+        validationService.validateUserPassword(passwordDTO);
         authService.updateUserPassword(mobile,passwordDTO);
         return ResponseEntity.noContent().build();
     }

@@ -1,9 +1,11 @@
 import { createContext, useState, useEffect } from "react";
 import { jwtDecode } from "jwt-decode";
-
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
+  const baseURL = process.env.REACT_APP_BACK_END_BASE_URL;
   const [user, setUser] = useState(null);
   const [darkMode, setDarkMode] = useState(false);
 
@@ -30,9 +32,23 @@ export const AuthProvider = ({ children }) => {
   };
 
   // Handle logout
-  const logout = () => {
-    localStorage.removeItem("token");
-    setUser(null);
+const logout = async () => {
+    const token = localStorage.getItem("token");
+    try {
+      if (token) {
+        await axios.post(
+          `${baseURL}/api/auth/v1/logout`,
+          {},
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+      }
+    } catch (error) {
+      console.error("Logout failed:", error);
+    } finally {
+      localStorage.removeItem("token");
+      setUser(null);
+      // navigate("/login");
+    }
   };
 
   // Toggle dark mode

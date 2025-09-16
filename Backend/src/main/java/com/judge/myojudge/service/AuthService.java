@@ -5,6 +5,8 @@ import com.judge.myojudge.model.dto.PasswordDTO;
 import com.judge.myojudge.model.dto.UpdateUserDTO;
 import com.judge.myojudge.model.entity.User;
 
+import java.util.Optional;
+
 public interface AuthService {
 
     public User register(User user);
@@ -20,4 +22,6 @@ public interface AuthService {
     public void updateUserPassword(String mobile, PasswordDTO passwordDTO);
 
     public User fetchUserDetails(String mobile);
+
+    public Optional<User> fetchUserByMobileNumber(String mobile);
 }

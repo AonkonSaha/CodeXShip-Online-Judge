@@ -5,6 +5,7 @@ import com.judge.myojudge.jwt.JwtAuthFilter;
 import com.judge.myojudge.routes.AuthApiRoute;
 import com.judge.myojudge.routes.ProblemApiRoute;
 import com.judge.myojudge.service.imp.CustomUserDetailsService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -49,7 +50,8 @@ public class SecurityConfig  {
             AuthApiRoute.USER_LOGIN,
             ProblemApiRoute.PROBLEM_FETCH_ALL,
             ProblemApiRoute.PROBLEM_FETCH_BY_ID_V2,
-            ProblemApiRoute.PROBLEM_FETCH_BY_CATEGORY
+            ProblemApiRoute.PROBLEM_FETCH_BY_CATEGORY,
+            "/api/role/**"
     };
 
     @Bean
@@ -63,7 +65,7 @@ public class SecurityConfig  {
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(CustomUserDetailsService customUserDetailsService) {
+    public AuthenticationManager authenticationManager(@Autowired CustomUserDetailsService customUserDetailsService) {
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
         provider.setUserDetailsService(customUserDetailsService);
         provider.setPasswordEncoder(passwordEncoder());

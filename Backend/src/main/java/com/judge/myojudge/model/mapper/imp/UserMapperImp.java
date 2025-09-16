@@ -21,13 +21,15 @@ public class UserMapperImp implements UserMapper {
     public User toUser(RegisterDTO registerDTO) {
         UserRole userRole = new UserRole();
         userRole.setRoleName(Role.NORMAL_USER.name());
-       return User.builder()
+        User user= User.builder()
                .username(registerDTO.getUsername())
                .email(registerDTO.getEmail())
                .mobileNumber(registerDTO.getMobile())
                .userRoles(Set.of(userRole))
                .password(passwordEncoder.encode(registerDTO.getPassword()))
                .build();
+        userRole.setUsers(Set.of(user));
+        return user;
     }
 
     @Override

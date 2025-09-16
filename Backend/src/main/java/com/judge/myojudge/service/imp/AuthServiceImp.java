@@ -1,5 +1,6 @@
 package com.judge.myojudge.service.imp;
 
+import com.judge.myojudge.exception.UserNotFoundException;
 import com.judge.myojudge.model.dto.LoginDTO;
 import com.judge.myojudge.model.dto.PasswordDTO;
 import com.judge.myojudge.jwt.JwtUtil;
@@ -47,7 +48,7 @@ public class AuthServiceImp implements AuthService {
         String username=jwtUtil.extractUsername(token);
         Optional<User> user=userRepository.findByUsername(username);
         if(user.isEmpty()){
-          throw new RuntimeException("User not found");
+          throw new UserNotFoundException("User not found");
         }
         user.get().setActivityStatus(false);
         blockedTokenRepo.save(new BlockedToken(token));
@@ -84,5 +85,15 @@ public class AuthServiceImp implements AuthService {
     @Override
     public User fetchUserDetails(String mobile) {
         return userRepository.findByMobileNumber(mobile).get();
+    }
+
+    @Override
+    public Optional<User> fetchUserByMobileNumber(String mobile) {
+        Optional<User> user= userRepository.findByMobileNumber(mobile);
+        System.out.println("Now WHats Going On/......");
+
+        System.out.println(user.get());
+        System.out.println("Now WHats Happend/......");
+        return user;
     }
 }

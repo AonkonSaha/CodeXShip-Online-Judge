@@ -31,7 +31,7 @@ const ProblemCategoryPage = () => {
         const fetchProblems = async () => {
             try {
                 const headers = token ? { Authorization: `Bearer ${token}` } : {}; // Include JWT only if present
-                const response = await axios.get(`${baseURL}/api/problems/category/${category}`, { headers });
+                const response = await axios.get(`${baseURL}/api/problem/v1/category/${category}`, { headers });
                 setProblems(response.data);
             } catch (err) {
                 setError(err.message);
@@ -47,7 +47,7 @@ const ProblemCategoryPage = () => {
         if (!window.confirm("Are you sure you want to delete this problem?")) return;
 
         try {
-            await axios.delete(`${baseURL}/admin/problems/remove/${handle}`, {
+            await axios.delete(`${baseURL}/api/problem/v1/remove/${handle}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
 

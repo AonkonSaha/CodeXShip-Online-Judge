@@ -26,7 +26,7 @@ const ProblemEditor = () => {
       const fetchProblem = async () => {
         try {
           const response = await axios.get(
-            `${baseURL}/admin/problem/${id}`,
+            `${baseURL}/api/problem/v1/${id}`,
             { headers: { Authorization: `Bearer ${token}` } }
           );
           const { title, handle, difficulty, type, problemStatement, testcases } = response.data.problem;
@@ -69,8 +69,8 @@ const ProblemEditor = () => {
     try {
       const url =
         id && id !== "null"
-          ? `${baseURL}/admin/problem/update/${id}`
-          : `${baseURL}/admin/problem/save`;
+          ? `${baseURL}/api/problem/v1/update/${id}`
+          : `${baseURL}/api/problem/v1/save`;
 
       const method = id && id !== "null" ? "put" : "post";
 

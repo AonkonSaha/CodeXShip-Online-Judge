@@ -23,9 +23,9 @@ const Login = () => {
         body: JSON.stringify(credentials),
       });
 
-      const data = await response.json();
+      const rawData = await response.json();
       if (response.ok) {
-        login(data.token);
+        login(rawData.data.token);
         navigate("/");
       } else {
         setError("Invalid username or password.");

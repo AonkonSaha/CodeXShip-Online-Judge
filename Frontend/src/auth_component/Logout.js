@@ -12,7 +12,7 @@ const Logout = () => {
      
     const handleLogout = async () => {
       try {
-        
+        alert("Logout Button");
         const response = await axios.post(
             `${baseURL}/api/auth/v1/logout`,
             {}, // Empty body
