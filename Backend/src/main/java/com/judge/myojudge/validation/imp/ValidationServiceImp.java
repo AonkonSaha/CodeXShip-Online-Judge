@@ -1,5 +1,6 @@
 package com.judge.myojudge.validation.imp;
 
+import com.judge.myojudge.exception.InvalidLoginArgumentException;
 import com.judge.myojudge.exception.InvalidPasswordArgumentException;
 import com.judge.myojudge.exception.InvalidUserArgumentException;
 import com.judge.myojudge.exception.UserNotFoundException;
@@ -27,6 +28,21 @@ public class ValidationServiceImp implements ValidationService {
         if(userValidation.isEmptyUserName(registerDTO.getUsername())) {
             throw new InvalidUserArgumentException("Username is empty");
         }
+        if(userValidation.isEmptyUserPassword(registerDTO.getPassword())){
+            throw new InvalidUserArgumentException("Password is empty");
+        }
+        if(userValidation.isEmptyUserPassword(registerDTO.getConfirmPassword())){
+            throw new InvalidUserArgumentException("Confirm Password is empty");
+        }
+        if(userValidation.isEmptyUserContact(registerDTO.getMobile())){
+            throw new InvalidUserArgumentException("Contact is empty");
+        }
+        if(userValidation.isEmptyUserEmail(registerDTO.getEmail())) {
+            throw new InvalidUserArgumentException("Email is empty");
+        }
+        if(userValidation.isEmptyUserGender(registerDTO.getGender())) {
+            throw new InvalidUserArgumentException("Gender is empty");
+        }
         if(userValidation.isExitUserByContact(registerDTO.getMobile())){
             throw new InvalidUserArgumentException("Mobile is already in use");
         }
@@ -34,9 +50,6 @@ public class ValidationServiceImp implements ValidationService {
             throw new InvalidUserArgumentException("Email is already in use");
         }
 
-            if(userValidation.isEmptyUserContact(registerDTO.getMobile())){
-            throw new InvalidUserArgumentException("Contact is empty");
-        }
         if(!userValidation.isValidUserContactLength(registerDTO.getMobile())){
             throw new InvalidUserArgumentException("Mobile Number must be 11 digits!");
         }
@@ -53,6 +66,7 @@ public class ValidationServiceImp implements ValidationService {
             throw new InvalidUserArgumentException("Gender must be male,female or other!");
         }
 
+
     }
 
     @Override
@@ -63,16 +77,16 @@ public class ValidationServiceImp implements ValidationService {
     @Override
     public void validateLoginDetails(LoginDTO loginDTO) {
         if (userValidation.isEmptyUserContact(loginDTO.getMobile())) {
-            throw new InvalidUserArgumentException("Contact is empty");
+            throw new InvalidLoginArgumentException("Contact is empty");
         }
         if (loginDTO.getPassword() == null || loginDTO.getPassword().isEmpty()) {
-            throw new InvalidUserArgumentException("Password is empty");
+            throw new InvalidLoginArgumentException("Password is empty");
         }
         if (!userValidation.isExitUserByContact(loginDTO.getMobile())) {
-            throw new InvalidUserArgumentException("User Not Found with this Contact: " + loginDTO.getMobile());
+            throw new InvalidLoginArgumentException("User Not Found with this Contact: " + loginDTO.getMobile());
         }
         if (!userValidation.isExitUserPassword(loginDTO.getMobile(), loginDTO.getPassword())) {
-            throw new InvalidUserArgumentException("Invalid Credentials");
+            throw new InvalidLoginArgumentException("Invalid Credentials");
         }
 
 

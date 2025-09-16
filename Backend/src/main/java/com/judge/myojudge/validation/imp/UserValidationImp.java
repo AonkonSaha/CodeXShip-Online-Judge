@@ -36,6 +36,21 @@ public class UserValidationImp implements UserValidation {
     }
 
     @Override
+    public boolean isEmptyUserPassword(String password) {
+        return password==null || password.isEmpty();
+    }
+
+    @Override
+    public boolean isEmptyUserEmail(String email) {
+        return email==null || email.isEmpty();
+    }
+
+    @Override
+    public boolean isEmptyUserGender(String gender) {
+        return gender==null || gender.isEmpty();
+    }
+
+    @Override
     public boolean isValidUserContactLength(String contact) {
         return contact.length() == 11;
     }
