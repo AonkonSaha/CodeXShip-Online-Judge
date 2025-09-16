@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface ProblemService {
@@ -29,7 +30,7 @@ public interface ProblemService {
 
     public boolean findProblemByHandleExit(String handle) ;
 
-    public Problem findProblemByHandle(String handle);
+    public Optional<Problem> findProblemByHandle(String handle);
 
     public void deleteEachProblem();
 
@@ -37,7 +38,7 @@ public interface ProblemService {
 
     public ProblemDetailWithSample findProblemByID(Long id);
 
-    public ProblemDTO fetchOneProblemByID(long idd);
+    public ProblemDTO fetchOneProblemByID(long id);
 
     public void saveProblemWithId(long id, String title, String handle, String difficulty, String type,
                                   String problemStatement, List<MultipartFile> multipartFiles) throws IOException;

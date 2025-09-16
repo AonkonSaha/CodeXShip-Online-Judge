@@ -1,28 +1,26 @@
 package com.judge.myojudge.validation.imp;
 
-import com.judge.myojudge.exception.InvalidLoginArgumentException;
-import com.judge.myojudge.exception.InvalidPasswordArgumentException;
-import com.judge.myojudge.exception.InvalidUserArgumentException;
-import com.judge.myojudge.exception.UserNotFoundException;
-import com.judge.myojudge.model.dto.LoginDTO;
-import com.judge.myojudge.model.dto.PasswordDTO;
-import com.judge.myojudge.model.dto.RegisterDTO;
-import com.judge.myojudge.model.dto.UpdateUserDTO;
+import com.judge.myojudge.exception.*;
+import com.judge.myojudge.model.dto.*;
 import com.judge.myojudge.model.mapper.DtoMapper;
 import com.judge.myojudge.repository.UserRepo;
+import com.judge.myojudge.validation.ProblemValidation;
 import com.judge.myojudge.validation.UserValidation;
 import com.judge.myojudge.validation.ValidationService;
-import jakarta.validation.ValidationException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor
 public class ValidationServiceImp implements ValidationService {
+
     private final UserValidation userValidation;
     private final DtoMapper dtoMapper;
     private final UserRepo userRepo;
+    private final ProblemValidation problemValidation;
+
     @Override
     public void validateUserDetails(RegisterDTO registerDTO) {
         if(userValidation.isEmptyUserName(registerDTO.getUsername())) {
@@ -115,6 +113,45 @@ public class ValidationServiceImp implements ValidationService {
         }
         if(!userValidation.isExitUserPassword(mobile,passwordDTO.getOldPassword())){
             throw new InvalidPasswordArgumentException("Invalid Old Password");
+        }
+    }
+
+    @Override
+    public void validateProblemDetails(ProblemDTO problemDTO) {
+        if(problemValidation.isEmptyProblemTitle(problemDTO.getTitle())){
+            throw new InvalidProblemArgumentException("Title is empty");
+        }
+        if(problemValidation.isEmptyProblemHandle(problemDTO.getHandle())){
+            throw new InvalidProblemArgumentException("Handle is empty");
+        }
+        if(problemValidation.isEmptyProblemType(problemDTO.getType())){
+            throw new InvalidProblemArgumentException("Type is empty");
+        }
+        if(problemValidation.isEmptyProblemDifficulty(problemDTO.getDifficulty())){
+            throw new InvalidProblemArgumentException("Difficulty is empty");
+        }
+        if(problemValidation.isEmptyProblemStatement(problemDTO.getProblemStatement())){
+            throw new InvalidProblemArgumentException("Statement is empty");
+        }
+        if(problemValidation.isEmptyProblemTestcases(problemDTO.getTestcasesWithFile())){
+            throw new InvalidProblemArgumentException("Testcases is empty");
+        }
+        if(problemValidation.isExitProblemHandle(problemDTO.getHandle())){
+            throw new InvalidProblemArgumentException("Handle is already exit");
+        }
+        if(problemValidation.isExitProblemTitle(problemDTO.getTitle())){
+            throw new InvalidProblemArgumentException("Title is already exit");
+        }
+        if(problemValidation.isOverProblemStatementLimit(problemDTO.getProblemStatement())){
+            throw new InvalidProblemArgumentException("Statement must be contained 8000 characters");
+        }
+        if(problemValidation.isOverProblemTestcaseLimit(problemDTO.getTestcasesWithFile())){
+            throw new InvalidProblemArgumentException("Testcase File must be contained 5MB");
+        }
+
+        if(!problemValidation.isMissMatchTestcase(problemDTO.getTestcasesWithFile()).isEmpty()){
+            List<String> missMatch=problemValidation.isMissMatchTestcase(problemDTO.getTestcasesWithFile());
+            throw new InvalidTestCaseArgumentException("Testcase MissMatch Number :  "+missMatch);
         }
     }
 }

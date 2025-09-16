@@ -5,10 +5,12 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface ProblemRepo extends JpaRepository<Problem,Long> {
-    Problem findByHandleName(String handle);
+    Optional<Problem> findByHandleName(String handle);
     boolean existsByHandleName(String handle);
     List<Problem> findByType(String type);
+    boolean existsByTitle(String title);
 }

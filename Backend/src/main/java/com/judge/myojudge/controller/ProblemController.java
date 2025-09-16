@@ -6,6 +6,7 @@ import com.judge.myojudge.model.dto.TestcaseDTO;
 import com.judge.myojudge.service.AuthService;
 import com.judge.myojudge.service.ProblemService;
 import com.judge.myojudge.service.TestCaseService;
+import com.judge.myojudge.validation.ValidationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -25,34 +26,14 @@ public class ProblemController {
     private final ProblemService problemService;
     private final TestCaseService testCaseService;
     private final AuthService authService;
-
-    @DeleteMapping(value="/v1/remove/all")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> removeAllProblem(
-    ) throws IOException {
-        problemService.deleteEachProblem();
-        return ResponseEntity.noContent().build();
-    }
-    @DeleteMapping(value="/v1/remove/{handle}")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?>removeProblem(@PathVariable String handle
-    ) throws IOException {
-        problemService.deleteProblemByHandle( handle);
-        return ResponseEntity.noContent().build() ;
-    }
+    private final ValidationService validationService;
 
     @GetMapping(value="/v1/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Map<String,ProblemDTO>>fetchOneProblem(@PathVariable String id
     ) throws IOException {
-        long idd = 0;
-        try {
-            idd = Long.parseLong(id);
-
-        } catch (NumberFormatException e) {
-            System.out.println("Invalid number format!");
-        }
-        ProblemDTO problem= problemService.fetchOneProblemByID( idd);
+        long problemId = Long.parseLong(id);
+        ProblemDTO problem= problemService.fetchOneProblemByID(problemId);
         return  ResponseEntity.ok(Map.of("problem",problem));
     }
 
@@ -71,15 +52,9 @@ public class ProblemController {
     }
     @GetMapping(value="/v2/{id}")
     public ResponseEntity<Map<String, ProblemDetailWithSample>>searchSingleProblem(@PathVariable String id
-    )  {
-        long idd = 0;
-        try {
-            idd = Long.parseLong(id);
-
-        } catch (NumberFormatException e) {
-            System.out.println("Invalid number format!");
-        }
-        ProblemDetailWithSample problem= problemService.findProblemByID(idd);
+    ) {
+        long problemId = Long.parseLong(id);
+        ProblemDetailWithSample problem= problemService.findProblemByID(problemId);
         return ResponseEntity.ok(Map.of("problem",problem));
     }
 
@@ -93,18 +68,14 @@ public class ProblemController {
             @RequestParam("problemStatement") String problemStatement,
             @RequestParam("testCaseFile") List<MultipartFile> multipartFiles
 
-    ) {
-        try {
-            if(problemService.findProblemByHandleExit(handle)) {
-                return new ResponseEntity<>("This handle isnot used!", HttpStatus.NOT_ACCEPTABLE);
-            }
+    ) throws IOException {
 
+            validationService.validateProblemDetails(new ProblemDTO(title, handle, difficulty, type,
+                                                                  problemStatement, multipartFiles));
             problemService.saveProblem(title,handle,difficulty,type,problemStatement);
             testCaseService.saveTestCases(handle,title, multipartFiles);
             return ResponseEntity.ok(Map.of("message", "Problem details created successfully!"));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", e.getMessage()));
-        }
+
     }
     @PutMapping(value="/v1/update/{id}")
     @PreAuthorize("hasRole('ADMIN')")
@@ -118,6 +89,9 @@ public class ProblemController {
             @RequestParam(value = "testCaseFile", required = false) List<MultipartFile> multipartFiles
     ) {
         try {
+            validationService.validateProblemDetails(new ProblemDTO(title, handle, difficulty, type,
+                    problemStatement, multipartFiles));
+
             long problemId = Long.parseLong(id);
             problemService.saveProblemWithId(problemId, title, handle, difficulty, type, problemStatement, multipartFiles);
             return ResponseEntity.ok(Map.of("message", "Problem details updated successfully!"));
@@ -126,6 +100,21 @@ public class ProblemController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "Failed to update problem details."));
         }
+    }
+
+    @DeleteMapping(value="/v1/remove/all")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> removeAllProblem(
+    ) throws IOException {
+        problemService.deleteEachProblem();
+        return ResponseEntity.noContent().build();
+    }
+    @DeleteMapping(value="/v1/remove/{handle}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?>removeProblem(@PathVariable String handle
+    ) throws IOException {
+        problemService.deleteProblemByHandle( handle);
+        return ResponseEntity.noContent().build() ;
     }
 
 }
