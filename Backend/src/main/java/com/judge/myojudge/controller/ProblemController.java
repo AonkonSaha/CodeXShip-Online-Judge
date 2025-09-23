@@ -1,8 +1,7 @@
 package com.judge.myojudge.controller;
 
-import com.judge.myojudge.model.dto.ProblemDTO;
-import com.judge.myojudge.model.dto.ProblemDetailWithSample;
-import com.judge.myojudge.model.dto.TestcaseDTO;
+import com.judge.myojudge.model.dto.*;
+import com.judge.myojudge.response.ApiResponse;
 import com.judge.myojudge.service.AuthService;
 import com.judge.myojudge.service.ProblemService;
 import com.judge.myojudge.service.TestCaseService;
@@ -30,25 +29,45 @@ public class ProblemController {
 
     @GetMapping(value="/v1/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Map<String,ProblemDTO>>fetchOneProblem(@PathVariable String id
+    public ResponseEntity<ApiResponse<ProblemDTO>>fetchOneProblem(@PathVariable String id
     ) throws IOException {
         long problemId = Long.parseLong(id);
-        ProblemDTO problem= problemService.fetchOneProblemByID(problemId);
-        return  ResponseEntity.ok(Map.of("problem",problem));
+        ProblemDTO problemDTO= problemService.fetchOneProblemByID(problemId);
+
+        ApiResponse<ProblemDTO> apiResponse= ApiResponse.<ProblemDTO>builder()
+                .success(true)
+                .statusCode(HttpStatus.OK.value())
+                .message("Fetching One Problem Success..!")
+                .data(problemDTO)
+                .build();
+
+        return  ResponseEntity.status(HttpStatus.OK).body(apiResponse);
     }
 
     @GetMapping(value="/v1/all")
-    public ResponseEntity<?>findAllProblem(
+    public ResponseEntity<ApiResponse<List<ProblemWithSample>>>findAllProblem(
     )  {
-        List<TestcaseDTO> testcaseDTOList = problemService.findProblemAll();
-        return new ResponseEntity<>(testcaseDTOList,HttpStatus.OK);
+        List<ProblemWithSample> problemWithSamples = problemService.findProblemAll();
+        ApiResponse<List<ProblemWithSample>> problemWithSample=ApiResponse.<List<ProblemWithSample>>builder()
+                .success(true)
+                .statusCode(HttpStatus.OK.value())
+                .message("Fetching All Problems Successfully..!")
+                .data(problemWithSamples)
+                .build();
+        return ResponseEntity.status(HttpStatus.OK).body(problemWithSample);
     }
     @GetMapping(value="/v1/category/{category}")
     public ResponseEntity<?>searchAllProblemWithCategory(
             @PathVariable String category
     )  {
-        List<TestcaseDTO> testcaseDTOList = problemService.findProblemAllByCategory(category);
-        return new ResponseEntity<>(testcaseDTOList,HttpStatus.OK);
+        List<ProblemWithSample> problemWithSamples = problemService.findProblemAllByCategory(category);
+        ApiResponse<List<ProblemWithSample>> problemWithSample=ApiResponse.<List<ProblemWithSample>>builder()
+                .success(true)
+                .statusCode(HttpStatus.OK.value())
+                .message("Fetching Problems With Category Successfully..!")
+                .data(problemWithSamples)
+                .build();
+        return ResponseEntity.status(HttpStatus.OK).body(problemWithSample);
     }
     @GetMapping(value="/v2/{id}")
     public ResponseEntity<Map<String, ProblemDetailWithSample>>searchSingleProblem(@PathVariable String id
@@ -104,7 +123,7 @@ public class ProblemController {
 
     @DeleteMapping(value="/v1/remove/all")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> removeAllProblem(
+    public ResponseEntity<Void> removeAllProblem(
     ) throws IOException {
         problemService.deleteEachProblem();
         return ResponseEntity.noContent().build();

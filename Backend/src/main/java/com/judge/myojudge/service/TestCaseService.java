@@ -14,9 +14,5 @@ public interface TestCaseService {
 
     public void saveTestCases(String handle, String name, List<MultipartFile> testCaseFiles) throws IOException;
 
-    public String uploadFile(MultipartFile file) throws IOException;
-
-    public String getFileUrl(String fileKey);
-
 
 }

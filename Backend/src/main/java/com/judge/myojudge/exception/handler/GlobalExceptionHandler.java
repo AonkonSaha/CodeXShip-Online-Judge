@@ -1,9 +1,6 @@
 package com.judge.myojudge.exception.handler;
 
-import com.judge.myojudge.exception.InvalidLoginArgumentException;
-import com.judge.myojudge.exception.InvalidTestCaseArgumentException;
-import com.judge.myojudge.exception.InvalidUserArgumentException;
-import com.judge.myojudge.exception.UserNotFoundException;
+import com.judge.myojudge.exception.*;
 import com.judge.myojudge.response.ApiResponse;
 import com.judge.myojudge.response.ErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
@@ -37,6 +34,12 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(UserNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleUserExitException(UserNotFoundException exception,
+                                                                 HttpServletRequest request) {
+        return buildError(HttpStatus.NOT_FOUND, exception.getMessage(), request.getRequestURI());
+    }
+
+    @ExceptionHandler(TestCaseNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleTestcaseExitException(TestCaseNotFoundException exception,
                                                                  HttpServletRequest request) {
         return buildError(HttpStatus.NOT_FOUND, exception.getMessage(), request.getRequestURI());
     }

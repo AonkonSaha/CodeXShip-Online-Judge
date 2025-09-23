@@ -8,6 +8,7 @@ import com.amazonaws.services.s3.model.S3Object;
 import com.judge.myojudge.exception.ProblemNotFoundException;
 import com.judge.myojudge.model.dto.ProblemDTO;
 import com.judge.myojudge.model.dto.ProblemDetailWithSample;
+import com.judge.myojudge.model.dto.ProblemWithSample;
 import com.judge.myojudge.model.dto.TestcaseDTO;
 import com.judge.myojudge.model.entity.Problem;
 import com.judge.myojudge.model.entity.TestCase;
@@ -41,18 +42,18 @@ public class ProdProblemService implements ProblemService {
     private String bucketName;
 
     @Override
-    public List<TestcaseDTO> findProblemAll() {
-        List<TestcaseDTO> problemList = new ArrayList<>();
+    public List<ProblemWithSample> findProblemAll() {
+        List<ProblemWithSample> problemList = new ArrayList<>();
         List<Problem> problems = problemRepo.findAll();
 
         for (Problem problem : problems) {
-            TestcaseDTO testcaseDTO = new TestcaseDTO();
-            testcaseDTO.setId(problem.getId());
-            testcaseDTO.setTitle(problem.getTitle());
-            testcaseDTO.setHandle(problem.getHandleName());
-            testcaseDTO.setProblemStatement(problem.getProblemStatement());
-            testcaseDTO.setType(problem.getType());
-            testcaseDTO.setDifficulty(problem.getDifficulty());
+            ProblemWithSample problemWithSample = new ProblemWithSample();
+            problemWithSample.setId(problem.getId());
+            problemWithSample.setTitle(problem.getTitle());
+            problemWithSample.setHandle(problem.getHandleName());
+            problemWithSample.setProblemStatement(problem.getProblemStatement());
+            problemWithSample.setType(problem.getType());
+            problemWithSample.setDifficulty(problem.getDifficulty());
 
             TestCase sampleTestcase = null;
             TestCase sampleOutput = null;
@@ -69,10 +70,10 @@ public class ProdProblemService implements ProblemService {
             List<String> sampleTestcaseContent = readS3File(sampleTestcase);
             List<String> sampleOutputContent = readS3File(sampleOutput);
 
-            testcaseDTO.setSampleTestcase(sampleTestcaseContent);
-            testcaseDTO.setSampleOutput(sampleOutputContent);
+            problemWithSample.setSampleTestcase(sampleTestcaseContent);
+            problemWithSample.setSampleOutput(sampleOutputContent);
 
-            problemList.add(testcaseDTO);
+            problemList.add(problemWithSample);
         }
         return problemList;
     }
@@ -272,8 +273,8 @@ public class ProdProblemService implements ProblemService {
     }
 
     @Override
-    public List<TestcaseDTO> findProblemAllByCategory(String category) {
-        List<TestcaseDTO>problemsWithTestCases=new ArrayList<>();
+    public List<ProblemWithSample> findProblemAllByCategory(String category) {
+        List<ProblemWithSample>problemWithSamples=new ArrayList<>();
         List<Problem> problems=problemRepo.findByType(category);
         for(Problem problem:problems)
         {
@@ -293,7 +294,7 @@ public class ProdProblemService implements ProblemService {
             List<String> sampleTestcaseContent = readS3File(sampleTestcase);
             List<String> sampleOutputContent = readS3File(sampleOutput);
 
-            TestcaseDTO testcaseDTO = TestcaseDTO.builder()
+            ProblemWithSample problemWithSample = ProblemWithSample.builder()
                     .id(problem.getId())
                     .problemStatement(problem.getProblemStatement())
                     .title(problem.getTitle())
@@ -303,9 +304,9 @@ public class ProdProblemService implements ProblemService {
                     .sampleTestcase(sampleTestcaseContent)
                     .sampleOutput(sampleOutputContent)
                     .build();
-            problemsWithTestCases.add(testcaseDTO);
+            problemWithSamples.add(problemWithSample);
 
         }
-        return problemsWithTestCases;
+        return problemWithSamples;
     }
 }
