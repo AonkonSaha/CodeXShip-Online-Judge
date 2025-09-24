@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -27,7 +29,7 @@ public class ProblemController {
     private final AuthService authService;
     private final ValidationService validationService;
 
-    @GetMapping(value="/v1/{id}")
+    @GetMapping(value="/v1/get/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<ProblemDTO>>fetchOneProblem(@PathVariable String id
     ) throws IOException {
@@ -69,12 +71,18 @@ public class ProblemController {
                 .build();
         return ResponseEntity.status(HttpStatus.OK).body(problemWithSample);
     }
-    @GetMapping(value="/v2/{id}")
-    public ResponseEntity<Map<String, ProblemDetailWithSample>>searchSingleProblem(@PathVariable String id
+    @GetMapping(value="/v2/get/{id}")
+    public ResponseEntity<ApiResponse<ProblemWithSample>>searchSingleProblem(@PathVariable String id
     ) {
         long problemId = Long.parseLong(id);
-        ProblemDetailWithSample problem= problemService.findProblemByID(problemId);
-        return ResponseEntity.ok(Map.of("problem",problem));
+        ProblemWithSample problemWithSample= problemService.findProblemByID(problemId);
+        ApiResponse<ProblemWithSample> apiResponse=ApiResponse.<ProblemWithSample>builder()
+                .success(true)
+                .statusCode(HttpStatus.OK.value())
+                .message("Problem Searched Successfully")
+                .data(problemWithSample)
+                .build();
+        return ResponseEntity.status(HttpStatus.OK).body(apiResponse);
     }
 
     @PostMapping(value="/v1/save" )
@@ -88,17 +96,23 @@ public class ProblemController {
             @RequestParam("testCaseFile") List<MultipartFile> multipartFiles
 
     ) throws IOException {
-
+        System.out.println("Problem Controller.....");
             validationService.validateProblemDetails(new ProblemDTO(title, handle, difficulty, type,
                                                                   problemStatement, multipartFiles));
             problemService.saveProblem(title,handle,difficulty,type,problemStatement);
             testCaseService.saveTestCases(handle,title, multipartFiles);
-            return ResponseEntity.ok(Map.of("message", "Problem details created successfully!"));
+            ApiResponse<String> apiResponse=ApiResponse.<String>builder()
+                    .success(true)
+                    .statusCode(HttpStatus.CREATED.value())
+                    .message("Problem Created Successfully..!")
+                    .data("Problem Created Successfully..!")
+                    .build();
+            return ResponseEntity.status(HttpStatus.CREATED).body(apiResponse);
 
     }
     @PutMapping(value="/v1/update/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> updateProblemDetails(
+    public ResponseEntity<Void> updateProblemDetails(
             @PathVariable("id") String id,
             @RequestParam("title") String title,
             @RequestParam("handle") String handle,
@@ -106,19 +120,13 @@ public class ProblemController {
             @RequestParam("type") String type,
             @RequestParam("problemStatement") String problemStatement,
             @RequestParam(value = "testCaseFile", required = false) List<MultipartFile> multipartFiles
-    ) {
-        try {
-            validationService.validateProblemDetails(new ProblemDTO(title, handle, difficulty, type,
-                    problemStatement, multipartFiles));
-
+    ) throws IOException {
+            validationService.validateProblemDetails(new ProblemDTO(title, handle, difficulty,
+                                                     type,problemStatement, multipartFiles));
             long problemId = Long.parseLong(id);
             problemService.saveProblemWithId(problemId, title, handle, difficulty, type, problemStatement, multipartFiles);
-            return ResponseEntity.ok(Map.of("message", "Problem details updated successfully!"));
-        } catch (NumberFormatException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Invalid problem ID format!"));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "Failed to update problem details."));
-        }
+            return ResponseEntity.noContent().build();
+
     }
 
     @DeleteMapping(value="/v1/remove/all")

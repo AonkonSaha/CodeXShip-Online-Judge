@@ -48,12 +48,13 @@ public class JwtAuthFilter extends OncePerRequestFilter {
            UserDetails userDetails = customUserDetailsService.loadUserByUsername(username);
            User user=userRepo.findByMobileNumber(username).get();
             if (jwtUtil.validateToken(token, username)) {
-
                 UsernamePasswordAuthenticationToken authToken =
                         new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
 
                 authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authToken);
+                System.out.println("I alsk am in filter: "+userDetails.getAuthorities());
+
             }
         }
         filterChain.doFilter(request, response);

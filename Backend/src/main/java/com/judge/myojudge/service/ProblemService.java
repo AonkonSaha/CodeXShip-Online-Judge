@@ -37,7 +37,7 @@ public interface ProblemService {
 
     public void deleteProblemByHandle(String handle) throws IOException;
 
-    public ProblemDetailWithSample findProblemByID(Long id);
+    public ProblemWithSample findProblemByID(Long id);
 
     public ProblemDTO fetchOneProblemByID(long id);
 

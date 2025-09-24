@@ -166,15 +166,14 @@ public class ProdProblemService implements ProblemService {
 
 
     @Override
-    public ProblemDetailWithSample findProblemByID(Long id) {
+    public ProblemWithSample findProblemByID(Long id) {
         Problem problem = problemRepo.findById(id).orElseThrow(() -> new ProblemNotFoundException("Problem not found"));
 
-        ProblemDetailWithSample problemDetail = new ProblemDetailWithSample();
-        problemDetail.setId(problem.getId());
-        problemDetail.setName(problem.getTitle());
-        problemDetail.setStatement(problem.getProblemStatement());
-        problemDetail.setDifficulty(problem.getDifficulty());
-        problemDetail.setSolve(false);
+        ProblemWithSample problemWithSample = new ProblemWithSample();
+        problemWithSample.setId(problem.getId());
+        problemWithSample.setTitle(problem.getTitle());
+        problemWithSample.setProblemStatement(problem.getProblemStatement());
+        problemWithSample.setDifficulty(problem.getDifficulty());
 
         TestCase sampleTestcase = null;
         TestCase sampleOutput = null;
@@ -193,14 +192,14 @@ public class ProdProblemService implements ProblemService {
         List<String> sampleOutputContent = readS3File(sampleOutput);
 
 
-        problemDetail.setInput(sampleTestcaseContent);
-        problemDetail.setOutput(sampleOutputContent);
+        problemWithSample.setSampleTestcase(sampleTestcaseContent);
+        problemWithSample.setSampleOutput(sampleOutputContent);
 
         // print the input/output here for debugging purposes
-        problemDetail.getInput().forEach(System.out::println);
-        problemDetail.getOutput().forEach(System.out::println);
+        problemWithSample.getSampleTestcase().forEach(System.out::println);
+        problemWithSample.getSampleOutput().forEach(System.out::println);
 
-        return problemDetail;
+        return problemWithSample;
     }
 
 

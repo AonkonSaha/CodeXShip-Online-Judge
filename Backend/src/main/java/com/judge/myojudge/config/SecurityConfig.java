@@ -1,5 +1,6 @@
 package com.judge.myojudge.config;
 
+import com.judge.myojudge.exception.handler.CustomAccessDeniedHandler;
 import com.judge.myojudge.jwt.JwtAuthFilter;
 
 import com.judge.myojudge.routes.AuthApiRoute;
@@ -28,10 +29,12 @@ import java.util.List;
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig  {
-    String[] adminApi={
+    @Autowired
+    private CustomAccessDeniedHandler customAccessDeniedHandler;
 
-            ProblemApiRoute.PROBLEM_FETCH_BY_ID_V1,
+    String[] adminApi={
             ProblemApiRoute.PROBLEM_SAVE,
+            ProblemApiRoute.PROBLEM_FETCH_BY_ID_V1,
             ProblemApiRoute.PROBLEM_DELETE_ALL,
             ProblemApiRoute.PROBLEM_DELETE_BY_HANDLE,
             ProblemApiRoute.PROBLEM_UPDATE_BY_ID,
@@ -78,6 +81,9 @@ public class SecurityConfig  {
         http
                 .csrf(AbstractHttpConfigurer::disable) // Disable CSRF for APIs
                 .cors(cors -> cors.configurationSource(corsConfigurationSource())) // Enable CORS globally
+                .exceptionHandling(ex -> ex
+                        .accessDeniedHandler(customAccessDeniedHandler)
+                )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(adminApi).hasRole("ADMIN")
                         .requestMatchers(normalUserApi).hasRole("NORMAL_USER")

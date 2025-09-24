@@ -50,6 +50,7 @@ public class DevProblemService implements ProblemService {
         problem.setType(type);
         problem.setProblemStatement(problemStatement);
         problemRepo.save(problem);
+        System.out.println("Problem Saved Successfully in Problems Function");
     }
 
     @Override
@@ -135,17 +136,14 @@ public class DevProblemService implements ProblemService {
     }
 
 
-    public ProblemDetailWithSample findProblemByID(Long id) {
-        // Fetch the problem by ID, throw an exception if not found
+    public ProblemWithSample findProblemByID(Long id) {
         Problem problem = problemRepo.findById(id).orElseThrow(() -> new RuntimeException("Problem not found"));
 
-        // Initialize the ProblemDetailWithSample object
-        ProblemDetailWithSample problemDetail = new ProblemDetailWithSample();
-        problemDetail.setId(problem.getId());
-        problemDetail.setName(problem.getTitle());
-        problemDetail.setStatement(problem.getProblemStatement());
-        problemDetail.setDifficulty(problem.getDifficulty());
-        problemDetail.setSolve(false);
+        ProblemWithSample problemWithSample = new ProblemWithSample();
+        problemWithSample.setId(problem.getId());
+        problemWithSample.setTitle(problem.getTitle());
+        problemWithSample.setProblemStatement(problem.getProblemStatement());
+        problemWithSample.setDifficulty(problem.getDifficulty());
 
         // Find the input and output test cases
         TestCase sampleTestcase = null;
@@ -162,17 +160,17 @@ public class DevProblemService implements ProblemService {
 
         // Ensure both sampleTestcase and sampleOutput are found before proceeding
         if (sampleTestcase != null && sampleOutput != null) {
-            problemDetail.setInput(readFileLines(sampleTestcase.getFilePath()));
-            problemDetail.setOutput(readFileLines(sampleOutput.getFilePath()));
+            problemWithSample.setSampleTestcase(readFileLines(sampleTestcase.getFilePath()));
+            problemWithSample.setSampleOutput(readFileLines(sampleOutput.getFilePath()));
         } else {
             throw new RuntimeException("Test cases not found for problem ID: " + id);
         }
 
         // Optionally, you can print the input/output here for debugging purposes
-        problemDetail.getInput().forEach(System.out::println);
-        problemDetail.getOutput().forEach(System.out::println);
+        problemWithSample.getSampleTestcase().forEach(System.out::println);
+        problemWithSample.getSampleOutput().forEach(System.out::println);
 
-        return problemDetail;
+        return problemWithSample;
     }
 
     public List<ProblemWithSample> findProblemAll() {

@@ -4,9 +4,14 @@ import com.judge.myojudge.exception.*;
 import com.judge.myojudge.response.ApiResponse;
 import com.judge.myojudge.response.ErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.InsufficientAuthenticationException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -15,6 +20,7 @@ import java.time.LocalDateTime;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     @ExceptionHandler(InvalidUserArgumentException.class)
     public ResponseEntity<ErrorResponse> handleUserValidationException(InvalidUserArgumentException exception,
@@ -49,11 +55,17 @@ public class GlobalExceptionHandler {
                                                                        HttpServletRequest request) {
         return buildError(HttpStatus.UNAUTHORIZED, exception.getMessage(), request.getRequestURI());
     }
-
-    @ExceptionHandler({IOException.class})
-    public ResponseEntity<ErrorResponse> handleFileException(IOException exception,
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleUnAuthorizedUserException(AccessDeniedException exception,
                                                                        HttpServletRequest request) {
-        return buildError(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage(), request.getRequestURI());
+        log.error("Access Denied Exception: {}", exception.getMessage());
+        return buildError(HttpStatus.FORBIDDEN, "You do not have permission to perform this action!", request.getRequestURI());
+    }
+
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<ErrorResponse> handleFileException(AuthenticationException exception,
+                                                                       HttpServletRequest request) {
+        return buildError(HttpStatus.INTERNAL_SERVER_ERROR,"You must be logged in to access this resource!", request.getRequestURI());
     }
 
     private ResponseEntity<ErrorResponse> buildError(HttpStatus status, String message, String path) {
