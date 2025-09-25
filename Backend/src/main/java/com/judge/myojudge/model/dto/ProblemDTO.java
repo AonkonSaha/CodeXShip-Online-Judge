@@ -20,15 +20,26 @@ public class ProblemDTO {
     private String type;
     @JsonProperty("problem_statement")
     private String problemStatement;
-    private List<MultipartFile> testcasesWithFile;
-    private List<TestCase> testcases;
+    private List<String> testcasesFilePaths;
+    private List<TestCase> testcase;
+    private List<MultipartFile> files;
 
-    public ProblemDTO(String title, String handle, String difficulty, String type, String problemStatement, List<MultipartFile> testcasesWithFile) {
+    public ProblemDTO(String title, String handle, String difficulty, String type, String problemStatement, List<MultipartFile> files) {
         this.title = title;
         this.handle = handle;
         this.difficulty = difficulty;
         this.type = type;
         this.problemStatement = problemStatement;
-        this.testcasesWithFile = testcasesWithFile;
+        this.files = files ;
     }
+
+    public ProblemDTO(String title, String handle, String difficulty, String type, List<String> testcasesFilePaths, String problemStatement) {
+        this.title = title;
+        this.handle = handle;
+        this.difficulty = difficulty;
+        this.type = type;
+        this.problemStatement = problemStatement;
+        this.testcasesFilePaths = testcasesFilePaths;
+    }
+
 }

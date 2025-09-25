@@ -25,34 +25,46 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(InvalidUserArgumentException.class)
     public ResponseEntity<ErrorResponse> handleUserValidationException(InvalidUserArgumentException exception,
                                                                      HttpServletRequest request) {
+        log.error("User Validation Exception: {}", exception.getMessage());
+        return buildError(HttpStatus.BAD_REQUEST, exception.getMessage(), request.getRequestURI());
+    }
+    @ExceptionHandler(InvalidProblemArgumentException.class)
+    public ResponseEntity<ErrorResponse> handleProblemValidationException(InvalidProblemArgumentException exception,
+                                                                           HttpServletRequest request) {
+        log.error("Problem Validation Exception: {}", exception.getMessage());
         return buildError(HttpStatus.BAD_REQUEST, exception.getMessage(), request.getRequestURI());
     }
     @ExceptionHandler(InvalidTestCaseArgumentException.class)
     public ResponseEntity<ErrorResponse> handleTestCaseValidationException(InvalidTestCaseArgumentException exception,
                                                                        HttpServletRequest request) {
+        log.error("TestCase Validation Exception: {}", exception.getMessage());
         return buildError(HttpStatus.BAD_REQUEST, exception.getMessage(), request.getRequestURI());
     }
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErrorResponse> handleAnyTypeArgumentException(IllegalArgumentException exception,
                                                                        HttpServletRequest request) {
+        log.error("IllegalArgument Exception: {}", exception.getMessage());
         return buildError(HttpStatus.BAD_REQUEST, exception.getMessage(), request.getRequestURI());
     }
 
     @ExceptionHandler(UserNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleUserExitException(UserNotFoundException exception,
                                                                  HttpServletRequest request) {
+        log.error("User Not Found Exception: {}", exception.getMessage());
         return buildError(HttpStatus.NOT_FOUND, exception.getMessage(), request.getRequestURI());
     }
 
     @ExceptionHandler(TestCaseNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleTestcaseExitException(TestCaseNotFoundException exception,
                                                                  HttpServletRequest request) {
+        log.error("TestCase Not Found Exception: {}", exception.getMessage());
         return buildError(HttpStatus.NOT_FOUND, exception.getMessage(), request.getRequestURI());
     }
 
     @ExceptionHandler({InvalidLoginArgumentException.class , BadCredentialsException.class})
     public ResponseEntity<ErrorResponse> handleUserCredentialException(Exception exception,
                                                                        HttpServletRequest request) {
+        log.error("User Credential Exception: {}", exception.getMessage());
         return buildError(HttpStatus.UNAUTHORIZED, exception.getMessage(), request.getRequestURI());
     }
     @ExceptionHandler(AccessDeniedException.class)
@@ -65,6 +77,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(AuthenticationException.class)
     public ResponseEntity<ErrorResponse> handleFileException(AuthenticationException exception,
                                                                        HttpServletRequest request) {
+        log.error("Authentication Exception: {}", exception.getMessage());
         return buildError(HttpStatus.INTERNAL_SERVER_ERROR,"You must be logged in to access this resource!", request.getRequestURI());
     }
 

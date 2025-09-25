@@ -214,7 +214,11 @@ public class ProdProblemService implements ProblemService {
         problemDTO.setType(problem.get().getType());
         problemDTO.setHandle(problem.get().getHandleName());
         problemDTO.setProblemStatement(problem.get().getProblemStatement());
-        problemDTO.setTestcases(problem.get().getTestcases());
+//        List<String> filePaths=new ArrayList<>();
+//        for(TestCase testCase:problem.get().getTestcases()){
+//            filePaths.add(testCase.getFilePath());
+//        }
+//        problemDTO.setTestcasesFilePaths(filePaths);
         return problemDTO;
     }
 

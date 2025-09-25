@@ -41,9 +41,9 @@ const ProblemDetail = () => {
   useEffect(() => {
     const fetchFileContent = async () => {
       try {
-        const response = await fetch(`${baseURL}/api/problem/v2/${id}`);
+        const response = await fetch(`${baseURL}/api/problem/v2/get/${id}`);
         const data = await response.json();
-        setFileContent(data.problem);
+        setFileContent(data.data);
       } catch (err) {
         setError("Failed to load the file content. Please try again later.");
         console.error(err);
@@ -80,8 +80,8 @@ const ProblemDetail = () => {
   //   };
   // }, [userName]);
 
-  const formattedInput = fileContent.input ? fileContent.input.join("\n") : ""; 
-  const formattedOutput = fileContent.output ? fileContent.output.join("\n") : ""; 
+  const formattedInput = fileContent.sampleTestcase ? fileContent.sampleTestcase.join("\n") : ""; 
+  const formattedOutput = fileContent.sampleOutput ? fileContent.sampleOutput.join("\n") : ""; 
 
   const handleSubmit = async () => {
     try {
@@ -127,7 +127,7 @@ const ProblemDetail = () => {
         >
           <div className="flex justify-between items-center mb-5">
             <h1 className="text-2xl font-bold text-gray-800">
-              {fileContent.name || "Problem Title"}
+              {fileContent.title || "Problem Title"}
             </h1>
             <span className="bg-blue-500 text-white px-4 py-1 rounded-full text-sm uppercase">
               {fileContent.difficulty || "Medium"}
@@ -138,7 +138,7 @@ const ProblemDetail = () => {
             <div
               className="mt-3"
               dangerouslySetInnerHTML={{
-                __html: fileContent.statement || "",
+                __html: fileContent.problemStatement || "",
               }}
             ></div>
           </div>

@@ -31,11 +31,10 @@ public class ProblemController {
 
     @GetMapping(value="/v1/get/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<ProblemDTO>>fetchOneProblem(@PathVariable String id
+    public ResponseEntity<ApiResponse<ProblemDTO>>fetchProblemForUpdate(@PathVariable String id
     ) throws IOException {
         long problemId = Long.parseLong(id);
         ProblemDTO problemDTO= problemService.fetchOneProblemByID(problemId);
-
         ApiResponse<ProblemDTO> apiResponse= ApiResponse.<ProblemDTO>builder()
                 .success(true)
                 .statusCode(HttpStatus.OK.value())
@@ -44,6 +43,20 @@ public class ProblemController {
                 .build();
 
         return  ResponseEntity.status(HttpStatus.OK).body(apiResponse);
+    }
+
+    @GetMapping(value="/v2/get/{id}")
+    public ResponseEntity<ApiResponse<ProblemWithSample>>fetchProblemForPage(@PathVariable String id
+    ) {
+        long problemId = Long.parseLong(id);
+        ProblemWithSample problemWithSample= problemService.findProblemByID(problemId);
+        ApiResponse<ProblemWithSample> apiResponse=ApiResponse.<ProblemWithSample>builder()
+                .success(true)
+                .statusCode(HttpStatus.OK.value())
+                .message("Problem Searched Successfully")
+                .data(problemWithSample)
+                .build();
+        return ResponseEntity.status(HttpStatus.OK).body(apiResponse);
     }
 
     @GetMapping(value="/v1/all")
@@ -71,19 +84,7 @@ public class ProblemController {
                 .build();
         return ResponseEntity.status(HttpStatus.OK).body(problemWithSample);
     }
-    @GetMapping(value="/v2/get/{id}")
-    public ResponseEntity<ApiResponse<ProblemWithSample>>searchSingleProblem(@PathVariable String id
-    ) {
-        long problemId = Long.parseLong(id);
-        ProblemWithSample problemWithSample= problemService.findProblemByID(problemId);
-        ApiResponse<ProblemWithSample> apiResponse=ApiResponse.<ProblemWithSample>builder()
-                .success(true)
-                .statusCode(HttpStatus.OK.value())
-                .message("Problem Searched Successfully")
-                .data(problemWithSample)
-                .build();
-        return ResponseEntity.status(HttpStatus.OK).body(apiResponse);
-    }
+
 
     @PostMapping(value="/v1/save" )
     @PreAuthorize("hasRole('ADMIN')")
@@ -96,7 +97,6 @@ public class ProblemController {
             @RequestParam("testCaseFile") List<MultipartFile> multipartFiles
 
     ) throws IOException {
-        System.out.println("Problem Controller.....");
             validationService.validateProblemDetails(new ProblemDTO(title, handle, difficulty, type,
                                                                   problemStatement, multipartFiles));
             problemService.saveProblem(title,handle,difficulty,type,problemStatement);

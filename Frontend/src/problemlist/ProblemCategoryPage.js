@@ -32,7 +32,7 @@ const ProblemCategoryPage = () => {
             try {
                 const headers = token ? { Authorization: `Bearer ${token}` } : {}; // Include JWT only if present
                 const response = await axios.get(`${baseURL}/api/problem/v1/category/${category}`, { headers });
-                setProblems(response.data);
+                setProblems(response.data.data);
             } catch (err) {
                 setError(err.message);
             } finally {

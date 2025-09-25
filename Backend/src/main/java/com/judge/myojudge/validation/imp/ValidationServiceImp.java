@@ -133,7 +133,7 @@ public class ValidationServiceImp implements ValidationService {
         if(problemValidation.isEmptyProblemStatement(problemDTO.getProblemStatement())){
             throw new InvalidProblemArgumentException("Statement is empty");
         }
-        if(problemValidation.isEmptyProblemTestcases(problemDTO.getTestcasesWithFile())){
+        if(problemValidation.isEmptyProblemTestcases(problemDTO.getFiles())){
             throw new InvalidProblemArgumentException("Testcases is empty");
         }
         if(problemValidation.isExitProblemHandle(problemDTO.getHandle())){
@@ -145,12 +145,12 @@ public class ValidationServiceImp implements ValidationService {
         if(problemValidation.isOverProblemStatementLimit(problemDTO.getProblemStatement())){
             throw new InvalidProblemArgumentException("Statement must be contained 8000 characters");
         }
-        if(problemValidation.isOverProblemTestcaseLimit(problemDTO.getTestcasesWithFile())){
+        if(problemValidation.isOverProblemTestcaseLimit(problemDTO.getFiles())){
             throw new InvalidProblemArgumentException("Testcase File must be contained 5MB");
         }
 
-        if(!problemValidation.isMissMatchTestcase(problemDTO.getTestcasesWithFile()).isEmpty()){
-            List<String> missMatch=problemValidation.isMissMatchTestcase(problemDTO.getTestcasesWithFile());
+        if(!problemValidation.isMissMatchTestcase(problemDTO.getFiles()).isEmpty()){
+            List<String> missMatch=problemValidation.isMissMatchTestcase(problemDTO.getFiles());
             throw new InvalidTestCaseArgumentException("Testcase MissMatch Number :  "+missMatch);
         }
     }

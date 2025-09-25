@@ -255,8 +255,9 @@ public class DevProblemService implements ProblemService {
         problemRepo.delete(problem.get());
     }
 
-    public ProblemDTO fetchOneProblemByID(long id) {
+    public ProblemDTO fetchOneProblemByID(long id) throws IOException {
         Optional<Problem> problem= problemRepo.findById(id);
+        System.out.println("Title: "+problem.get().getTitle());
         if(problem.isEmpty()){
             throw new ProblemNotFoundException("Problem not found with ID: "+id);
         }
@@ -266,7 +267,6 @@ public class DevProblemService implements ProblemService {
         problemDTO.setType(problem.get().getType());
         problemDTO.setHandle(problem.get().getHandleName());
         problemDTO.setProblemStatement(problem.get().getProblemStatement());
-        problemDTO.setTestcases(problem.get().getTestcases());
         return problemDTO;
     }
 

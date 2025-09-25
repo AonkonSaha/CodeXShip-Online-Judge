@@ -26,12 +26,13 @@ const ProblemEditor = () => {
       const fetchProblem = async () => {
         try {
           const response = await axios.get(
-            `${baseURL}/api/problem/v1/${id}`,
+            `${baseURL}/api/problem/v1/get/${id}`,
             { headers: { Authorization: `Bearer ${token}` } }
           );
-          const { title, handle, difficulty, type, problemStatement, testcases } = response.data.problem;
+          const { title, handle, difficulty, type, problemStatement, testcase } = response.data.data;
+          alert(testcase);
           setProblem({ title, handle, difficulty, type, problemStatement });
-          setFiles(testcases.map((tc) => ({ name: tc.fileName, file: tc })));
+          setFiles(testcase.map((tc) => ({ name: tc.fileName, file: tc })));
         } catch (error) {
           alert("Problem Cannot Fetch for Updating!");
         }

@@ -18,7 +18,7 @@ public class TestCase{
     private String filePath;
     private String handle;
     private String fileKey;
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER, cascade = { CascadeType.PERSIST, CascadeType.MERGE})
     @JoinColumn(name = "problem_id")
     private Problem problem;
 
