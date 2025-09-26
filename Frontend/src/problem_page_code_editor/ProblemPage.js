@@ -85,22 +85,21 @@ const ProblemDetail = () => {
 
   const handleSubmit = async () => {
     try {
-      const response = await fetch(`${baseURL}/code/submit`, {
+      const response = await fetch(`${baseURL}/api/submission/v1/submit`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          problemId: id,
-          userName:userName,
-          userCode:code,
+          problem_id: id,
+          submission_code:code,
           language,
         }),
       });
 
       const data = await response.json();
-      setExecutionResult(data.execution);
+      setExecutionResult(data.data);
       setSubmissionStatus("Processing...");
       
       
@@ -214,7 +213,7 @@ const ProblemDetail = () => {
          <h1>Results: </h1>
          <ul>
           {executionResult.results.map((result, index) => (
-            <li key={index}>{result.testcaseName+" ------- "+result.isPassed}</li>
+            <li key={index}>{result.passed+" ------- "}</li>
           ))}
         </ul>
        </div>
@@ -222,7 +221,8 @@ const ProblemDetail = () => {
           
           }
         </div>
-        
+        {/* docker compose down -v
+docker compose up -d */}
 
 
 

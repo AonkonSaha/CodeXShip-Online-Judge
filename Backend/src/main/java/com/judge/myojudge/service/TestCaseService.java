@@ -2,6 +2,8 @@ package com.judge.myojudge.service;
 
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
+import com.judge.myojudge.model.dto.ExecuteTestCase;
+import com.judge.myojudge.model.dto.TestcaseDTO;
 import com.judge.myojudge.model.entity.Problem;
 import com.judge.myojudge.model.entity.TestCase;
 import org.springframework.web.multipart.MultipartFile;
@@ -13,6 +15,5 @@ import java.util.UUID;
 public interface TestCaseService {
 
     public void saveTestCases(String handle, String name, List<MultipartFile> testCaseFiles) throws IOException;
-
-
+    List<ExecuteTestCase> getTestCaseWithFile(Long problemId);
 }

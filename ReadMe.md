@@ -18,8 +18,7 @@ It’s designed for **competitive programming, coding contests, and practice pla
   - Supports multiple programming languages  
   - Secure Docker-based execution sandbox  
   - Instant feedback with verdicts (AC, WA, TLE, RE, CE)
-  - Under Development  
-
+   
 - 🎯 **Gamification (Coin System)**  
   - Earn **coins** by solving problems successfully  
   - Redeem coins for **rewards** like T-shirts, bags, and other goodies 🎁  

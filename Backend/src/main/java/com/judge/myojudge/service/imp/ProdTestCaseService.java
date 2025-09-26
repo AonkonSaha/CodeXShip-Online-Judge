@@ -4,6 +4,8 @@ import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.judge.myojudge.exception.ProblemNotFoundException;
+import com.judge.myojudge.model.dto.ExecuteTestCase;
+import com.judge.myojudge.model.dto.TestcaseDTO;
 import com.judge.myojudge.model.entity.Problem;
 import com.judge.myojudge.model.entity.TestCase;
 import com.judge.myojudge.repository.TestCaseRepo;
@@ -57,6 +59,12 @@ public class ProdTestCaseService implements TestCaseService {
             testCaseRepo.save(testCase);
         }
     }
+
+    @Override
+    public List<ExecuteTestCase> getTestCaseWithFile(Long problemId) {
+        return List.of();
+    }
+
     public String uploadFile(MultipartFile file) throws IOException {
         String uniqueFileName = UUID.randomUUID() + "_" + file.getOriginalFilename();
         ObjectMetadata metadata = new ObjectMetadata();
