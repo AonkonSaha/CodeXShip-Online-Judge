@@ -1,118 +1,73 @@
 import React, { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
-import { FiClipboard } from "react-icons/fi"; 
+import { useParams, useNavigate } from "react-router-dom";
 import CodeEditor from "./CodeEditor";
-import Footer from "../NavBar_Footer/Footer";
-import { jwtDecode } from "jwt-decode";
-import SockJS from "sockjs-client";
-import { Client } from "@stomp/stompjs";
 import NavBar from "../NavBar_Footer/NavBarCus";
+import Footer from "../NavBar_Footer/Footer";
 
 const ProblemDetail = () => {
   const { id } = useParams();
-  const [leftWidth, setLeftWidth] = useState(50); // Initial left panel width percentage
+  const navigate = useNavigate();
   const [code, setCode] = useState("");
   const [language, setLanguage] = useState("javascript");
   const [fileContent, setFileContent] = useState({});
-  const [executionResult, setExecutionResult] = useState({});
-  const [error, setError] = useState("");
-  const [submissionStatus, setSubmissionStatus] = useState(null);
-  const token = localStorage.getItem("token");
-  const decoded = token?jwtDecode(token):null;
-  const userName = token?decoded.sub:null;
-  const baseURL=process.env.REACT_APP_BACK_END_BASE_URL;
-  const handleMouseDown = (e) => {
-    e.preventDefault();
-    const handleMouseMove = (e) => {
-      const newLeftWidth = (e.clientX / window.innerWidth) * 100;
-      if (newLeftWidth > 20 && newLeftWidth < 80) {
-        setLeftWidth(newLeftWidth);
-      }
-    };
-    const handleMouseUp = () => {
-      document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseup", handleMouseUp);
-    };
-
-    document.addEventListener("mousemove", handleMouseMove);
-    document.addEventListener("mouseup", handleMouseUp);
-  };
+  const [loading, setLoading] = useState(false);
+  const [processingDots, setProcessingDots] = useState("");
+  const baseURL = process.env.REACT_APP_BACK_END_BASE_URL;
 
   useEffect(() => {
     const fetchFileContent = async () => {
       try {
-        const response = await fetch(`${baseURL}/api/problem/v2/get/${id}`);
-        const data = await response.json();
+        const res = await fetch(`${baseURL}/api/problem/v2/get/${id}`);
+        const data = await res.json();
         setFileContent(data.data);
       } catch (err) {
-        setError("Failed to load the file content. Please try again later.");
         console.error(err);
       }
     };
-
     fetchFileContent();
   }, [id]);
 
-  // useEffect(() => {
-  //   const socket = new SockJS(`${baseURL}/ws`);
-  //   const client = new Client({
-  //     webSocketFactory: () => socket,
-  //     reconnectDelay: 5000,
-  //     debug: (str) => console.log("WebSocket Debug:", str),
-  //   });
-
-  //   client.onConnect = () => {
-  //     console.log("Connected to WebSocket");
-  //     client.subscribe(`/topic/submissions/${userName}`, (message) => {
-  //       const submissionUpdate = JSON.parse(message.body);
-  //       setSubmissionStatus(submissionUpdate.status);
-  //     });
-  //   };
-
-  //   client.onStompError = (error) => {
-  //     console.error("STOMP Error: ", error);
-  //   };
-
-  //   client.activate();
-
-  //   return () => {
-  //     client.deactivate(); 
-  //   };
-  // }, [userName]);
-
-  const formattedInput = fileContent.sampleTestcase ? fileContent.sampleTestcase.join("\n") : ""; 
-  const formattedOutput = fileContent.sampleOutput ? fileContent.sampleOutput.join("\n") : ""; 
+  useEffect(() => {
+    let interval;
+    if (loading) {
+      let count = 0;
+      interval = setInterval(() => {
+        count = (count + 1) % 4;
+        setProcessingDots(".".repeat(count));
+      }, 500);
+    } else {
+      setProcessingDots("");
+      clearInterval(interval);
+    }
+    return () => clearInterval(interval);
+  }, [loading]);
 
   const handleSubmit = async () => {
+    setLoading(true);
     try {
+      const token = localStorage.getItem("token");
       const response = await fetch(`${baseURL}/api/submission/v1/submit`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          problem_id: id,
-          submission_code:code,
-          language,
-        }),
+        body: JSON.stringify({ problem_id: id, submission_code: code, language }),
       });
-
       const data = await response.json();
-      setExecutionResult(data.data);
-      setSubmissionStatus("Processing...");
-      
-      
-    } catch (error) {
-      setError("Error submitting code. Please try again.");
-    }
-  };
 
-  const copyToClipboard = (text) => {
-    navigator.clipboard.writeText(text).then(
-      () => alert("Copied to clipboard!"),
-      (err) => console.error("Error copying text: ", err)
-    );
+      navigate("/submission-result", {
+        state: {
+          submissionStatus: "Processed",
+          executionResult: data.data,
+        },
+      });
+    } catch (err) {
+      console.error(err);
+      alert("Submission failed. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -120,113 +75,35 @@ const ProblemDetail = () => {
       <NavBar />
       <div className="flex flex-col md:flex-row h-screen overflow-hidden">
         {/* Left Panel */}
-        <div
-          className="bg-white p-5 overflow-y-auto border-b md:border-r md:border-gray-300"
-          style={{ width: `${leftWidth}%` }}
-        >
-          <div className="flex justify-between items-center mb-5">
-            <h1 className="text-2xl font-bold text-gray-800">
-              {fileContent.title || "Problem Title"}
-            </h1>
-            <span className="bg-blue-500 text-white px-4 py-1 rounded-full text-sm uppercase">
-              {fileContent.difficulty || "Medium"}
-            </span>
-          </div>
-
-          <div className="mb-5">
-            <div
-              className="mt-3"
-              dangerouslySetInnerHTML={{
-                __html: fileContent.problemStatement || "",
-              }}
-            ></div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4 mt-5">
-            <div className="border p-4 flex flex-col items-center relative">
-              <h3 className="text-lg font-semibold">Input</h3>
-              <textarea
-                className="w-full p-3 text-sm font-mono text-gray-700 border border-gray-300 rounded-md bg-white resize-none shadow-inner"
-                value={formattedInput}
-                readOnly
-                rows={10}
-              />
-              <FiClipboard
-                className="absolute top-3 right-3 cursor-pointer text-xl hover:text-blue-600"
-                onClick={() => copyToClipboard(formattedInput)}
-                title="Copy to clipboard"
-              />
-            </div>
-
-            <div className="border p-4 flex flex-col items-center relative">
-              <h3 className="text-lg font-semibold">Output</h3>
-              <textarea
-                className="w-full p-3 text-sm font-mono text-gray-700 border border-gray-300 rounded-md bg-white resize-none shadow-inner"
-                value={formattedOutput}
-                readOnly
-                rows={10}
-              />
-              <FiClipboard
-                className="absolute top-3 right-3 cursor-pointer text-xl hover:text-blue-600"
-                onClick={() => copyToClipboard(formattedOutput)}
-                title="Copy to clipboard"
-              />
-            </div>
-          </div>
-
-          <div className="mb-5">
-            <h2 className="text-xl font-semibold text-gray-700">Explanation</h2>
-            <p className="text-gray-600">
-              For n = 5, the sum of the first 5 natural numbers is 15.
-            </p>
-            <p className="text-gray-600">
-              The formula for the sum of the first n natural numbers is: Sum = n * (n + 1) / 2.
-            </p>
-          </div>
+        <div className="bg-white p-5 overflow-y-auto border-b md:border-r md:border-gray-300 w-full md:w-1/2">
+          <h1 className="text-2xl font-bold mb-3">{fileContent.title || "Problem Title"}</h1>
+          <div dangerouslySetInnerHTML={{ __html: fileContent.problemStatement || "" }} />
         </div>
 
-        {/* Resizer */}
-        <div
-          className="cursor-col-resize bg-gray-300 md:block hidden"
-          style={{ width: "5px" }}
-          onMouseDown={handleMouseDown}
-        />
-
         {/* Right Panel */}
-        <div
-          className="bg-gray-100 flex flex-col p-5 overflow-y-auto"
-          style={{ width: `${100 - leftWidth}%` }}
-        >
-          <h2 className="text-xl font-semibold">Code Editor</h2>
+        <div className="bg-gray-100 p-5 w-full md:w-1/2 flex flex-col">
+          <h2 className="text-xl font-semibold mb-3">Code Editor</h2>
           <CodeEditor code={code} setCode={setCode} language={language} setLanguage={setLanguage} />
 
           <button
             onClick={handleSubmit}
-            className="mt-5 px-6 py-3 bg-green-500 text-white font-bold rounded-lg hover:bg-green-600 transition-colors"
+            disabled={loading}
+            className={`mt-5 px-6 py-3 font-bold rounded-lg transition-colors ${
+              loading ? "bg-gray-400 cursor-not-allowed" : "bg-green-500 hover:bg-green-600 text-white"
+            }`}
           >
-            Submit Solution
+            {loading ? "Submitting..." : "Submit Solution"}
           </button>
-          {submissionStatus && <p className="mt-3 font-semibold">Status: {submissionStatus}</p>}
-          {submissionStatus && 
-          
-        <div>
-         <h1>Results: </h1>
-         <ul>
-          {executionResult.results.map((result, index) => (
-            <li key={index}>{result.passed+" ------- "}</li>
-          ))}
-        </ul>
-       </div>
-          
-          
-          }
+
+          {loading && (
+            <div className="mt-5 flex items-center gap-3">
+              <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+              <span className="text-blue-500 font-semibold text-lg">
+                Processing{processingDots}
+              </span>
+            </div>
+          )}
         </div>
-        {/* docker compose down -v
-docker compose up -d */}
-
-
-
-
       </div>
       <Footer />
     </>
@@ -234,18 +111,3 @@ docker compose up -d */}
 };
 
 export default ProblemDetail;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
