@@ -91,13 +91,13 @@ public class SubmissionServiceImp implements SubmissionService {
         tr.setTime(jr.get("time") != null ? jr.get("time").toString() : null);
         tr.setMemory(jr.get("memory") != null ? jr.get("memory").toString() : null);
 
-        System.out.println(tr);
+
         boolean passed = tr.getStdout() != null &&
                 testcase.getOutput() != null &&
                 tr.getStdout().trim().equals(testcase.getOutput().trim()) &&
                 "Accepted".equalsIgnoreCase(tr.getStatus());
         tr.setPassed(passed);
-
+        System.out.println(tr);
         return tr;
     }
 
