@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
 @Data
-public class TestcaseResult {
+public class TestcaseResultDTO {
 
     public String status;
     public String stdout;

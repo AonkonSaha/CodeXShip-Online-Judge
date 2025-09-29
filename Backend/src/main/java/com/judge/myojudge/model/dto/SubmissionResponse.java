@@ -11,5 +11,8 @@ import java.util.List;
 public class SubmissionResponse {
     private int total;
     private int passed;
-    List<TestcaseResult> results;
+    private String verdict;
+    private float time;
+    private Long memory;
+    List<TestcaseResultDTO> results;
 }

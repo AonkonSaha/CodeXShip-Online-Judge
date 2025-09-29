@@ -22,7 +22,6 @@ public class SubmissionController {
     @PostMapping("/v1/submit")
     @PreAuthorize("hasAnyRole('NORMAL_USER', 'ADMIN')")
     public ResponseEntity<ApiResponse<SubmissionResponse>> submit(@RequestBody SubmissionRequest submissionRequest){
-        System.out.println(submissionRequest);
         SubmissionResponse submissionResponse = submissionService.excuteCode(submissionRequest);
         ApiResponse<SubmissionResponse> apiResponse=ApiResponse.<SubmissionResponse>builder()
                 .success(true)

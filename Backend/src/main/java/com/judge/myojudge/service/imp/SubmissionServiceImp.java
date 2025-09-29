@@ -3,10 +3,16 @@ package com.judge.myojudge.service.imp;
 import com.judge.myojudge.config.Judge0Config;
 import com.judge.myojudge.exception.ProblemNotFoundException;
 import com.judge.myojudge.model.dto.*;
+import com.judge.myojudge.model.entity.Problem;
+import com.judge.myojudge.model.entity.Submission;
+import com.judge.myojudge.model.entity.User;
 import com.judge.myojudge.repository.ProblemRepo;
+import com.judge.myojudge.repository.SubmissionRepo;
+import com.judge.myojudge.repository.UserRepo;
 import com.judge.myojudge.service.SubmissionService;
 import com.judge.myojudge.service.TestCaseService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
@@ -21,39 +27,78 @@ public class SubmissionServiceImp implements SubmissionService {
     private final TestCaseService testCaseService;
     private final ProblemRepo problemRepo;
     private final WebClient webClient;
+    private final UserRepo userRepo;
+    private final SubmissionRepo submissionRepo;
 
     @Override
     public SubmissionResponse excuteCode(SubmissionRequest req) {
-
+        User user= userRepo.findByMobileNumber(SecurityContextHolder.getContext().getAuthentication().getName()).orElseThrow(() -> new RuntimeException("User Not Found"));
+        Problem problem = problemRepo.findById(req.getProblemId()).orElseThrow(() -> new ProblemNotFoundException("Problem Not Found With ID: " + req.getProblemId()));
         List<ExecuteTestCase> testcases = testCaseService.getTestCaseWithFile(req.getProblemId());
-        if (testcases.isEmpty()) {
-            throw new ProblemNotFoundException("TestCase Not Found With ID: " + req.getProblemId());
-        }
-
         Integer languageId = mapLanguageToId(req.getLanguage());
-        if (languageId == null) {
-            throw new ProblemNotFoundException("Unsupported language: " + req.getLanguage());
-        }
 
-        if (req.getSubmissionCode() == null || req.getSubmissionCode().trim().isEmpty()) {
-            throw new ProblemNotFoundException("Submission code cannot be empty!");
-        }
-
-        List<TestcaseResult> results = new ArrayList<>();
+        List<TestcaseResultDTO> results = new ArrayList<>();
 
         for (ExecuteTestCase testcase : testcases) {
             results.add(executeSingleTestcase(req.getSubmissionCode(), languageId, testcase));
         }
 
+
+
         SubmissionResponse response = new SubmissionResponse();
         response.setResults(results);
         response.setTotal(results.size());
-        response.setPassed((int) results.stream().filter(TestcaseResult::isPassed).count());
+        response.setPassed((int) results.stream().filter(TestcaseResultDTO::isPassed).count());
 
+        float maxTimeTake=0; long maxSpaceTake=0;
+
+        String verdict=""; boolean flag=true;
+
+        for(TestcaseResultDTO result:results){
+
+            maxTimeTake=Math.max(maxTimeTake, Float.parseFloat(result.getTime()));
+            maxSpaceTake=Math.max(maxSpaceTake, Integer.parseInt(result.getMemory()));
+
+            if(flag && result.getStatus().equalsIgnoreCase("Accepted")){
+                verdict="Accepted";
+            }
+            else if(flag && result.getStatus().equalsIgnoreCase("Wrong Answer")){
+                verdict="Wrong Answer";
+                flag=false;
+            }
+            else if(flag && result.getStatus().equalsIgnoreCase("Runtime Error")){
+                verdict="Runtime Error";
+                flag=false;
+            }
+            else if (flag && result.getStatus().equalsIgnoreCase("Compilation Error")) {
+                verdict="Compilation Error";
+                flag=false;
+            }
+            else if (flag && result.getStatus().equalsIgnoreCase("Time Limit Exceeded")) {
+                verdict="Time Limit Exceeded";
+                flag=false;
+            }
+        }
+        response.setVerdict(verdict);
+        response.setTime(maxTimeTake);
+        response.setMemory(maxSpaceTake);
+
+        Submission submission= Submission.builder()
+                .language(req.getLanguage())
+                .userCode(req.getSubmissionCode().trim())
+                .status(verdict)
+                .memory((long) maxSpaceTake)
+                .time(maxTimeTake)
+                .problem(problem)
+                .user(user)
+                .build();
+        problem.getSubmissions().add(submission);
+        user.getSubmissions().add(submission);
+        submissionRepo.save(submission);
         return response;
     }
 
-    private TestcaseResult executeSingleTestcase(String code, Integer languageId, ExecuteTestCase testcase) {
+    private TestcaseResultDTO executeSingleTestcase(String code, Integer languageId, ExecuteTestCase testcase) {
 
         String encodedCode = Base64.getEncoder().encodeToString(code.trim().getBytes());
         String encodedInput = Base64.getEncoder().encodeToString(testcase.getInput().getBytes());
@@ -81,7 +126,7 @@ public class SubmissionServiceImp implements SubmissionService {
         if (jr == null) throw new RuntimeException("Judge0 returned empty response");
 
         Map<String, Object> status = (Map<String, Object>) jr.get("status");
-        TestcaseResult tr = new TestcaseResult();
+        TestcaseResultDTO tr = new TestcaseResultDTO();
         tr.setStatus(status != null ? status.get("description").toString() : "Unknown");
         tr.setStdout(decodeBase64((String) jr.get("stdout")));
         tr.setExpectedOutput(testcase.getOutput());
