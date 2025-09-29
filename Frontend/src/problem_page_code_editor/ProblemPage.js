@@ -1,22 +1,26 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { FiClipboard } from "react-icons/fi";
-import CodeEditor from "./CodeEditor";
+import MonacoEditor from "@monaco-editor/react";
 import NavBar from "../NavBar_Footer/NavBarCus";
 import Footer from "../NavBar_Footer/Footer";
+import { AuthContext } from "../auth_component/AuthContext";
 
 const ProblemDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { darkMode } = useContext(AuthContext);
+
   const [code, setCode] = useState("");
   const [language, setLanguage] = useState("javascript");
   const [fileContent, setFileContent] = useState({});
   const [loading, setLoading] = useState(false);
   const [processingDots, setProcessingDots] = useState("");
-  const [leftWidth, setLeftWidth] = useState(50); // resizable panel
+  const [leftWidth, setLeftWidth] = useState(50);
+  const containerRef = useRef(null);
   const baseURL = process.env.REACT_APP_BACK_END_BASE_URL;
 
-  // Fetch problem data
+  // Fetch problem
   useEffect(() => {
     const fetchProblem = async () => {
       try {
@@ -24,13 +28,13 @@ const ProblemDetail = () => {
         const data = await res.json();
         setFileContent(data.data);
       } catch (err) {
-        console.error("Failed to fetch problem:", err);
+        console.error(err);
       }
     };
     fetchProblem();
   }, [id]);
 
-  // Loading dots animation
+  // Loading animation dots
   useEffect(() => {
     let interval;
     if (loading) {
@@ -46,17 +50,29 @@ const ProblemDetail = () => {
     return () => clearInterval(interval);
   }, [loading]);
 
-  // Resizer handler
+  // Smart bidirectional panel resizer
   const handleMouseDown = (e) => {
     e.preventDefault();
+    const container = containerRef.current;
+    if (!container) return;
+
+    const containerRect = container.getBoundingClientRect();
+
     const handleMouseMove = (e) => {
-      const newLeftWidth = (e.clientX / window.innerWidth) * 100;
-      if (newLeftWidth > 20 && newLeftWidth < 80) setLeftWidth(newLeftWidth);
+      let newLeftWidth = ((e.clientX - containerRect.left) / containerRect.width) * 100;
+
+      // Clamp width between 20% and 80%
+      if (newLeftWidth < 20) newLeftWidth = 20;
+      if (newLeftWidth > 80) newLeftWidth = 80;
+
+      setLeftWidth(newLeftWidth);
     };
+
     const handleMouseUp = () => {
       document.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mouseup", handleMouseUp);
     };
+
     document.addEventListener("mousemove", handleMouseMove);
     document.addEventListener("mouseup", handleMouseUp);
   };
@@ -94,15 +110,16 @@ const ProblemDetail = () => {
     }
   };
 
-  // Format sample input/output
-  const formattedInput = fileContent.sampleTestcase
-    ? fileContent.sampleTestcase.join("\n")
-    : "";
-  const formattedOutput = fileContent.sampleOutput
-    ? fileContent.sampleOutput.join("\n")
-    : "";
+  // Run sample test
+  const handleRunSample = () => {
+    if (!fileContent.sampleTestcase) return;
+    alert("Sample Test Run:\n\nInput:\n" + fileContent.sampleTestcase.join("\n"));
+  };
 
-  // Clipboard copy
+  // Format sample input/output
+  const formattedInput = fileContent.sampleTestcase ? fileContent.sampleTestcase.join("\n") : "";
+  const formattedOutput = fileContent.sampleOutput ? fileContent.sampleOutput.join("\n") : "";
+
   const copyToClipboard = (text) => {
     navigator.clipboard.writeText(text).then(
       () => alert("Copied to clipboard!"),
@@ -113,11 +130,11 @@ const ProblemDetail = () => {
   return (
     <>
       <NavBar />
-      <div className="flex flex-col md:flex-row h-screen overflow-hidden">
+      <div ref={containerRef} className={`flex flex-col md:flex-row h-screen overflow-hidden transition-colors duration-300 ${darkMode ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-900"}`}>
         {/* Left Panel */}
         <div
-          className="bg-white p-5 overflow-y-auto border-b md:border-r md:border-gray-300"
           style={{ width: `${leftWidth}%` }}
+          className={`p-5 overflow-y-auto border-b md:border-r transition-all duration-300 rounded-lg ${darkMode ? "bg-gray-900 border-gray-800" : "bg-white border-gray-300"}`}
         >
           <div className="flex justify-between items-center mb-5">
             <h1 className="text-2xl font-bold">{fileContent.title || "Problem Title"}</h1>
@@ -126,35 +143,40 @@ const ProblemDetail = () => {
             </span>
           </div>
 
-          <div dangerouslySetInnerHTML={{ __html: fileContent.problemStatement || "" }} />
+          <div
+            className="prose dark:prose-invert"
+            dangerouslySetInnerHTML={{ __html: fileContent.problemStatement || "" }}
+          />
 
           {(fileContent.sampleTestcase || fileContent.sampleOutput) && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-5">
-              <div className="border p-4 flex flex-col items-center relative">
-                <h3 className="text-lg font-semibold">Input</h3>
+              {/* Input */}
+              <div className={`border p-4 flex flex-col items-center relative rounded-md transition-all duration-300 ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-300"}`}>
+                <h3 className="text-lg font-semibold mb-2">Input</h3>
                 <textarea
-                  className="w-full p-3 text-sm font-mono text-gray-700 border border-gray-300 rounded-md bg-white resize-none shadow-inner"
+                  className={`w-full p-3 text-sm font-mono rounded-md resize-none shadow-inner transition-all duration-300 ${darkMode ? "bg-gray-700 text-gray-100 border-gray-600" : "bg-white text-gray-700 border-gray-300"}`}
                   value={formattedInput}
                   readOnly
                   rows={10}
                 />
                 <FiClipboard
-                  className="absolute top-3 right-3 cursor-pointer text-xl hover:text-blue-600"
+                  className="absolute top-3 right-3 cursor-pointer text-xl hover:text-blue-400 transition-colors"
                   onClick={() => copyToClipboard(formattedInput)}
                   title="Copy to clipboard"
                 />
               </div>
 
-              <div className="border p-4 flex flex-col items-center relative">
-                <h3 className="text-lg font-semibold">Output</h3>
+              {/* Output */}
+              <div className={`border p-4 flex flex-col items-center relative rounded-md transition-all duration-300 ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-300"}`}>
+                <h3 className="text-lg font-semibold mb-2">Output</h3>
                 <textarea
-                  className="w-full p-3 text-sm font-mono text-gray-700 border border-gray-300 rounded-md bg-white resize-none shadow-inner"
+                  className={`w-full p-3 text-sm font-mono rounded-md resize-none shadow-inner transition-all duration-300 ${darkMode ? "bg-gray-700 text-gray-100 border-gray-600" : "bg-white text-gray-700 border-gray-300"}`}
                   value={formattedOutput}
                   readOnly
                   rows={10}
                 />
                 <FiClipboard
-                  className="absolute top-3 right-3 cursor-pointer text-xl hover:text-blue-600"
+                  className="absolute top-3 right-3 cursor-pointer text-xl hover:text-blue-400 transition-colors"
                   onClick={() => copyToClipboard(formattedOutput)}
                   title="Copy to clipboard"
                 />
@@ -165,35 +187,69 @@ const ProblemDetail = () => {
 
         {/* Resizer */}
         <div
-          className="cursor-col-resize bg-gray-300 md:block hidden"
+          className={`cursor-col-resize md:block hidden transition-colors duration-300 ${darkMode ? "bg-gray-800" : "bg-gray-300"}`}
           style={{ width: "5px" }}
           onMouseDown={handleMouseDown}
         />
 
         {/* Right Panel */}
-        <div className="bg-gray-100 p-5 w-full md:w-1/2 flex flex-col">
-          <h2 className="text-xl font-semibold mb-3">Code Editor</h2>
-          <CodeEditor
-            code={code}
-            setCode={setCode}
+        <div className={`p-5 w-full md:w-1/2 flex flex-col transition-colors duration-300 ${darkMode ? "bg-gray-900" : "bg-gray-100"}`}>
+          <div className="flex justify-between items-center mb-3">
+            <h2 className="text-xl font-semibold">Code Editor</h2>
+            <div className="flex items-center gap-2">
+              <label htmlFor="language" className="font-medium">Language:</label>
+              <select
+                id="language"
+                value={language}
+                onChange={(e) => setLanguage(e.target.value)}
+                className={`px-2 py-1 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 ${darkMode ? "bg-gray-800 text-gray-100 border-gray-600" : "bg-white text-gray-900 border-gray-300"}`}
+              >
+                <option value="javascript">JavaScript</option>
+                <option value="python">Python</option>
+                <option value="cpp">C++</option>
+                <option value="java">Java</option>
+                <option value="csharp">C#</option>
+                <option value="ruby">Ruby</option>
+                <option value="go">Go</option>
+              </select>
+            </div>
+          </div>
+
+          <MonacoEditor
             language={language}
-            setLanguage={setLanguage}
+            theme="vs-dark"
+            value={code}
+            onChange={(value) => setCode(value)}
+            options={{
+              selectOnLineNumbers: true,
+              automaticLayout: true,
+              fontSize: 14,
+              minimap: { enabled: false },
+              tabSize: 2,
+              insertSpaces: true,
+            }}
+            className="flex-grow rounded-md border transition-all duration-300"
           />
 
-          <button
-            onClick={handleSubmit}
-            disabled={loading}
-            className={`mt-5 px-6 py-3 font-bold rounded-lg transition-colors ${
-              loading
-                ? "bg-gray-400 cursor-not-allowed"
-                : "bg-green-500 hover:bg-green-600 text-white"
-            }`}
-          >
-            {loading ? "Submitting..." : "Submit Solution"}
-          </button>
+          <div className="mt-5 flex gap-3">
+            <button
+              onClick={handleSubmit}
+              disabled={loading}
+              className={`flex-1 px-6 py-3 font-bold rounded-lg transition-all duration-300 ${loading ? "bg-gray-400 cursor-not-allowed" : "bg-green-500 hover:bg-green-600 text-white"}`}
+            >
+              {loading ? "Submitting..." : "Submit Solution"}
+            </button>
+            <button
+              onClick={handleRunSample}
+              disabled={loading}
+              className="flex-1 px-6 py-3 font-bold rounded-lg bg-blue-500 hover:bg-blue-600 text-white transition-all duration-300"
+            >
+              Run Sample Test
+            </button>
+          </div>
 
           {loading && (
-            <div className="mt-5 flex items-center gap-3">
+            <div className="mt-5 flex items-center gap-3 animate-fadeIn">
               <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
               <span className="text-blue-500 font-semibold text-lg">
                 Processing{processingDots}
