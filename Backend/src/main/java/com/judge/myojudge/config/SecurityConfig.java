@@ -88,7 +88,7 @@ public class SecurityConfig  {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(adminApi).hasRole("ADMIN")
                         .requestMatchers(normalUserApi).hasRole("NORMAL_USER")
-                        .requestMatchers("/code/**").hasAnyRole("NORMAL_USER","ADMIN")
+                        .requestMatchers("/api/submission/**").hasAnyRole("NORMAL_USER","ADMIN")
                         .requestMatchers(publicUserApi).permitAll()
                         .anyRequest().authenticated() // All other endpoints require authentication
                 )

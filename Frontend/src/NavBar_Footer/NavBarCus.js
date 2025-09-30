@@ -46,6 +46,7 @@ const NavBar = () => {
         <div className="hidden md:flex flex-grow justify-center space-x-4 text-sm">
           <NavLink to="/" className="hover:text-blue-500">Home</NavLink>
           <NavLink to="/problem/category" className="hover:text-blue-500">Problems</NavLink>
+          <NavLink to="/submission" className="hover:text-blue-500">Submissions</NavLink>
           <NavLink to="/contests" className="hover:text-blue-500">Contests</NavLink>
           <NavLink to="/leaderboard" className="hover:text-blue-500">Leaderboard</NavLink>
         </div>
@@ -106,6 +107,8 @@ const NavBar = () => {
         <div className={`flex flex-col space-y-2 p-3 ${darkMode ? "bg-gray-900 text-white" : "bg-white text-gray-800"}`}>
           <NavLink to="/" className="hover:text-blue-500" onClick={toggleMenu}>Home</NavLink>
           <NavLink to="/problem/category" className="hover:text-blue-500" onClick={toggleMenu}>Problems</NavLink>
+          <NavLink to="/submission" className="hover:text-blue-500" onClick={toggleMenu}>Submissions</NavLink>
+
           <NavLink to="/contests" className="hover:text-blue-500" onClick={toggleMenu}>Contests</NavLink>
           <NavLink to="/leaderboard" className="hover:text-blue-500" onClick={toggleMenu}>Leaderboard</NavLink>
 

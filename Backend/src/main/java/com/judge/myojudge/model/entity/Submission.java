@@ -26,6 +26,8 @@ public class Submission {
     private String status;
     private float time;
     private Long memory;
+    private int totalTestcases;
+    private int passedTestcases;
 
     @CreationTimestamp
     @Column(updatable = false,name ="creation_at", nullable = false)

@@ -8,10 +8,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Set;
 
 @RestController
 @RequiredArgsConstructor
@@ -30,7 +31,21 @@ public class SubmissionController {
                 .data(submissionResponse)
                 .build();
         return ResponseEntity.status(HttpStatus.OK).body(apiResponse);
-
     }
+
+    @GetMapping("/v1/get/user/all")
+    @PreAuthorize("hasAnyRole('NORMAL_USER', 'ADMIN')")
+    public ResponseEntity<ApiResponse<Set<SubmissionResponse>>> getSubmission(){
+        String contact= SecurityContextHolder.getContext().getAuthentication().getName();
+        Set<SubmissionResponse> submissionResponse = submissionService.getAllSubmissionByUser(contact);
+        ApiResponse<Set<SubmissionResponse>> apiResponse=ApiResponse.<Set<SubmissionResponse>>builder()
+                .success(true)
+                .statusCode(HttpStatus.OK.value())
+                .message("Submission Successfully..")
+                .data(submissionResponse)
+                .build();
+        return ResponseEntity.status(HttpStatus.OK).body(apiResponse);
+    }
+
 
 }

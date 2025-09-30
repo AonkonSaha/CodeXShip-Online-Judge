@@ -19,9 +19,12 @@ import ProblemCategoryPage from './problemlist/ProblemCategoryPage';
 import SubmissionHistory from './problem_page_code_editor/SubmissionHistory';
 import Profile from './components/profile';
 import SubmissionResult from './problem_page_code_editor/SubmissionResult';
+import SubmissionsPage from './problem_page_code_editor/SubmissionPage';
+
 
 
 function App() {
+
   return (
    <>
    {/* <FixedFooter/> */}
@@ -35,19 +38,21 @@ function App() {
         <Route path="/login" element={<Login/>} />
         <Route path="/verify-email" element={<VerifyEmail/>} />
         <Route path="/submission-result" element={<SubmissionResult/>} />
-
+        <Route path="/submission" element={<SubmissionsPage/>}/>
 
          {/* Protected Routes */}
          <Route element={<ProtectedRoute roles={["USER"]} />}>
           <Route path="/profile" element={<Profile/>} />
             <Route path="/submissions/history" element={ <SubmissionHistory/> }/>
             <Route path="/logout" element={<Logout/>}/>
+
           </Route>
 
           <Route element={<ProtectedRoute roles={["ADMIN"]} />}>
           <Route path="/editproblem/:id" element={<ProblemEditor/>} />
           <Route path="/deleteproblem" element={<DeleteProblem/>} />
           <Route path="/logout" element={<Logout/>}/>
+
           </Route>
         
       </Routes>

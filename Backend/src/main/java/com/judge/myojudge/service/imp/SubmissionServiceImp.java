@@ -6,6 +6,7 @@ import com.judge.myojudge.model.dto.*;
 import com.judge.myojudge.model.entity.Problem;
 import com.judge.myojudge.model.entity.Submission;
 import com.judge.myojudge.model.entity.User;
+import com.judge.myojudge.model.mapper.SubmissionMapper;
 import com.judge.myojudge.repository.ProblemRepo;
 import com.judge.myojudge.repository.SubmissionRepo;
 import com.judge.myojudge.repository.UserRepo;
@@ -29,6 +30,7 @@ public class SubmissionServiceImp implements SubmissionService {
     private final WebClient webClient;
     private final UserRepo userRepo;
     private final SubmissionRepo submissionRepo;
+    private final SubmissionMapper submissionMapper;
 
     @Override
     public SubmissionResponse excuteCode(SubmissionRequest req) {
@@ -89,6 +91,8 @@ public class SubmissionServiceImp implements SubmissionService {
                 .status(verdict)
                 .memory((long) maxSpaceTake)
                 .time(maxTimeTake)
+                .totalTestcases(response.getTotal())
+                .passedTestcases(response.getPassed())
                 .problem(problem)
                 .user(user)
                 .build();
@@ -96,6 +100,18 @@ public class SubmissionServiceImp implements SubmissionService {
         user.getSubmissions().add(submission);
         submissionRepo.save(submission);
         return response;
+    }
+
+    @Override
+    public Set<SubmissionResponse> getAllSubmissionByUser(String contact) {
+        User user= userRepo.findByMobileNumber(contact).orElseThrow(() -> new RuntimeException("User Not Found"));
+
+        Set<SubmissionResponse> submissionResponses= new HashSet<>();
+        for(Submission submission: user.getSubmissions()){
+            submissionResponses.add(submissionMapper.toSubmissionResponse(submission));
+        }
+
+        return submissionResponses;
     }
 
     private TestcaseResultDTO executeSingleTestcase(String code, Integer languageId, ExecuteTestCase testcase) {
