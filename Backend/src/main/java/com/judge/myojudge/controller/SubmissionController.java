@@ -5,12 +5,15 @@ import com.judge.myojudge.model.dto.SubmissionResponse;
 import com.judge.myojudge.response.ApiResponse;
 import com.judge.myojudge.service.SubmissionService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
 
@@ -35,10 +38,21 @@ public class SubmissionController {
 
     @GetMapping("/v1/get/user/all")
     @PreAuthorize("hasAnyRole('NORMAL_USER', 'ADMIN')")
-    public ResponseEntity<ApiResponse<Set<SubmissionResponse>>> getSubmission(){
+    public ResponseEntity<ApiResponse<Page<SubmissionResponse>>> getSubmission(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int size,
+            @RequestParam(name = "sort_field", defaultValue = "createdAt") String sortField,
+            @RequestParam(defaultValue = "asc") String sortBy
+    ){
+        System.out.println("----- "+sortBy+"-------- "+sortField);
         String contact= SecurityContextHolder.getContext().getAuthentication().getName();
-        Set<SubmissionResponse> submissionResponse = submissionService.getAllSubmissionByUser(contact);
-        ApiResponse<Set<SubmissionResponse>> apiResponse=ApiResponse.<Set<SubmissionResponse>>builder()
+
+        Sort sort = sortBy.equalsIgnoreCase("asc")
+                ? Sort.by(sortField).ascending()
+                : Sort.by(sortField).descending();
+
+        Page<SubmissionResponse> submissionResponse = submissionService.getAllSubmissionByUser(contact,sort,page,size);
+        ApiResponse<Page<SubmissionResponse>> apiResponse=ApiResponse.<Page<SubmissionResponse>>builder()
                 .success(true)
                 .statusCode(HttpStatus.OK.value())
                 .message("Submission Successfully..")

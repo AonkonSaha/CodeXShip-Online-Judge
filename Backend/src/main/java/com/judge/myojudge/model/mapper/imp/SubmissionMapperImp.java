@@ -17,6 +17,7 @@ public class SubmissionMapperImp implements SubmissionMapper {
                 .total(submission.getTotalTestcases())
                 .time(submission.getTime())
                 .memory(submission.getMemory())
+                .createdAt(submission.getCreatedAt())
                 .build();
     }
 

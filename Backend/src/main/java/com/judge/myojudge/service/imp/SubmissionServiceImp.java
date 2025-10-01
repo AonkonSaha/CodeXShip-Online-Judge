@@ -13,6 +13,10 @@ import com.judge.myojudge.repository.UserRepo;
 import com.judge.myojudge.service.SubmissionService;
 import com.judge.myojudge.service.TestCaseService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -103,15 +107,9 @@ public class SubmissionServiceImp implements SubmissionService {
     }
 
     @Override
-    public Set<SubmissionResponse> getAllSubmissionByUser(String contact) {
-        User user= userRepo.findByMobileNumber(contact).orElseThrow(() -> new RuntimeException("User Not Found"));
-
-        Set<SubmissionResponse> submissionResponses= new HashSet<>();
-        for(Submission submission: user.getSubmissions()){
-            submissionResponses.add(submissionMapper.toSubmissionResponse(submission));
-        }
-
-        return submissionResponses;
+    public Page<SubmissionResponse> getAllSubmissionByUser(String contact, Sort sort, int page, int size) {
+        Pageable pageable = PageRequest.of(page,size,sort);
+        return submissionRepo.findSubmissionsByContact(contact,pageable).map(submissionMapper::toSubmissionResponse);
     }
 
     private TestcaseResultDTO executeSingleTestcase(String code, Integer languageId, ExecuteTestCase testcase) {
