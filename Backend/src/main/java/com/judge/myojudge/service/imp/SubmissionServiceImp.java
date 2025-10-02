@@ -62,8 +62,8 @@ public class SubmissionServiceImp implements SubmissionService {
 
         for(TestcaseResultDTO result:results){
 
-            maxTimeTake=Math.max(maxTimeTake, Float.parseFloat(result.getTime()));
-            maxSpaceTake=Math.max(maxSpaceTake, Integer.parseInt(result.getMemory()));
+            maxTimeTake=Math.max(maxTimeTake, Float.parseFloat(result.getTime()==null?"0":result.getTime()));
+            maxSpaceTake=Math.max(maxSpaceTake, Integer.parseInt(result.getMemory()==null?"0":result.getMemory()));
 
             if(flag && result.getStatus().equalsIgnoreCase("Accepted")){
                 verdict="Accepted";
@@ -107,9 +107,9 @@ public class SubmissionServiceImp implements SubmissionService {
     }
 
     @Override
-    public Page<SubmissionResponse> getAllSubmissionByUser(String contact, Sort sort, int page, int size) {
+    public Page<SubmissionResponse> getAllSubmissionByUser(String contact, String search, Sort sort, int page, int size) {
         Pageable pageable = PageRequest.of(page,size,sort);
-        return submissionRepo.findSubmissionsByContact(contact,pageable).map(submissionMapper::toSubmissionResponse);
+        return submissionRepo.findSubmissionsByContact(contact,search,pageable).map(submissionMapper::toSubmissionResponse);
     }
 
     private TestcaseResultDTO executeSingleTestcase(String code, Integer languageId, ExecuteTestCase testcase) {

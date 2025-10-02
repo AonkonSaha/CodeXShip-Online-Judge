@@ -42,7 +42,8 @@ public class SubmissionController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "5") int size,
             @RequestParam(name = "sort_field", defaultValue = "createdAt") String sortField,
-            @RequestParam(defaultValue = "asc") String sortBy
+            @RequestParam(defaultValue = "asc") String sortBy,
+            @RequestParam(name = "search", required = false) String search
     ){
         System.out.println("----- "+sortBy+"-------- "+sortField);
         String contact= SecurityContextHolder.getContext().getAuthentication().getName();
@@ -51,7 +52,7 @@ public class SubmissionController {
                 ? Sort.by(sortField).ascending()
                 : Sort.by(sortField).descending();
 
-        Page<SubmissionResponse> submissionResponse = submissionService.getAllSubmissionByUser(contact,sort,page,size);
+        Page<SubmissionResponse> submissionResponse = submissionService.getAllSubmissionByUser(contact,search,sort,page,size);
         ApiResponse<Page<SubmissionResponse>> apiResponse=ApiResponse.<Page<SubmissionResponse>>builder()
                 .success(true)
                 .statusCode(HttpStatus.OK.value())

@@ -12,5 +12,5 @@ public interface SubmissionService {
 
     public SubmissionResponse excuteCode(SubmissionRequest submissionRequest);
 
-    Page<SubmissionResponse> getAllSubmissionByUser(String contact, Sort sort, int page, int size);
+    Page<SubmissionResponse> getAllSubmissionByUser(String contact,String search, Sort sort, int page, int size);
 }
