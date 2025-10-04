@@ -49,8 +49,6 @@ public class SubmissionServiceImp implements SubmissionService {
             results.add(executeSingleTestcase(req.getSubmissionCode(), languageId, testcase));
         }
 
-
-
         SubmissionResponse response = new SubmissionResponse();
         response.setResults(results);
         response.setTotal(results.size());

@@ -4,6 +4,7 @@ import com.judge.myojudge.model.dto.SubmissionRequest;
 import com.judge.myojudge.model.dto.SubmissionResponse;
 import com.judge.myojudge.response.ApiResponse;
 import com.judge.myojudge.service.SubmissionService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort;
@@ -25,7 +26,9 @@ public class SubmissionController {
 
     @PostMapping("/v1/submit")
     @PreAuthorize("hasAnyRole('NORMAL_USER', 'ADMIN')")
-    public ResponseEntity<ApiResponse<SubmissionResponse>> submit(@RequestBody SubmissionRequest submissionRequest){
+    public ResponseEntity<ApiResponse<SubmissionResponse>> submit(@RequestBody @Valid SubmissionRequest submissionRequest){
+
+        System.out.println("I am Controller...");
         SubmissionResponse submissionResponse = submissionService.excuteCode(submissionRequest);
         ApiResponse<SubmissionResponse> apiResponse=ApiResponse.<SubmissionResponse>builder()
                 .success(true)
