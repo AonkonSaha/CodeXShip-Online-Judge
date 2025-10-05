@@ -39,7 +39,7 @@ public interface ProblemService {
 
     public ProblemWithSample findProblemByID(Long id);
 
-    public ProblemDTO fetchOneProblemByID(long id) throws IOException;
+    public ProblemDTO fetchOneProblemByID(long id);
 
     public void saveProblemWithId(long id, String title, String handle, String difficulty, String type,
                                   String problemStatement, List<MultipartFile> multipartFiles) throws IOException;

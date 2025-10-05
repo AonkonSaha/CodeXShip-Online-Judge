@@ -2,9 +2,7 @@ package com.judge.myojudge.service.imp;
 
 import com.judge.myojudge.exception.ProblemNotFoundException;
 import com.judge.myojudge.model.dto.ProblemDTO;
-import com.judge.myojudge.model.dto.ProblemDetailWithSample;
 import com.judge.myojudge.model.dto.ProblemWithSample;
-import com.judge.myojudge.model.dto.TestcaseDTO;
 import com.judge.myojudge.model.entity.Problem;
 import com.judge.myojudge.model.entity.TestCase;
 import com.judge.myojudge.repository.ProblemRepo;
@@ -138,7 +136,6 @@ public class DevProblemService implements ProblemService {
 
     public ProblemWithSample findProblemByID(Long id) {
         Problem problem = problemRepo.findById(id).orElseThrow(() -> new RuntimeException("Problem not found"));
-
         ProblemWithSample problemWithSample = new ProblemWithSample();
         problemWithSample.setId(problem.getId());
         problemWithSample.setTitle(problem.getTitle());
@@ -166,7 +163,6 @@ public class DevProblemService implements ProblemService {
             throw new RuntimeException("Test cases not found for problem ID: " + id);
         }
 
-        // Optionally, you can print the input/output here for debugging purposes
         problemWithSample.getSampleTestcase().forEach(System.out::println);
         problemWithSample.getSampleOutput().forEach(System.out::println);
 
@@ -176,6 +172,9 @@ public class DevProblemService implements ProblemService {
     public List<ProblemWithSample> findProblemAll() {
         List<ProblemWithSample>problemList=new ArrayList<>();
         List<Problem>problems= problemRepo.findAll();
+        if(problems.isEmpty()){
+            throw new ProblemNotFoundException("There is no problem..!");
+        }
         for(Problem problem:problems)
         {
             ProblemWithSample problemWithSample=new ProblemWithSample();
@@ -255,9 +254,8 @@ public class DevProblemService implements ProblemService {
         problemRepo.delete(problem.get());
     }
 
-    public ProblemDTO fetchOneProblemByID(long id) throws IOException {
+    public ProblemDTO fetchOneProblemByID(long id){
         Optional<Problem> problem= problemRepo.findById(id);
-        System.out.println("Title: "+problem.get().getTitle());
         if(problem.isEmpty()){
             throw new ProblemNotFoundException("Problem not found with ID: "+id);
         }
@@ -274,12 +272,14 @@ public class DevProblemService implements ProblemService {
     public List<ProblemWithSample> findProblemAllByCategory(String category) {
         List<ProblemWithSample> problemWithSamples=new ArrayList<>();
         List<Problem> problems=problemRepo.findByType(category);
+        if(problems.isEmpty()){
+            throw new ProblemNotFoundException("There is no problem By "+category+" category..!");
+        }
         for(Problem problem:problems)
         {
             TestCase sampleTestcase = null;
             TestCase sampleOutput = null;
 
-            // Find the test case files for this problem
             for (TestCase testCase : problem.getTestcases()) {
                 if (testCase.getFileName().equals("1.in")) {
                     sampleTestcase = testCase;
@@ -288,7 +288,6 @@ public class DevProblemService implements ProblemService {
                 }
             }
 
-            // Read test case file content from S3
             List<String> sampleTestcaseContent = readFileLines(sampleTestcase.getFilePath());
             List<String> sampleOutputContent = readFileLines(sampleOutput.getFilePath());
 

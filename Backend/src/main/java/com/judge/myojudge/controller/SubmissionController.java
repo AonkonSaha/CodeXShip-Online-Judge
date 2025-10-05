@@ -48,9 +48,7 @@ public class SubmissionController {
             @RequestParam(defaultValue = "asc") String sortBy,
             @RequestParam(name = "search", required = false) String search
     ){
-        System.out.println("----- "+sortBy+"-------- "+sortField);
         String contact= SecurityContextHolder.getContext().getAuthentication().getName();
-
         Sort sort = sortBy.equalsIgnoreCase("asc")
                 ? Sort.by(sortField).ascending()
                 : Sort.by(sortField).descending();

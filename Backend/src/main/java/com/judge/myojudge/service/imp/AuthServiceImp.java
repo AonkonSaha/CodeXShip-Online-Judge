@@ -35,7 +35,7 @@ public class AuthServiceImp implements AuthService {
     public String login(LoginDTO loginDTO) {
         User user = userRepository.findByMobileNumber(loginDTO.getMobile()).get();
         if(!passwordEncoder.matches(loginDTO.getPassword(), user.getPassword())) {
-           throw new BadCredentialsException("Password incorrect");
+           throw new BadCredentialsException("Incorrect Password");
         }
         user.setActivityStatus(true);
         userRepository.save(user);
@@ -62,7 +62,7 @@ public class AuthServiceImp implements AuthService {
 
     @Override
     public User updateUserDetails(String mobile,UpdateUserDTO updateUserDTO) {
-        User user = userRepository.findByMobileNumber(mobile).get();
+        User user = userRepository.findByMobileNumber(mobile).orElseThrow(()->new UserNotFoundException("User not found"));
         user.setMobileNumber(updateUserDTO.getMobileNumber());
         user.setEmail(updateUserDTO.getEmail());
         user.setCountry(updateUserDTO.getCountry());
@@ -75,7 +75,7 @@ public class AuthServiceImp implements AuthService {
 
     @Override
     public void updateUserPassword(String mobile,PasswordDTO passwordDTO) {
-        User user = userRepository.findByMobileNumber(mobile).get();
+        User user = userRepository.findByMobileNumber(mobile).orElseThrow(()->new UserNotFoundException("User not found"));
         if(!passwordEncoder.matches(passwordDTO.getNewPassword(), user.getPassword())){
             throw new BadCredentialsException("Password incorrect");
         }
@@ -84,16 +84,11 @@ public class AuthServiceImp implements AuthService {
 
     @Override
     public User fetchUserDetails(String mobile) {
-        return userRepository.findByMobileNumber(mobile).get();
+        return userRepository.findByMobileNumber(mobile).orElseThrow(()->new UserNotFoundException("User not found"));
     }
 
     @Override
     public Optional<User> fetchUserByMobileNumber(String mobile) {
-        Optional<User> user= userRepository.findByMobileNumber(mobile);
-        System.out.println("Now WHats Going On/......");
-
-        System.out.println(user.get());
-        System.out.println("Now WHats Happend/......");
-        return user;
+        return userRepository.findByMobileNumber(mobile);
     }
 }

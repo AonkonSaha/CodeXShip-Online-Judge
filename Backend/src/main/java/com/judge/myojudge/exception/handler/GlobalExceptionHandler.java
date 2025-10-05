@@ -30,7 +30,14 @@ public class GlobalExceptionHandler {
         log.error("Method Argument Not Valid Exception: {}", exception.getMessage());
         List<ErrorResponse> errorResponses=new ArrayList<>();
         exception.getBindingResult().getAllErrors().forEach(error -> {
-            String message = ((FieldError) error).getField() + " : "+error.getDefaultMessage();
+            String message;
+            if(error instanceof FieldError fieldError){
+                message= fieldError.getField() + " : "+error.getDefaultMessage();
+            }
+            else {
+                message= error.getObjectName()+" : "+error.getDefaultMessage();
+            }
+
             ErrorResponse errorResponse = buildError(HttpStatus.BAD_REQUEST, message, request.getRequestURI());
             errorResponses.add(errorResponse);
         });

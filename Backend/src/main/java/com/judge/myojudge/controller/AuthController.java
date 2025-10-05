@@ -4,9 +4,9 @@ import com.judge.myojudge.model.dto.*;
 import com.judge.myojudge.model.mapper.UserMapper;
 import com.judge.myojudge.response.ApiResponse;
 import com.judge.myojudge.service.AuthService;
-import com.judge.myojudge.validation.UserValidation;
 import com.judge.myojudge.validation.ValidationService;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.apache.coyote.BadRequestException;
 import org.springframework.http.HttpStatus;
@@ -15,7 +15,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
-import java.util.Objects;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -26,8 +25,7 @@ public class AuthController {
     private final ValidationService validationService;
 
     @PostMapping("/v1/register")
-    public ResponseEntity<ApiResponse<RegisterDTO>> register(@RequestBody RegisterDTO registerDTO) {
-        validationService.validateUserDetails(registerDTO);
+    public ResponseEntity<ApiResponse<RegisterDTO>> register(@RequestBody @Valid RegisterDTO registerDTO) {
         ApiResponse<RegisterDTO> apiResponse= ApiResponse.<RegisterDTO>builder()
                 .success(true)
                 .statusCode(HttpStatus.CREATED.value())
@@ -39,8 +37,7 @@ public class AuthController {
 
     }
     @PostMapping("/v1/login")
-    public  ResponseEntity<ApiResponse<Map<String,String>>> login(@RequestBody LoginDTO loginDTO) {
-        validationService.validateLoginDetails(loginDTO);
+    public  ResponseEntity<ApiResponse<Map<String,String>>> login(@RequestBody @Valid LoginDTO loginDTO) {
         ApiResponse<Map<String,String>> apiResponse=ApiResponse.<Map<String,String>>builder()
                 .success(true)
                 .statusCode(HttpStatus.OK.value())
@@ -57,17 +54,15 @@ public class AuthController {
     }
 
     @PostMapping("/v1/update")
-    public ResponseEntity<Void> updateUser(@RequestBody UpdateUserDTO updateUserDTO) {
+    public ResponseEntity<Void> updateUser(@RequestBody @Valid UpdateUserDTO updateUserDTO) {
         String mobile= SecurityContextHolder.getContext().getAuthentication().getName();
-        validationService.validateUserDetails(updateUserDTO);
         authService.updateUserDetails(mobile,updateUserDTO);
         return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/v1/update/password")
-    public ResponseEntity<Void> updatePassword(@RequestBody PasswordDTO passwordDTO) throws BadRequestException {
+    public ResponseEntity<Void> updatePassword(@RequestBody @Valid PasswordDTO passwordDTO) throws BadRequestException {
         String mobile= SecurityContextHolder.getContext().getAuthentication().getName();
-        validationService.validateUserPassword(passwordDTO);
         authService.updateUserPassword(mobile,passwordDTO);
         return ResponseEntity.noContent().build();
     }
