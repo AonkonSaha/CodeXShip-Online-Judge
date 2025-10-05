@@ -5,11 +5,12 @@ import MonacoEditor from "@monaco-editor/react";
 import NavBar from "../NavBar_Footer/NavBarCus";
 import Footer from "../NavBar_Footer/Footer";
 import { AuthContext } from "../auth_component/AuthContext";
+import { BadgeDollarSign } from "lucide-react"; // Coins icon
 
 const ProblemDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { darkMode } = useContext(AuthContext);
+  const { darkMode, coins } = useContext(AuthContext);
 
   const [code, setCode] = useState("");
   const [language, setLanguage] = useState("javascript");
@@ -130,17 +131,34 @@ const ProblemDetail = () => {
   return (
     <>
       <NavBar />
-      <div ref={containerRef} className={`flex flex-col md:flex-row h-screen overflow-hidden transition-colors duration-300 ${darkMode ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-900"}`}>
+      <div
+        ref={containerRef}
+        className={`flex flex-col md:flex-row h-screen overflow-hidden transition-colors duration-300 ${
+          darkMode ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-900"
+        }`}
+      >
         {/* Left Panel */}
         <div
           style={{ width: `${leftWidth}%` }}
-          className={`p-5 overflow-y-auto border-b md:border-r transition-all duration-300 rounded-lg ${darkMode ? "bg-gray-900 border-gray-800" : "bg-white border-gray-300"}`}
+          className={`p-5 overflow-y-auto border-b md:border-r transition-all duration-300 rounded-lg ${
+            darkMode ? "bg-gray-900 border-gray-800" : "bg-white border-gray-300"
+          }`}
         >
           <div className="flex justify-between items-center mb-5">
             <h1 className="text-2xl font-bold">{fileContent.title || "Problem Title"}</h1>
-            <span className="bg-blue-500 text-white px-4 py-1 rounded-full text-sm uppercase">
-              {fileContent.difficulty || "Medium"}
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="bg-blue-500 text-white px-4 py-1 rounded-full text-sm uppercase">
+                {fileContent.difficulty || "Medium"}
+              </span>
+              <span className="bg-yellow-400 text-gray-900 px-3 py-1 rounded-full text-sm font-semibold flex items-center gap-1">
+                <BadgeDollarSign size={16} /> {fileContent.coins || 0}
+              </span>
+              {/* {coins !== null && (
+                <span className="bg-green-500 text-white px-3 py-1 rounded-full text-sm font-semibold flex items-center gap-1">
+                  <BadgeDollarSign size={16} /> {coins}
+                </span>
+              )} */}
+            </div>
           </div>
 
           <div
@@ -151,10 +169,16 @@ const ProblemDetail = () => {
           {(fileContent.sampleTestcase || fileContent.sampleOutput) && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-5">
               {/* Input */}
-              <div className={`border p-4 flex flex-col items-center relative rounded-md transition-all duration-300 ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-300"}`}>
+              <div
+                className={`border p-4 flex flex-col items-center relative rounded-md transition-all duration-300 ${
+                  darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-300"
+                }`}
+              >
                 <h3 className="text-lg font-semibold mb-2">Input</h3>
                 <textarea
-                  className={`w-full p-3 text-sm font-mono rounded-md resize-none shadow-inner transition-all duration-300 ${darkMode ? "bg-gray-700 text-gray-100 border-gray-600" : "bg-white text-gray-700 border-gray-300"}`}
+                  className={`w-full p-3 text-sm font-mono rounded-md resize-none shadow-inner transition-all duration-300 ${
+                    darkMode ? "bg-gray-700 text-gray-100 border-gray-600" : "bg-white text-gray-700 border-gray-300"
+                  }`}
                   value={formattedInput}
                   readOnly
                   rows={10}
@@ -167,10 +191,16 @@ const ProblemDetail = () => {
               </div>
 
               {/* Output */}
-              <div className={`border p-4 flex flex-col items-center relative rounded-md transition-all duration-300 ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-300"}`}>
+              <div
+                className={`border p-4 flex flex-col items-center relative rounded-md transition-all duration-300 ${
+                  darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-300"
+                }`}
+              >
                 <h3 className="text-lg font-semibold mb-2">Output</h3>
                 <textarea
-                  className={`w-full p-3 text-sm font-mono rounded-md resize-none shadow-inner transition-all duration-300 ${darkMode ? "bg-gray-700 text-gray-100 border-gray-600" : "bg-white text-gray-700 border-gray-300"}`}
+                  className={`w-full p-3 text-sm font-mono rounded-md resize-none shadow-inner transition-all duration-300 ${
+                    darkMode ? "bg-gray-700 text-gray-100 border-gray-600" : "bg-white text-gray-700 border-gray-300"
+                  }`}
                   value={formattedOutput}
                   readOnly
                   rows={10}
@@ -187,22 +217,32 @@ const ProblemDetail = () => {
 
         {/* Resizer */}
         <div
-          className={`cursor-col-resize md:block hidden transition-colors duration-300 ${darkMode ? "bg-gray-800" : "bg-gray-300"}`}
+          className={`cursor-col-resize md:block hidden transition-colors duration-300 ${
+            darkMode ? "bg-gray-800" : "bg-gray-300"
+          }`}
           style={{ width: "5px" }}
           onMouseDown={handleMouseDown}
         />
 
         {/* Right Panel */}
-        <div className={`p-5 w-full md:w-1/2 flex flex-col transition-colors duration-300 ${darkMode ? "bg-gray-900" : "bg-gray-100"}`}>
+        <div
+          className={`p-5 w-full md:w-1/2 flex flex-col transition-colors duration-300 ${
+            darkMode ? "bg-gray-900" : "bg-gray-100"
+          }`}
+        >
           <div className="flex justify-between items-center mb-3">
             <h2 className="text-xl font-semibold">Code Editor</h2>
             <div className="flex items-center gap-2">
-              <label htmlFor="language" className="font-medium">Language:</label>
+              <label htmlFor="language" className="font-medium">
+                Language:
+              </label>
               <select
                 id="language"
                 value={language}
                 onChange={(e) => setLanguage(e.target.value)}
-                className={`px-2 py-1 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 ${darkMode ? "bg-gray-800 text-gray-100 border-gray-600" : "bg-white text-gray-900 border-gray-300"}`}
+                className={`px-2 py-1 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 ${
+                  darkMode ? "bg-gray-800 text-gray-100 border-gray-600" : "bg-white text-gray-900 border-gray-300"
+                }`}
               >
                 <option value="javascript">JavaScript</option>
                 <option value="python">Python</option>
@@ -235,7 +275,9 @@ const ProblemDetail = () => {
             <button
               onClick={handleSubmit}
               disabled={loading}
-              className={`flex-1 px-6 py-3 font-bold rounded-lg transition-all duration-300 ${loading ? "bg-gray-400 cursor-not-allowed" : "bg-green-500 hover:bg-green-600 text-white"}`}
+              className={`flex-1 px-6 py-3 font-bold rounded-lg transition-all duration-300 ${
+                loading ? "bg-gray-400 cursor-not-allowed" : "bg-green-500 hover:bg-green-600 text-white"
+              }`}
             >
               {loading ? "Submitting..." : "Submit Solution"}
             </button>
@@ -251,9 +293,7 @@ const ProblemDetail = () => {
           {loading && (
             <div className="mt-5 flex items-center gap-3 animate-fadeIn">
               <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-              <span className="text-blue-500 font-semibold text-lg">
-                Processing{processingDots}
-              </span>
+              <span className="text-blue-500 font-semibold text-lg">Processing{processingDots}</span>
             </div>
           )}
         </div>

@@ -1,9 +1,10 @@
 import React, { useEffect, useState, useContext } from 'react';
 import axios from 'axios';
-import { jwtDecode } from 'jwt-decode'; // For decoding JWT token
+import {jwtDecode} from 'jwt-decode'; // Correct import
 import Footer from '../NavBar_Footer/Footer';
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { FaCheckCircle, FaTimesCircle, FaEdit, FaTrash } from 'react-icons/fa';
+import { BadgeDollarSign } from 'lucide-react'; // Coin icon
 import NavBar from '../NavBar_Footer/NavBarCus';
 import { AuthContext } from "../auth_component/AuthContext"; // Import the AuthContext
 
@@ -19,7 +20,6 @@ const ProblemCategoryPage = () => {
 
     const token = localStorage.getItem("token");
     const baseURL = process.env.REACT_APP_BACK_END_BASE_URL;
-
     const { darkMode } = useContext(AuthContext); // Get dark mode from AuthContext
 
     useEffect(() => {
@@ -30,7 +30,7 @@ const ProblemCategoryPage = () => {
 
         const fetchProblems = async () => {
             try {
-                const headers = token ? { Authorization: `Bearer ${token}` } : {}; // Include JWT only if present
+                const headers = token ? { Authorization: `Bearer ${token}` } : {};
                 const response = await axios.get(`${baseURL}/api/problem/v1/category/${category}`, { headers });
                 setProblems(response.data.data);
             } catch (err) {
@@ -41,7 +41,7 @@ const ProblemCategoryPage = () => {
         };
 
         fetchProblems();
-    }, [token, category]);
+    }, [token, category, baseURL]);
 
     const handleDelete = async (handle) => {
         if (!window.confirm("Are you sure you want to delete this problem?")) return;
@@ -102,18 +102,9 @@ const ProblemCategoryPage = () => {
                     </div>
                 </div>
 
-                {/* Problem List Box with Full Height */}
+                {/* Problem List Box */}
                 <div className={`p-6 border-2 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-300'} rounded-lg shadow-md space-y-3 h-full flex flex-col`}>
-                    {/* Loading state inside problem list */}
-                    {loading && (
-                        <div className="flex justify-center items-center h-full">
-                            <div className="spinner"></div>
-                            <p>Loading problems...</p>
-                        </div>
-                    )}
-
-                    {/* Problem list */}
-                    {!loading && filteredProblems.length === 0 && (
+                    {filteredProblems.length === 0 && (
                         <div className="text-center text-gray-500">
                             No problems found.
                         </div>
@@ -125,13 +116,12 @@ const ProblemCategoryPage = () => {
                         >
                             <Link to={`/problem/page/${problem.id}`}>
                                 <div className="flex justify-between items-center">
-                                    {/* Problem Title */}
                                     <h3 className={`text-xl font-semibold ${darkMode ? 'text-white' : 'text-gray-800'} hover:text-indigo-600`}>{problem.title}</h3>
                                 </div>
                             </Link>
 
-                            {/* Problem Details under the title */}
-                            <div className="flex justify-between items-center text-sm font-medium space-x-4">
+                            {/* Problem Details */}
+                            <div className="flex justify-between items-center text-sm font-medium space-x-4 mt-2">
                                 <div className="flex space-x-4">
                                     <p className={problem.difficulty === 'Easy' ? 'text-green-600' : problem.difficulty === 'Medium' ? 'text-yellow-600' : 'text-red-600'}>
                                         {problem.difficulty}
@@ -139,30 +129,31 @@ const ProblemCategoryPage = () => {
                                     <p className={darkMode ? 'text-gray-400' : 'text-gray-600'}>{problem.type}</p>
                                 </div>
 
-                                {/* Status button aligned to the right with icon */}
-                                <button
-                                    className={`px-5 py-2 rounded-full text-white flex justify-center items-center transition-colors duration-300 ${problem.solved ? 'bg-green-600 hover:bg-green-500' : 'bg-red-600 hover:bg-red-500'}`}
-                                    aria-label={problem.solved ? "Problem Solved" : "Problem Not Solved"}
-                                >
-                                    {problem.solved ? 
-                                        <FaCheckCircle className="text-white text-xl" /> : 
-                                        <FaTimesCircle className="text-white text-xl" />
-                                    }
-                                </button>
+                                {/* Coins + Solve Status */}
+                                <div className="flex items-center space-x-2">
+                                    <div className="flex items-center gap-1 bg-yellow-400 text-gray-900 px-2 py-1 rounded-full font-semibold text-sm">
+                                        <BadgeDollarSign size={16} />
+                                        {problem.coins || 0}
+                                    </div>
+
+                                    <button
+                                        className={`px-4 py-2 rounded-full text-white flex justify-center items-center transition-colors duration-300 ${problem.solved ? 'bg-green-600 hover:bg-green-500' : 'bg-red-600 hover:bg-red-500'}`}
+                                        aria-label={problem.solved ? "Problem Solved" : "Problem Not Solved"}
+                                    >
+                                        {problem.solved ? <FaCheckCircle className="text-white text-xl" /> : <FaTimesCircle className="text-white text-xl" />}
+                                    </button>
+                                </div>
                             </div>
 
                             {/* Admin Controls */}
                             {role === "ADMIN" && (
                                 <div className="flex flex-col sm:flex-row sm:space-x-3 mt-3">
-                                    {/* Edit Button */}
                                     <button
                                         className="flex items-center justify-center px-2 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition transform hover:scale-105"
                                         onClick={() => navigate(`/editproblem/${problem.id}`)}
                                     >
                                         <FaEdit className="text-white text-lg" />
                                     </button>
-
-                                    {/* Delete Button */}
                                     <button
                                         className="flex items-center justify-center px-2 py-1 bg-red-600 text-white rounded-lg hover:bg-red-500 transition transform hover:scale-105"
                                         onClick={() => handleDelete(problem.handle)}

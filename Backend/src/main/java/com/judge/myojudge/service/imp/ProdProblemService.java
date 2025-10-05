@@ -108,6 +108,7 @@ public class ProdProblemService implements ProblemService {
                             String handle,
                             String difficulty,
                             String type,
+                            Long coin,
                             String problemStatement
     )  {
         Problem problem=new Problem();
@@ -115,6 +116,7 @@ public class ProdProblemService implements ProblemService {
         problem.setHandleName(handle);
         problem.setDifficulty(difficulty);
         problem.setType(type);
+        problem.setCoins(coin);
         problem.setProblemStatement(problemStatement);
         problemRepo.save(problem);
     }
@@ -174,6 +176,9 @@ public class ProdProblemService implements ProblemService {
         problemWithSample.setTitle(problem.getTitle());
         problemWithSample.setProblemStatement(problem.getProblemStatement());
         problemWithSample.setDifficulty(problem.getDifficulty());
+        problemWithSample.setType(problem.getType());
+        problemWithSample.setHandle(problem.getHandleName());
+        problemWithSample.setCoins(problem.getCoins());
 
         TestCase sampleTestcase = null;
         TestCase sampleOutput = null;
@@ -213,6 +218,7 @@ public class ProdProblemService implements ProblemService {
         problemDTO.setDifficulty(problem.get().getDifficulty());
         problemDTO.setType(problem.get().getType());
         problemDTO.setHandle(problem.get().getHandleName());
+        problemDTO.setCoins(problem.get().getCoins());
         problemDTO.setProblemStatement(problem.get().getProblemStatement());
 //        List<String> filePaths=new ArrayList<>();
 //        for(TestCase testCase:problem.get().getTestcases()){
@@ -304,6 +310,7 @@ public class ProdProblemService implements ProblemService {
                     .handle(problem.getHandleName())
                     .type(problem.getType())
                     .difficulty(problem.getDifficulty())
+                    .coins(problem.getCoins())
                     .sampleTestcase(sampleTestcaseContent)
                     .sampleOutput(sampleOutputContent)
                     .build();

@@ -95,11 +95,14 @@ public class SubmissionServiceImp implements SubmissionService {
                 .time(maxTimeTake)
                 .totalTestcases(response.getTotal())
                 .passedTestcases(response.getPassed())
+                .coinsEarned(problem.getCoins())
                 .problem(problem)
                 .user(user)
                 .build();
         problem.getSubmissions().add(submission);
         user.getSubmissions().add(submission);
+        user.setTotalCoinsEarned((user.getTotalCoinsEarned()==null?0: user.getTotalCoinsEarned())+problem.getCoins());
+        user.setTotalPresentCoins((user.getTotalPresentCoins()==null?0:user.getTotalPresentCoins())+problem.getCoins());
         submissionRepo.save(submission);
         return response;
     }

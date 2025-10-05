@@ -28,6 +28,7 @@ public class Submission {
     private Long memory;
     private int totalTestcases;
     private int passedTestcases;
+    private Long coinsEarned;
 
     @CreationTimestamp
     @Column(updatable = false,name ="creation_at", nullable = false)

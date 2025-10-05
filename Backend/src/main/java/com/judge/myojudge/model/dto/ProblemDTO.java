@@ -23,6 +23,7 @@ public class ProblemDTO {
     private List<String> testcasesFilePaths;
     private List<TestCase> testcase;
     private List<MultipartFile> files;
+    private Long coins;
 
     public ProblemDTO(String title, String handle, String difficulty, String type, String problemStatement, List<MultipartFile> files) {
         this.title = title;

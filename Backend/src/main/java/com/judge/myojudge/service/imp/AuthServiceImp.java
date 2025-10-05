@@ -91,4 +91,10 @@ public class AuthServiceImp implements AuthService {
     public Optional<User> fetchUserByMobileNumber(String mobile) {
         return userRepository.findByMobileNumber(mobile);
     }
+
+    @Override
+    public Long getUserCoins(String contact) {
+        User user = userRepository.findByMobileNumber(contact).orElseThrow(()->new UserNotFoundException("User not found"));
+        return user.getTotalPresentCoins();
+    }
 }

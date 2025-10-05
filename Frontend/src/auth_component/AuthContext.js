@@ -7,31 +7,41 @@ export const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
   const baseURL = process.env.REACT_APP_BACK_END_BASE_URL;
   const [user, setUser] = useState(null);
+  const [coins,setCoins]=useState(null);
   const [darkMode, setDarkMode] = useState(false);
 
+  const fetchUserCoins = async (token) => {
+    try {
+      const res = await axios.get(`${baseURL}/api/coin/get`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setCoins(res.data.data); 
+    } catch (err) {
+      console.error("Failed to fetch user info:", err);
+      setCoins(null);
+    }
+  };
+
   useEffect(() => {
-    // Load the user info from token if it exists
     const token = localStorage.getItem("token");
     if (token) {
       const decoded = jwtDecode(token);
       setUser({ username: decoded.sub, role: decoded.role });
+      fetchUserCoins(token);
     }
 
-    // Load the dark mode preference from localStorage
     const storedDarkMode = localStorage.getItem("darkMode");
     if (storedDarkMode) {
       setDarkMode(storedDarkMode === "true");
     }
   }, []);
 
-  // Handle login
   const login = (token) => {
     localStorage.setItem("token", token);
     const decoded = jwtDecode(token);
     setUser({ username: decoded.sub, role: decoded.role });
   };
 
-  // Handle logout
 const logout = async () => {
     const token = localStorage.getItem("token");
     try {
@@ -59,7 +69,7 @@ const logout = async () => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, darkMode, toggleDarkMode }}>
+    <AuthContext.Provider value={{ user, login, coins, logout, darkMode, toggleDarkMode }}>
       {children}
     </AuthContext.Provider>
   );

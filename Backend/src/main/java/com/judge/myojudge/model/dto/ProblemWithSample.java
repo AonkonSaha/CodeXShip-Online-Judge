@@ -19,6 +19,7 @@ public class ProblemWithSample {
     private String problemStatement;
     private String difficulty;
     private String type;
+    private Long coins;
     private List<String> sampleTestcase;
     private List<String> sampleOutput;
 }

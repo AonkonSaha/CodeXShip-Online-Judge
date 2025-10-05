@@ -93,13 +93,14 @@ public class ProblemController {
             @RequestParam("handle")String handle,
             @RequestParam("difficulty")String difficulty,
             @RequestParam("type")String type,
+            @RequestParam("coin")Long coin,
             @RequestParam("problemStatement") String problemStatement,
             @RequestParam("testCaseFile") List<MultipartFile> multipartFiles
 
     ) throws IOException {
             validationService.validateProblemDetails(new ProblemDTO(title, handle, difficulty, type,
                                                                   problemStatement, multipartFiles));
-            problemService.saveProblem(title,handle,difficulty,type,problemStatement);
+            problemService.saveProblem(title,handle,difficulty,type,coin,problemStatement);
             testCaseService.saveTestCases(handle,title, multipartFiles);
             ApiResponse<String> apiResponse=ApiResponse.<String>builder()
                     .success(true)

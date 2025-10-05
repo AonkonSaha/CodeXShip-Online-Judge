@@ -39,6 +39,7 @@ public class DevProblemService implements ProblemService {
                             String handle,
                             String difficulty,
                             String type,
+                            Long coin,
                             String problemStatement
     )  {
         Problem problem=new Problem();
@@ -46,6 +47,7 @@ public class DevProblemService implements ProblemService {
         problem.setHandleName(handle);
         problem.setDifficulty(difficulty);
         problem.setType(type);
+        problem.setCoins(coin);
         problem.setProblemStatement(problemStatement);
         problemRepo.save(problem);
         System.out.println("Problem Saved Successfully in Problems Function");
@@ -141,6 +143,10 @@ public class DevProblemService implements ProblemService {
         problemWithSample.setTitle(problem.getTitle());
         problemWithSample.setProblemStatement(problem.getProblemStatement());
         problemWithSample.setDifficulty(problem.getDifficulty());
+        problemWithSample.setType(problem.getType());
+        problemWithSample.setHandle(problem.getHandleName());
+        problemWithSample.setCoins(problem.getCoins());
+
 
         // Find the input and output test cases
         TestCase sampleTestcase = null;
@@ -264,6 +270,7 @@ public class DevProblemService implements ProblemService {
         problemDTO.setDifficulty(problem.get().getDifficulty());
         problemDTO.setType(problem.get().getType());
         problemDTO.setHandle(problem.get().getHandleName());
+        problemDTO.setCoins(problem.get().getCoins());
         problemDTO.setProblemStatement(problem.get().getProblemStatement());
         return problemDTO;
     }
@@ -298,6 +305,7 @@ public class DevProblemService implements ProblemService {
                     .handle(problem.getHandleName())
                     .type(problem.getType())
                     .difficulty(problem.getDifficulty())
+                    .coins(problem.getCoins())
                     .sampleTestcase(sampleTestcaseContent)
                     .sampleOutput(sampleOutputContent)
                     .build();

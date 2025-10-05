@@ -27,7 +27,7 @@ public interface ProblemService {
     public List<ProblemWithSample> findProblemAll();
 
     public void saveProblem(String title, String handle, String difficulty,
-                            String type, String problemStatement);
+                            String type,Long coin, String problemStatement);
 
     public boolean findProblemByHandleExit(String handle) ;
 
