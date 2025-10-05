@@ -22,8 +22,7 @@ It’s designed for **competitive programming, coding contests, and practice pla
 - 🎯 **Gamification (Coin System)**  
   - Earn **coins** by solving problems successfully  
   - Redeem coins for **rewards** like T-shirts, bags, and other goodies 🎁  
-  - Motivates users to solve more problems and participate in contests
-  - Under Development  
+  - Motivates users to solve more problems and participate in contests  
 
 - 📊 **Contest & Ranking System**  
   - Create and manage contests  
