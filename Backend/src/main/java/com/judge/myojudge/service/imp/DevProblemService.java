@@ -11,6 +11,9 @@ import com.judge.myojudge.service.ProblemService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -276,13 +279,13 @@ public class DevProblemService implements ProblemService {
     }
 
     @Override
-    public List<ProblemWithSample> findProblemAllByCategory(String category) {
+    public Page<ProblemWithSample> findProblemAllByCategory(String category,String search,String difficulty, Pageable pageable) {
         List<ProblemWithSample> problemWithSamples=new ArrayList<>();
-        List<Problem> problems=problemRepo.findByType(category);
+        Page<Problem> problems=problemRepo.findByType(category,search,difficulty,pageable);
         if(problems.isEmpty()){
             throw new ProblemNotFoundException("There is no problem By "+category+" category..!");
         }
-        for(Problem problem:problems)
+        for(Problem problem:problems.getContent())
         {
             TestCase sampleTestcase = null;
             TestCase sampleOutput = null;
@@ -312,6 +315,6 @@ public class DevProblemService implements ProblemService {
             problemWithSamples.add(problemWithSample);
 
         }
-        return problemWithSamples;
+        return new PageImpl<>(problemWithSamples,pageable,problems.getTotalElements()) ;
     }
 }

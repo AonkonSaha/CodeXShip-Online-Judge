@@ -7,6 +7,9 @@ import com.judge.myojudge.service.ProblemService;
 import com.judge.myojudge.service.TestCaseService;
 import com.judge.myojudge.validation.ValidationService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -72,11 +75,16 @@ public class ProblemController {
         return ResponseEntity.status(HttpStatus.OK).body(problemWithSample);
     }
     @GetMapping(value="/v1/category/{category}")
-    public ResponseEntity<?>searchAllProblemWithCategory(
-            @PathVariable String category
+    public ResponseEntity<ApiResponse<Page<ProblemWithSample>>>searchAllProblemWithCategory(
+            @PathVariable String category,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int size,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String difficulty
     )  {
-        List<ProblemWithSample> problemWithSamples = problemService.findProblemAllByCategory(category);
-        ApiResponse<List<ProblemWithSample>> problemWithSample=ApiResponse.<List<ProblemWithSample>>builder()
+        Pageable pageable= PageRequest.of(page,size);
+        Page<ProblemWithSample> problemWithSamples = problemService.findProblemAllByCategory(category,search,difficulty,pageable);
+        ApiResponse<Page<ProblemWithSample>> problemWithSample=ApiResponse.<Page<ProblemWithSample>>builder()
                 .success(true)
                 .statusCode(HttpStatus.OK.value())
                 .message("Fetching Problems With Category Successfully..!")

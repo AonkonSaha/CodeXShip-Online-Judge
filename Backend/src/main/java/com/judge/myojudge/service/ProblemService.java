@@ -10,6 +10,8 @@ import com.judge.myojudge.model.dto.ProblemWithSample;
 import com.judge.myojudge.model.dto.TestcaseDTO;
 import com.judge.myojudge.model.entity.Problem;
 import com.judge.myojudge.model.entity.TestCase;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.BufferedReader;
@@ -44,6 +46,6 @@ public interface ProblemService {
     public void saveProblemWithId(long id, String title, String handle, String difficulty, String type,
                                   String problemStatement, List<MultipartFile> multipartFiles) throws IOException;
 
-    public List<ProblemWithSample> findProblemAllByCategory(String category);
+    public Page<ProblemWithSample> findProblemAllByCategory(String category,String search, String difficulty, Pageable pageable);
 
 }
