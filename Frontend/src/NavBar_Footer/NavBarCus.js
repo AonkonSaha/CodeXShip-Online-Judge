@@ -11,7 +11,7 @@ import {
 import { Coins } from "lucide-react"; // Coin icon
 
 const NavBar = () => {
-  const { user, logout, darkMode, toggleDarkMode, coins } = useContext(AuthContext);
+  const { user, logout, darkMode, toggleDarkMode, coins, isAdmin, isContestUser, isNormalUser} = useContext(AuthContext);
   const [isOpen, setIsOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const profileRef = useRef(null);
@@ -50,7 +50,7 @@ const NavBar = () => {
         <div className="hidden md:flex flex-grow justify-center space-x-4 text-sm">
           <NavLink to="/" className="hover:text-blue-500">Home</NavLink>
           <NavLink to="/problem/category" className="hover:text-blue-500">Problems</NavLink>
-          <NavLink to="/submission" className="hover:text-blue-500">Submissions</NavLink>
+          {(isNormalUser || isContestUser || isAdmin) && (<NavLink to="/submission" className="hover:text-blue-500">Submissions</NavLink>)}
           <NavLink to="/contests" className="hover:text-blue-500">Contests</NavLink>
           <NavLink to="/leaderboard" className="hover:text-blue-500">Leaderboard</NavLink>
         </div>
@@ -96,7 +96,7 @@ const NavBar = () => {
                     <DropdownMenuItem onClick={handleProfileClick}>
                       Profile
                     </DropdownMenuItem>
-                    {user.role === "ADMIN" && (
+                    {isAdmin && (
                       <>
                         <DropdownMenuItem asChild>
                           <NavLink to={`/editproblem/${null}`} onClick={() => setIsProfileOpen(false)}>
@@ -189,7 +189,7 @@ const NavBar = () => {
               <NavLink to="/profile" className="hover:text-blue-500" onClick={toggleMenu}>
                 Profile
               </NavLink>
-              {user.role === "ADMIN" && (
+              {isAdmin && (
                 <>
                   <NavLink to={`/editproblem/${null}`} className="hover:text-blue-500" onClick={toggleMenu}>
                     Create Problem

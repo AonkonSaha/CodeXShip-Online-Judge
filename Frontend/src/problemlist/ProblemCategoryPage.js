@@ -24,7 +24,7 @@ const ProblemCategoryPage = () => {
 
     const token = localStorage.getItem("token");
     const baseURL = process.env.REACT_APP_BACK_END_BASE_URL;
-    const { darkMode } = useContext(AuthContext);
+    const { darkMode, user, isAdmin } = useContext(AuthContext);
 
     useEffect(() => {
         if (token) {
@@ -199,7 +199,7 @@ const ProblemCategoryPage = () => {
                                 </div>
                             </div>
 
-                            {role === "ADMIN" && (
+                            {isAdmin && (
                                 <div className="flex flex-col sm:flex-row sm:space-x-3 mt-3">
                                     <button
                                         className="flex items-center justify-center px-2 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition transform hover:scale-105"
