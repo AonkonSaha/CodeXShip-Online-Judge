@@ -2,7 +2,6 @@ package com.judge.myojudge.config;
 
 import com.judge.myojudge.exception.handler.CustomAccessDeniedHandler;
 import com.judge.myojudge.jwt.JwtAuthFilter;
-
 import com.judge.myojudge.routes.AuthApiRoute;
 import com.judge.myojudge.routes.ProblemApiRoute;
 import com.judge.myojudge.service.imp.CustomUserDetailsService;
@@ -55,7 +54,8 @@ public class SecurityConfig  {
             ProblemApiRoute.PROBLEM_FETCH_ALL,
             ProblemApiRoute.PROBLEM_FETCH_BY_ID_V2,
             ProblemApiRoute.PROBLEM_FETCH_BY_CATEGORY,
-            "/api/role/**"
+            "/api/role/**",
+
     };
 
     @Bean

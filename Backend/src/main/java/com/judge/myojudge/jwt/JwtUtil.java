@@ -1,15 +1,18 @@
 package com.judge.myojudge.jwt;
 
 
-import io.jsonwebtoken.*;
+import com.judge.myojudge.model.entity.User;
+import com.judge.myojudge.model.entity.UserRole;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.security.Key;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 
 @Component
@@ -25,11 +28,16 @@ public class JwtUtil {
         return Keys.hmacShaKeyFor(secret.getBytes());
     }
 
-    public String generateToken(String username,boolean isActive) {
+    @Transactional(value = Transactional.TxType.REQUIRED)
+    public String generateToken(User user,String username, boolean isActive) {
+        List<String> roles=new ArrayList<>();
+        for(UserRole userRole:user.getUserRoles()){
+            roles.add(userRole.getRoleName());
+        }
 
         Map<String,Object>claims=new HashMap<>();
         claims.put("active",isActive);
-        claims.put("role","ADMIN"); // Just for Testing, I have to bind multiple roles later
+        claims.put("role",roles);
        return createToken(claims,username);
     }
     private String createToken(Map<String, Object> claims, String username) {
@@ -62,7 +70,6 @@ public class JwtUtil {
     private boolean isTokenExpired(String token) {
         return extractClaim(token, Claims::getExpiration).before(new Date());
     }
-    // Extract a custom claim (e.g., "active" field)
     public Boolean extractActiveStatus(String token) {
         return extractClaim(token, claims -> claims.get("active", Boolean.class));
     }

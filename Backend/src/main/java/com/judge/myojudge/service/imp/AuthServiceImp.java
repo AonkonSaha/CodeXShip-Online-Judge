@@ -1,15 +1,16 @@
 package com.judge.myojudge.service.imp;
 
 import com.judge.myojudge.exception.UserNotFoundException;
+import com.judge.myojudge.jwt.JwtUtil;
 import com.judge.myojudge.model.dto.LoginDTO;
 import com.judge.myojudge.model.dto.PasswordDTO;
-import com.judge.myojudge.jwt.JwtUtil;
 import com.judge.myojudge.model.dto.UpdateUserDTO;
 import com.judge.myojudge.model.entity.BlockedToken;
 import com.judge.myojudge.model.entity.User;
 import com.judge.myojudge.repository.BlockedTokenRepo;
 import com.judge.myojudge.repository.UserRepo;
 import com.judge.myojudge.service.AuthService;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -32,6 +33,7 @@ public class AuthServiceImp implements AuthService {
     }
 
     @Override
+    @Transactional
     public String login(LoginDTO loginDTO) {
         User user = userRepository.findByMobileNumber(loginDTO.getMobile()).get();
         if(!passwordEncoder.matches(loginDTO.getPassword(), user.getPassword())) {
@@ -39,7 +41,7 @@ public class AuthServiceImp implements AuthService {
         }
         user.setActivityStatus(true);
         userRepository.save(user);
-        return jwtUtil.generateToken(user.getMobileNumber(),user.getActivityStatus());
+        return jwtUtil.generateToken(user,user.getMobileNumber(),user.getActivityStatus());
     }
 
     @Override

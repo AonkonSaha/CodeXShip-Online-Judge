@@ -1,17 +1,14 @@
 package com.judge.myojudge.repository;
 
-import com.judge.myojudge.model.dto.SubmissionResponse;
 import com.judge.myojudge.model.entity.Submission;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.util.Set;
-
+import java.util.List;
 @Repository
 public interface SubmissionRepo extends JpaRepository<Submission,Long> {
 
@@ -31,15 +28,11 @@ public interface SubmissionRepo extends JpaRepository<Submission,Long> {
             @Param("search") String search,
             Pageable pageable);
 
-//    @Query(
-//            value = "SELECT * FROM submissions s " +
-//                    "JOIN musers u ON s.user_id = u.id " +
-//                    "WHERE u.mobile_number = :contact",
-//            countQuery = "SELECT COUNT(*) FROM submissions s " +
-//                    "JOIN musers u ON s.user_id = u.id " +
-//                    "WHERE u.mobile_number = :contact",
-//            nativeQuery = true
-//    )
-//    Page<Submission> findSubmissionsByContact(@Param("contact") String contact, Pageable pageable);
+   @Query("SELECT s FROM Submission s WHERE s.user.mobileNumber = :contact AND lower(s.handle) = lower(:handleName) AND lower(s.status) = lower(:accepted)")
+   List<Submission> findByContactAndHandleAndStatus(@Param("contact") String mobileNumber,
+                                              @Param("handleName") String handleName,
+                                              @Param("accepted") String accepted);
+
+
 
 }

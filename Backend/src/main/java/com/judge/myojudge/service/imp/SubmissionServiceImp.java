@@ -2,7 +2,10 @@ package com.judge.myojudge.service.imp;
 
 import com.judge.myojudge.config.Judge0Config;
 import com.judge.myojudge.exception.ProblemNotFoundException;
-import com.judge.myojudge.model.dto.*;
+import com.judge.myojudge.model.dto.ExecuteTestCase;
+import com.judge.myojudge.model.dto.SubmissionRequest;
+import com.judge.myojudge.model.dto.SubmissionResponse;
+import com.judge.myojudge.model.dto.TestcaseResultDTO;
 import com.judge.myojudge.model.entity.Problem;
 import com.judge.myojudge.model.entity.Submission;
 import com.judge.myojudge.model.entity.User;
@@ -12,6 +15,7 @@ import com.judge.myojudge.repository.SubmissionRepo;
 import com.judge.myojudge.repository.UserRepo;
 import com.judge.myojudge.service.SubmissionService;
 import com.judge.myojudge.service.TestCaseService;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -37,6 +41,7 @@ public class SubmissionServiceImp implements SubmissionService {
     private final SubmissionMapper submissionMapper;
 
     @Override
+    @Transactional
     public SubmissionResponse excuteCode(SubmissionRequest req) {
         User user= userRepo.findByMobileNumber(SecurityContextHolder.getContext().getAuthentication().getName()).orElseThrow(() -> new RuntimeException("User Not Found"));
         Problem problem = problemRepo.findById(req.getProblemId()).orElseThrow(() -> new ProblemNotFoundException("Problem Not Found With ID: " + req.getProblemId()));
@@ -86,12 +91,12 @@ public class SubmissionServiceImp implements SubmissionService {
         response.setVerdict(verdict);
         response.setTime(maxTimeTake);
         response.setMemory(maxSpaceTake);
-
         Submission submission= Submission.builder()
                 .language(req.getLanguage())
                 .userCode(req.getSubmissionCode().trim())
                 .status(verdict)
                 .memory((long) maxSpaceTake)
+                .handle(problem.getHandleName())
                 .time(maxTimeTake)
                 .totalTestcases(response.getTotal())
                 .passedTestcases(response.getPassed())
@@ -101,20 +106,26 @@ public class SubmissionServiceImp implements SubmissionService {
                 .build();
         problem.getSubmissions().add(submission);
         user.getSubmissions().add(submission);
-        user.setTotalCoinsEarned((user.getTotalCoinsEarned()==null?0: user.getTotalCoinsEarned())+problem.getCoins());
-        user.setTotalPresentCoins((user.getTotalPresentCoins()==null?0:user.getTotalPresentCoins())+problem.getCoins());
+        if(submissionRepo.findByContactAndHandleAndStatus(user.getMobileNumber(),problem.getHandleName(),"Accepted")==null){
+            user.setTotalCoinsEarned((user.getTotalCoinsEarned()==null?0: user.getTotalCoinsEarned())+problem.getCoins());
+            user.setTotalPresentCoins((user.getTotalPresentCoins()==null?0:user.getTotalPresentCoins())+problem.getCoins());
+        }else{
+            user.setTotalCoinsEarned((user.getTotalCoinsEarned()==null?0: user.getTotalCoinsEarned()));
+            user.setTotalPresentCoins((user.getTotalPresentCoins()==null?0:user.getTotalPresentCoins()));
+        }
         submissionRepo.save(submission);
         return response;
     }
 
     @Override
+    @Transactional
     public Page<SubmissionResponse> getAllSubmissionByUser(String contact, String search, Sort sort, int page, int size) {
         Pageable pageable = PageRequest.of(page,size,sort);
-        return submissionRepo.findSubmissionsByContact(contact,search,pageable).map(submissionMapper::toSubmissionResponse);
+        Page<SubmissionResponse> submissionResponses = submissionRepo.findSubmissionsByContact(contact,search,pageable).map(submissionMapper::toSubmissionResponse);
+        return submissionResponses;
     }
 
-    private TestcaseResultDTO executeSingleTestcase(String code, Integer languageId, ExecuteTestCase testcase) {
-
+    public TestcaseResultDTO executeSingleTestcase(String code, Integer languageId, ExecuteTestCase testcase) {
         String encodedCode = Base64.getEncoder().encodeToString(code.trim().getBytes());
         String encodedInput = Base64.getEncoder().encodeToString(testcase.getInput().getBytes());
         String encodedOutput = Base64.getEncoder().encodeToString(testcase.getOutput().getBytes());
@@ -157,7 +168,7 @@ public class SubmissionServiceImp implements SubmissionService {
                 tr.getStdout().trim().equals(testcase.getOutput().trim()) &&
                 "Accepted".equalsIgnoreCase(tr.getStatus());
         tr.setPassed(passed);
-        System.out.println(tr);
+//        System.out.println(tr);
         return tr;
     }
 

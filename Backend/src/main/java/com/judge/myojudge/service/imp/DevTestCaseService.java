@@ -2,7 +2,6 @@ package com.judge.myojudge.service.imp;
 
 import com.judge.myojudge.exception.ProblemNotFoundException;
 import com.judge.myojudge.model.dto.ExecuteTestCase;
-import com.judge.myojudge.model.dto.TestcaseDTO;
 import com.judge.myojudge.model.entity.Problem;
 import com.judge.myojudge.model.entity.TestCase;
 import com.judge.myojudge.repository.ProblemRepo;

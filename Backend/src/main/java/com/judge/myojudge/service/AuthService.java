@@ -4,7 +4,6 @@ import com.judge.myojudge.model.dto.LoginDTO;
 import com.judge.myojudge.model.dto.PasswordDTO;
 import com.judge.myojudge.model.dto.UpdateUserDTO;
 import com.judge.myojudge.model.entity.User;
-import com.judge.myojudge.response.ApiResponse;
 
 import java.util.Optional;
 

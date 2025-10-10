@@ -16,19 +16,16 @@ public interface ProblemRepo extends JpaRepository<Problem,Long> {
     Optional<Problem> findByHandleName(String handle);
     boolean existsByHandleName(String handle);
     @Query("SELECT p FROM Problem p " +
-            "WHERE p.type = :type AND (" +
-            "(:search IS NULL OR LOWER(p.title) LIKE LOWER(CONCAT('%', :search, '%')) " +
-            ")" +
-            "AND (:difficulty IS NULL OR LOWER(p.difficulty) LIKE LOWER(CONCAT('%', :difficulty, '%')))" +
-            ") " +
+            "WHERE (:type IS NULL OR :type = '' OR LOWER(TRIM(p.type)) = LOWER(TRIM(:type))) " +
+
             "ORDER BY p.id ASC")
     Page<Problem> findByCategoryORFilter(
             @Param("type") String type,
             @Param("search") String search,
             @Param("difficulty") String difficulty,
             Pageable pageable);
-    boolean existsByTitle(String title);
 
-    @Query("SELECT p FROM Problem p where lower(p.type)=lower(:category) ")
-    List<Problem> findByType(String category);
+    boolean existsByTitle(String title);
+@Query("SELECT p FROM Problem p where lower(p.type)=lower(:category) ")
+    List<Problem> findByType(@Param("category") String category);
 }

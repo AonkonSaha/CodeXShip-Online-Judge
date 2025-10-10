@@ -1,7 +1,10 @@
 package com.judge.myojudge.model.entity;
 
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "test_cases")
@@ -18,7 +21,7 @@ public class TestCase{
     private String filePath;
     private String handle;
     private String fileKey;
-    @ManyToOne(fetch = FetchType.EAGER, cascade = { CascadeType.PERSIST, CascadeType.MERGE})
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "problem_id")
     private Problem problem;
 

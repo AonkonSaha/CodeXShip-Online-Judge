@@ -148,9 +148,8 @@ const NavBar = () => {
           <NavLink to="/problem/category" className="hover:text-blue-500" onClick={toggleMenu}>
             Problems
           </NavLink>
-          <NavLink to="/submission" className="hover:text-blue-500" onClick={toggleMenu}>
-            Submissions
-          </NavLink>
+          {(isNormalUser || isContestUser || isAdmin) && (<NavLink to="/submission" className="hover:text-blue-500" onClick={toggleMenu}>Submissions</NavLink>)}
+
           <NavLink to="/contests" className="hover:text-blue-500" onClick={toggleMenu}>
             Contests
           </NavLink>

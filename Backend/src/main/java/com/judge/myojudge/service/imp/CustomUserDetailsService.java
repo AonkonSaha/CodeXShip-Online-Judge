@@ -1,12 +1,10 @@
 package com.judge.myojudge.service.imp;
 
+import com.judge.myojudge.model.entity.User;
 import com.judge.myojudge.model.entity.UserRole;
 import com.judge.myojudge.repository.UserRepo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-
-
-import com.judge.myojudge.model.entity.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;

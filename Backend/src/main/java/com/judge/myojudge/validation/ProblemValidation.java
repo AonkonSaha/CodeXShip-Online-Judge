@@ -2,7 +2,6 @@ package com.judge.myojudge.validation;
 
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public interface ProblemValidation {

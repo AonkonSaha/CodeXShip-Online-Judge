@@ -1,6 +1,7 @@
 package com.judge.myojudge.controller;
 
-import com.judge.myojudge.model.dto.*;
+import com.judge.myojudge.model.dto.ProblemDTO;
+import com.judge.myojudge.model.dto.ProblemWithSample;
 import com.judge.myojudge.response.ApiResponse;
 import com.judge.myojudge.service.AuthService;
 import com.judge.myojudge.service.ProblemService;
@@ -18,10 +19,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/problem")
@@ -35,9 +33,9 @@ public class ProblemController {
 
     @GetMapping(value="/v1/get/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<ProblemDTO>>fetchProblemForUpdate(@PathVariable("id") Long problemId
+    public ResponseEntity<ApiResponse<ProblemDTO>>fetchProblemForUpdate(@PathVariable Long id
     ) throws IOException {
-        ProblemDTO problemDTO= problemService.fetchOneProblemByID(problemId);
+        ProblemDTO problemDTO= problemService.fetchOneProblemByID(id);
         ApiResponse<ProblemDTO> apiResponse= ApiResponse.<ProblemDTO>builder()
                 .success(true)
                 .statusCode(HttpStatus.OK.value())
@@ -49,9 +47,9 @@ public class ProblemController {
     }
 
     @GetMapping(value="/v2/get/{id}")
-    public ResponseEntity<ApiResponse<ProblemWithSample>>fetchProblemForPage(@PathVariable("id") Long problemId
+    public ResponseEntity<ApiResponse<ProblemWithSample>>fetchProblemForPage(@PathVariable Long id
     ) {
-        ProblemWithSample problemWithSample= problemService.findProblemByID(problemId);
+        ProblemWithSample problemWithSample= problemService.findProblemByID(id);
         ApiResponse<ProblemWithSample> apiResponse=ApiResponse.<ProblemWithSample>builder()
                 .success(true)
                 .statusCode(HttpStatus.OK.value())
@@ -132,6 +130,7 @@ public class ProblemController {
     ) throws IOException {
             validationService.validateProblemDetails(new ProblemDTO(title, handle, difficulty,
                                                      type,problemStatement, multipartFiles));
+
             problemService.saveProblemWithId(problemId, title, handle, difficulty, type, problemStatement, multipartFiles);
             return ResponseEntity.noContent().build();
 

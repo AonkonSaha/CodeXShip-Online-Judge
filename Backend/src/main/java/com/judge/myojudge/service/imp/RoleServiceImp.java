@@ -5,11 +5,9 @@ import com.judge.myojudge.model.entity.UserRole;
 import com.judge.myojudge.repository.RoleRepo;
 import com.judge.myojudge.repository.UserRepo;
 import com.judge.myojudge.service.RoleService;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.HashSet;
 import java.util.Set;
 
 @Component
