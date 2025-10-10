@@ -35,9 +35,8 @@ public class ProblemController {
 
     @GetMapping(value="/v1/get/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<ProblemDTO>>fetchProblemForUpdate(@PathVariable String id
+    public ResponseEntity<ApiResponse<ProblemDTO>>fetchProblemForUpdate(@PathVariable("id") Long problemId
     ) throws IOException {
-        long problemId = Long.parseLong(id);
         ProblemDTO problemDTO= problemService.fetchOneProblemByID(problemId);
         ApiResponse<ProblemDTO> apiResponse= ApiResponse.<ProblemDTO>builder()
                 .success(true)
@@ -50,9 +49,8 @@ public class ProblemController {
     }
 
     @GetMapping(value="/v2/get/{id}")
-    public ResponseEntity<ApiResponse<ProblemWithSample>>fetchProblemForPage(@PathVariable String id
+    public ResponseEntity<ApiResponse<ProblemWithSample>>fetchProblemForPage(@PathVariable("id") Long problemId
     ) {
-        long problemId = Long.parseLong(id);
         ProblemWithSample problemWithSample= problemService.findProblemByID(problemId);
         ApiResponse<ProblemWithSample> apiResponse=ApiResponse.<ProblemWithSample>builder()
                 .success(true)
@@ -124,7 +122,7 @@ public class ProblemController {
     @PutMapping(value="/v1/update/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> updateProblemDetails(
-            @PathVariable("id") String id,
+            @PathVariable("id") Long problemId,
             @RequestParam("title") String title,
             @RequestParam("handle") String handle,
             @RequestParam("difficulty") String difficulty,
@@ -134,7 +132,6 @@ public class ProblemController {
     ) throws IOException {
             validationService.validateProblemDetails(new ProblemDTO(title, handle, difficulty,
                                                      type,problemStatement, multipartFiles));
-            long problemId = Long.parseLong(id);
             problemService.saveProblemWithId(problemId, title, handle, difficulty, type, problemStatement, multipartFiles);
             return ResponseEntity.noContent().build();
 
