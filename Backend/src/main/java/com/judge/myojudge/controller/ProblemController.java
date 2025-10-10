@@ -6,6 +6,7 @@ import com.judge.myojudge.service.AuthService;
 import com.judge.myojudge.service.ProblemService;
 import com.judge.myojudge.service.TestCaseService;
 import com.judge.myojudge.validation.ValidationService;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -96,6 +97,7 @@ public class ProblemController {
 
     @PostMapping(value="/v1/save" )
     @PreAuthorize("hasRole('ADMIN')")
+    @Transactional
     public ResponseEntity<?> createProblemDetails(
             @RequestParam("title") String title,
             @RequestParam("handle")String handle,

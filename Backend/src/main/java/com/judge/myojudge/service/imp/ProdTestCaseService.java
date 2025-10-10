@@ -1,83 +1,103 @@
 package com.judge.myojudge.service.imp;
 
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.ObjectMetadata;
-import com.amazonaws.services.s3.model.PutObjectRequest;
+import com.cloudinary.Cloudinary;
 import com.judge.myojudge.exception.ProblemNotFoundException;
 import com.judge.myojudge.model.dto.ExecuteTestCase;
-import com.judge.myojudge.model.dto.TestcaseDTO;
 import com.judge.myojudge.model.entity.Problem;
 import com.judge.myojudge.model.entity.TestCase;
+import com.judge.myojudge.repository.ProblemRepo;
 import com.judge.myojudge.repository.TestCaseRepo;
+import com.judge.myojudge.service.CloudinaryService;
 import com.judge.myojudge.service.ProblemService;
 import com.judge.myojudge.service.TestCaseService;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 @Profile("prod")
 public class ProdTestCaseService implements TestCaseService {
 
-    @Value("${testcase.folder.path}")
-    public String testCaseFolderPath;
     private final TestCaseRepo testCaseRepo;
     private final ProblemService problemService;
-    @Autowired
-    AmazonS3 s3Client;
-    @Value("${aws.s3.bucket-name}")
-    private String bucketName;
+    private final Cloudinary cloudinary;
+    private final CloudinaryService cloudinaryService;
+    private final ProblemRepo problemRepo;
 
     @Override
+    @Transactional(value = Transactional.TxType.REQUIRES_NEW)
     public void saveTestCases(String handle, String name, List<MultipartFile> testCaseFiles) throws IOException {
-
         Optional<Problem> problem = problemService.findProblemByHandle(handle);
-        if(problem.isEmpty()){
-            throw new ProblemNotFoundException("Problem Not Found Handle By: "+handle);
+
+        if (problem.isEmpty()) {
+            throw new ProblemNotFoundException("Problem Not Found Handle By: " + handle);
         }
-        TestCase testCase;
-        for(MultipartFile file:testCaseFiles)
-        {
-            String s3Key = uploadFile(file);
-            String fileUrl = getFileUrl(s3Key);
-            testCase = TestCase.builder()
+
+        for (MultipartFile file : testCaseFiles) {
+            Map uploadResult = cloudinaryService.uploadTestcase(file);
+            String fileUrl = uploadResult.get("secure_url").toString();
+            TestCase testCase = TestCase.builder()
                     .fileName(file.getOriginalFilename())
                     .filePath(fileUrl)
                     .handle(handle)
-                    .fileKey(s3Key)
+                    .fileKey(uploadResult.get("public_id").toString())
                     .build();
+
             testCase.setProblem(problem.get());
             testCaseRepo.save(testCase);
         }
+
     }
 
     @Override
     public List<ExecuteTestCase> getTestCaseWithFile(Long problemId) {
-        return List.of();
+        Problem problem = problemRepo.findById(problemId)
+                .orElseThrow(() -> new ProblemNotFoundException("Problem Not Found With ID: " + problemId));
+
+        List<TestCase> testCases = problem.getTestcases();
+        List<ExecuteTestCase> executeTestCases = new ArrayList<>();
+        List<ExecuteTestCase> inputs = new ArrayList<>();
+        List<ExecuteTestCase> outputs = new ArrayList<>();
+
+        for (TestCase testCase : testCases) {
+            String content = cloudinaryService.readCloudinaryFileForExecuting(testCase.getFilePath());
+
+            ExecuteTestCase executeTestCase = ExecuteTestCase.builder()
+                    .title(testCase.getFileName())
+                    .handle(testCase.getHandle())
+                    .build();
+
+            if (testCase.getFileName().endsWith(".in")) {
+                executeTestCase.setInput(content);
+                inputs.add(executeTestCase);
+            } else {
+                executeTestCase.setOutput(content);
+                outputs.add(executeTestCase);
+            }
+        }
+
+        if (inputs.size() != outputs.size()) {
+            throw new RuntimeException("Number of Input and Output files do not match");
+        }
+
+        for (int i = 0; i < inputs.size(); i++) {
+            ExecuteTestCase exTestCase = new ExecuteTestCase();
+            exTestCase.setInput(inputs.get(i).getInput());
+            exTestCase.setOutput(outputs.get(i).getOutput());
+            exTestCase.setTitle(inputs.get(i).getTitle());
+            exTestCase.setHandle(inputs.get(i).getHandle());
+            executeTestCases.add(exTestCase);
+        }
+
+        return executeTestCases;
     }
-
-    public String uploadFile(MultipartFile file) throws IOException {
-        String uniqueFileName = UUID.randomUUID() + "_" + file.getOriginalFilename();
-        ObjectMetadata metadata = new ObjectMetadata();
-        metadata.setContentLength(file.getSize());
-
-        s3Client.putObject(new PutObjectRequest(bucketName, uniqueFileName, file.getInputStream(), metadata));
-
-        return uniqueFileName;
-    }
-
-    public String getFileUrl(String fileKey) {
-        return s3Client.getUrl(bucketName, fileKey).toString();
-    }
-
-
 }

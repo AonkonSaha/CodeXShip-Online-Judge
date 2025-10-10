@@ -281,7 +281,7 @@ public class DevProblemService implements ProblemService {
     @Override
     public Page<ProblemWithSample> findProblemAllByCategory(String category,String search,String difficulty, Pageable pageable) {
         List<ProblemWithSample> problemWithSamples=new ArrayList<>();
-        Page<Problem> problems=problemRepo.findByType(category,search,difficulty,pageable);
+        Page<Problem> problems=problemRepo.findByCategoryORFilter(category,search,difficulty,pageable);
         if(problems.isEmpty()){
             throw new ProblemNotFoundException("There is no problem By "+category+" category..!");
         }
