@@ -5,13 +5,12 @@ import MonacoEditor from "@monaco-editor/react";
 import NavBar from "../NavBar_Footer/NavBarCus";
 import Footer from "../NavBar_Footer/Footer";
 import { AuthContext } from "../auth_component/AuthContext";
-import { BadgeDollarSign } from "lucide-react"; // Coins icon
+import { BadgeDollarSign } from "lucide-react"; 
 
 const ProblemDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { darkMode, coins } = useContext(AuthContext);
-
   const [code, setCode] = useState("");
   const [language, setLanguage] = useState("javascript");
   const [fileContent, setFileContent] = useState({});
@@ -20,6 +19,14 @@ const ProblemDetail = () => {
   const [leftWidth, setLeftWidth] = useState(50);
   const containerRef = useRef(null);
   const baseURL = process.env.REACT_APP_BACK_END_BASE_URL;
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const observer = new ResizeObserver(() => {
+    });
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, []);
 
   // Fetch problem
   useEffect(() => {
@@ -60,12 +67,10 @@ const ProblemDetail = () => {
     const containerRect = container.getBoundingClientRect();
 
     const handleMouseMove = (e) => {
-      let newLeftWidth = ((e.clientX - containerRect.left) / containerRect.width) * 100;
-
-      // Clamp width between 20% and 80%
+      let newLeftWidth =
+        ((e.clientX - containerRect.left) / containerRect.width) * 100;
       if (newLeftWidth < 20) newLeftWidth = 20;
       if (newLeftWidth > 80) newLeftWidth = 80;
-
       setLeftWidth(newLeftWidth);
     };
 
@@ -79,28 +84,31 @@ const ProblemDetail = () => {
   };
 
   // Submit solution
-  const handleSubmit = async () => {
+  const handleSubmit =  () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem("token");
-      const res = await fetch(`${baseURL}/api/submission/v1/submit`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          problem_id: id,
-          submission_code: code,
-          language,
-        }),
-      });
-      const data = await res.json();
+      // const token = localStorage.getItem("token");
+      // const res = await fetch(`${baseURL}/api/submission/v1/submit`, {
+      //   method: "POST",
+      //   headers: {
+      //     "Content-Type": "application/json",
+      //     Authorization: `Bearer ${token}`,
+      //   },
+      //   body: JSON.stringify({
+      //     problem_id: id,
+      //     submission_code: code,
+      //     language,
+      //   }),
+      // });
+      // const data = await res.json();
 
       navigate("/submission-result", {
         state: {
-          submissionStatus: "Processed",
-          executionResult: data.data,
+          problem_id: id,
+          submission_code: code,
+          language:language,
+          problemName: fileContent.title,
+          createdAt: fileContent.created_at
         },
       });
     } catch (err) {
@@ -111,15 +119,19 @@ const ProblemDetail = () => {
     }
   };
 
-  // Run sample test
   const handleRunSample = () => {
     if (!fileContent.sampleTestcase) return;
-    alert("Sample Test Run:\n\nInput:\n" + fileContent.sampleTestcase.join("\n"));
+    alert(
+      "Sample Test Run:\n\nInput:\n" + fileContent.sampleTestcase.join("\n")
+    );
   };
 
-  // Format sample input/output
-  const formattedInput = fileContent.sampleTestcase ? fileContent.sampleTestcase.join("\n") : "";
-  const formattedOutput = fileContent.sampleOutput ? fileContent.sampleOutput.join("\n") : "";
+  const formattedInput = fileContent.sampleTestcase
+    ? fileContent.sampleTestcase.join("\n")
+    : "";
+  const formattedOutput = fileContent.sampleOutput
+    ? fileContent.sampleOutput.join("\n")
+    : "";
 
   const copyToClipboard = (text) => {
     navigator.clipboard.writeText(text).then(
@@ -129,23 +141,30 @@ const ProblemDetail = () => {
   };
 
   return (
-    <>
+    <div
+      className={`flex flex-col min-h-screen ${
+        darkMode ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-900"
+      }`}
+    >
       <NavBar />
-      <div
+
+      <main
         ref={containerRef}
-        className={`flex flex-col md:flex-row h-screen overflow-hidden transition-colors duration-300 ${
-          darkMode ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-900"
-        }`}
+        className="flex flex-col md:flex-row flex-grow overflow-hidden transition-colors duration-300"
       >
         {/* Left Panel */}
         <div
           style={{ width: `${leftWidth}%` }}
           className={`p-5 overflow-y-auto border-b md:border-r transition-all duration-300 rounded-lg ${
-            darkMode ? "bg-gray-900 border-gray-800" : "bg-white border-gray-300"
+            darkMode
+              ? "bg-gray-900 border-gray-800"
+              : "bg-white border-gray-300"
           }`}
         >
           <div className="flex justify-between items-center mb-5">
-            <h1 className="text-2xl font-bold">{fileContent.title || "Problem Title"}</h1>
+            <h1 className="text-2xl font-bold">
+              {fileContent.title || "Problem Title"}
+            </h1>
             <div className="flex items-center gap-2">
               <span className="bg-blue-500 text-white px-4 py-1 rounded-full text-sm uppercase">
                 {fileContent.difficulty || "Medium"}
@@ -153,31 +172,31 @@ const ProblemDetail = () => {
               <span className="bg-yellow-400 text-gray-900 px-3 py-1 rounded-full text-sm font-semibold flex items-center gap-1">
                 <BadgeDollarSign size={16} /> {fileContent.coins || 0}
               </span>
-              {/* {coins !== null && (
-                <span className="bg-green-500 text-white px-3 py-1 rounded-full text-sm font-semibold flex items-center gap-1">
-                  <BadgeDollarSign size={16} /> {coins}
-                </span>
-              )} */}
             </div>
           </div>
 
           <div
             className="prose dark:prose-invert"
-            dangerouslySetInnerHTML={{ __html: fileContent.problemStatement || "" }}
+            dangerouslySetInnerHTML={{
+              __html: fileContent.problemStatement || "",
+            }}
           />
 
           {(fileContent.sampleTestcase || fileContent.sampleOutput) && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-5">
-              {/* Input */}
               <div
                 className={`border p-4 flex flex-col items-center relative rounded-md transition-all duration-300 ${
-                  darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-300"
+                  darkMode
+                    ? "bg-gray-800 border-gray-700"
+                    : "bg-white border-gray-300"
                 }`}
               >
                 <h3 className="text-lg font-semibold mb-2">Input</h3>
                 <textarea
                   className={`w-full p-3 text-sm font-mono rounded-md resize-none shadow-inner transition-all duration-300 ${
-                    darkMode ? "bg-gray-700 text-gray-100 border-gray-600" : "bg-white text-gray-700 border-gray-300"
+                    darkMode
+                      ? "bg-gray-700 text-gray-100 border-gray-600"
+                      : "bg-white text-gray-700 border-gray-300"
                   }`}
                   value={formattedInput}
                   readOnly
@@ -190,16 +209,19 @@ const ProblemDetail = () => {
                 />
               </div>
 
-              {/* Output */}
               <div
                 className={`border p-4 flex flex-col items-center relative rounded-md transition-all duration-300 ${
-                  darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-300"
+                  darkMode
+                    ? "bg-gray-800 border-gray-700"
+                    : "bg-white border-gray-300"
                 }`}
               >
                 <h3 className="text-lg font-semibold mb-2">Output</h3>
                 <textarea
                   className={`w-full p-3 text-sm font-mono rounded-md resize-none shadow-inner transition-all duration-300 ${
-                    darkMode ? "bg-gray-700 text-gray-100 border-gray-600" : "bg-white text-gray-700 border-gray-300"
+                    darkMode
+                      ? "bg-gray-700 text-gray-100 border-gray-600"
+                      : "bg-white text-gray-700 border-gray-300"
                   }`}
                   value={formattedOutput}
                   readOnly
@@ -225,11 +247,7 @@ const ProblemDetail = () => {
         />
 
         {/* Right Panel */}
-        <div
-          className={`p-5 w-full md:w-1/2 flex flex-col transition-colors duration-300 ${
-            darkMode ? "bg-gray-900" : "bg-gray-100"
-          }`}
-        >
+        <div className="p-5 w-full md:w-1/2 flex flex-col transition-colors duration-300">
           <div className="flex justify-between items-center mb-3">
             <h2 className="text-xl font-semibold">Code Editor</h2>
             <div className="flex items-center gap-2">
@@ -241,7 +259,9 @@ const ProblemDetail = () => {
                 value={language}
                 onChange={(e) => setLanguage(e.target.value)}
                 className={`px-2 py-1 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 ${
-                  darkMode ? "bg-gray-800 text-gray-100 border-gray-600" : "bg-white text-gray-900 border-gray-300"
+                  darkMode
+                    ? "bg-gray-800 text-gray-100 border-gray-600"
+                    : "bg-white text-gray-900 border-gray-300"
                 }`}
               >
                 <option value="javascript">JavaScript</option>
@@ -276,7 +296,9 @@ const ProblemDetail = () => {
               onClick={handleSubmit}
               disabled={loading}
               className={`flex-1 px-6 py-3 font-bold rounded-lg transition-all duration-300 ${
-                loading ? "bg-gray-400 cursor-not-allowed" : "bg-green-500 hover:bg-green-600 text-white"
+                loading
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-green-500 hover:bg-green-600 text-white"
               }`}
             >
               {loading ? "Submitting..." : "Submit Solution"}
@@ -293,13 +315,16 @@ const ProblemDetail = () => {
           {loading && (
             <div className="mt-5 flex items-center gap-3 animate-fadeIn">
               <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-              <span className="text-blue-500 font-semibold text-lg">Processing{processingDots}</span>
+              <span className="text-blue-500 font-semibold text-lg">
+                Processing{processingDots}
+              </span>
             </div>
           )}
         </div>
-      </div>
+      </main>
+
       <Footer />
-    </>
+    </div>
   );
 };
 

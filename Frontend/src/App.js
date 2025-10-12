@@ -1,6 +1,7 @@
 import './App.css';
 import { Routes, Route, BrowserRouter } from 'react-router-dom';
 import { AuthProvider } from './auth_component/AuthContext';
+import { Toaster } from 'react-hot-toast'; // ✅ Add toast provider
 
 import HomePage from './home/home';
 import ProblemPage from './problem_page_code_editor/ProblemPage';
@@ -21,6 +22,20 @@ import SubmissionsPage from './problem_page_code_editor/SubmissionPage';
 function App() {
   return (
       <AuthProvider>
+        {/* ✅ Global toast system */}
+        <Toaster
+          position="top-right"
+          toastOptions={{
+            duration: 2000,
+            style: {
+              borderRadius: '10px',
+              fontSize: '14px',
+              padding: '12px 16px',
+              fontWeight: 500,
+            },
+          }}
+        />
+
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={<HomePage />} />
@@ -32,7 +47,6 @@ function App() {
           <Route path="/verify-email" element={<VerifyEmail />} />
 
           {/* ================= Protected Routes ================= */}
-
           {/* Shared access for all authenticated users */}
           <Route element={<ProtectedRoute roles={["NORMAL_USER", "CONTEST_USER", "ADMIN"]} />}>
             <Route path="/submission" element={<SubmissionsPage />} />
@@ -54,7 +68,7 @@ function App() {
           </Route>
         </Routes>
       </AuthProvider>
-  );
+ );
 }
 
 export default App;

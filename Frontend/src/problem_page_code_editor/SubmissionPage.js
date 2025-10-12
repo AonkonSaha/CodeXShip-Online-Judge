@@ -71,9 +71,11 @@ export default function SubmissionsPage() {
   }
 
   return (
-    <>
+    <div className={`flex flex-col min-h-screen ${darkMode ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-800"}`}>
       <NavBar />
-      <div className={`p-4 sm:p-6 min-h-screen ${darkMode ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-800"}`}>
+      
+      {/* Main content grows to fill remaining space */}
+      <main className="flex-grow p-4 sm:p-6">
         {/* Title + Search */}
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 sm:mb-6 gap-4">
           <h1 className="text-2xl sm:text-3xl font-bold">My Submissions</h1>
@@ -154,8 +156,9 @@ export default function SubmissionsPage() {
             </div>
           </div>
         )}
-      </div>
+      </main>
+
       <Footer />
-    </>
+    </div>
   );
 }

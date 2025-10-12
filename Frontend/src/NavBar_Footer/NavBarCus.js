@@ -9,9 +9,10 @@ import {
   DropdownMenuItem,
 } from "../components/dropdown-menu";
 import { Coins } from "lucide-react"; // Coin icon
+import Logout from "../auth_component/Logout";
 
 const NavBar = () => {
-  const { user, logout, darkMode, toggleDarkMode, coins, isAdmin, isContestUser, isNormalUser} = useContext(AuthContext);
+  const { user, darkMode, toggleDarkMode, coins, isAdmin, isContestUser, isNormalUser} = useContext(AuthContext);
   const [isOpen, setIsOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const profileRef = useRef(null);
@@ -112,8 +113,8 @@ const NavBar = () => {
                     )}
                     <DropdownMenuItem
                       onClick={() => {
-                        logout();
                         setIsProfileOpen(false);
+                        navigate("/logout");
                       }}
                     >
                       Logout
@@ -200,10 +201,11 @@ const NavBar = () => {
               )}
               <button
                 onClick={() => {
-                  logout();
                   toggleMenu();
+                  navigate("/logout");
                 }}
                 className="hover:text-blue-500"
+                
               >
                 Logout
               </button>

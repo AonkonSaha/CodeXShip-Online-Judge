@@ -94,23 +94,10 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const logout = async () => {
-    const token = localStorage.getItem("token");
-    try {
-      if (token) {
-        await axios.post(
-          `${baseURL}/api/auth/v1/logout`,
-          {},
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-      }
-    } catch (error) {
-      console.error("Logout failed:", error);
-    } finally {
+  const logout = ()=> {
       localStorage.removeItem("token");
       setUser(null);
       setCoins(null);
-    }
   };
 
   // ================== Dark Mode ==================
