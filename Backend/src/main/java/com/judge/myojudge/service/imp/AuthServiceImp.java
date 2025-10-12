@@ -48,7 +48,7 @@ public class AuthServiceImp implements AuthService {
     public void logout(String token)
     {
         String username=jwtUtil.extractUsername(token);
-        Optional<User> user=userRepository.findByUsername(username);
+        Optional<User> user=userRepository.findByMobileNumber(username);
         if(user.isEmpty()){
           throw new UserNotFoundException("User not found");
         }

@@ -29,14 +29,22 @@ public class GlobalExceptionHandler {
         List<ErrorResponse> errorResponses=new ArrayList<>();
         exception.getBindingResult().getAllErrors().forEach(error -> {
             String message;
+            String field="";
             if(error instanceof FieldError fieldError){
-                message= fieldError.getField() + " : "+error.getDefaultMessage();
+                message= error.getDefaultMessage();
+                field=fieldError.getField();
             }
             else {
                 message= error.getObjectName()+" : "+error.getDefaultMessage();
             }
 
-            ErrorResponse errorResponse = buildError(HttpStatus.BAD_REQUEST, message, request.getRequestURI());
+            ErrorResponse errorResponse= ErrorResponse.builder()
+                            .field(field)
+                            .error(message)
+                            .status(HttpStatus.BAD_REQUEST.value())
+                            .path(request.getRequestURI())
+                            .message(message)
+                            .build();
             errorResponses.add(errorResponse);
         });
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResponses);
@@ -106,7 +114,7 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(buildError(HttpStatus.INTERNAL_SERVER_ERROR,"You must be logged in to access this resource!", request.getRequestURI()));
     }
 
-    private ErrorResponse buildError(HttpStatus status, String message, String path) {
+    private ErrorResponse buildError(HttpStatus status,String message, String path) {
 
         return new ErrorResponse(
                 status.value(),

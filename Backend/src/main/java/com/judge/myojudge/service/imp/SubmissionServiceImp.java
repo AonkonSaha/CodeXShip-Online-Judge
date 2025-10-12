@@ -55,13 +55,13 @@ public class SubmissionServiceImp implements SubmissionService {
         }
 
         SubmissionResponse response = new SubmissionResponse();
-        response.setResults(results);
-        response.setTotal(results.size());
-        response.setPassed((int) results.stream().filter(TestcaseResultDTO::isPassed).count());
+//        response.setResults(results);
+//        response.setTotal(results.size());
+//        response.setPassed((int) results.stream().filter(TestcaseResultDTO::isPassed).count());
 
         float maxTimeTake=0; long maxSpaceTake=0;
-
         String verdict=""; boolean flag=true;
+        List<TestcaseResultDTO> passedTestcases=new ArrayList<>();
 
         for(TestcaseResultDTO result:results){
 
@@ -70,27 +70,42 @@ public class SubmissionServiceImp implements SubmissionService {
 
             if(flag && result.getStatus().equalsIgnoreCase("Accepted")){
                 verdict="Accepted";
+                passedTestcases.add(result);
             }
             else if(flag && result.getStatus().equalsIgnoreCase("Wrong Answer")){
                 verdict="Wrong Answer";
                 flag=false;
+                passedTestcases.add(result);
+                break;
             }
             else if(flag && result.getStatus().equalsIgnoreCase("Runtime Error")){
                 verdict="Runtime Error";
                 flag=false;
+                passedTestcases.add(result);
+                break;
             }
             else if (flag && result.getStatus().equalsIgnoreCase("Compilation Error")) {
                 verdict="Compilation Error";
                 flag=false;
+                break;
             }
             else if (flag && result.getStatus().equalsIgnoreCase("Time Limit Exceeded")) {
                 verdict="Time Limit Exceeded";
                 flag=false;
+                break;
             }
         }
+        response.setResults(passedTestcases);
+        response.setTotal(results.size());
+
+        if(!flag && verdict.equals("Compilation Error"))response.setPassed(0);
+        if(!flag && !verdict.equals("Compilation Error"))response.setPassed(passedTestcases.size()-1);
+        else response.setPassed(passedTestcases.size());
+
         response.setVerdict(verdict);
         response.setTime(maxTimeTake);
         response.setMemory(maxSpaceTake);
+        response.setProblemName(problem.getTitle());
         Submission submission= Submission.builder()
                 .language(req.getLanguage())
                 .userCode(req.getSubmissionCode().trim())
