@@ -18,6 +18,10 @@ import SubmissionHistory from './problem_page_code_editor/SubmissionHistory';
 import Profile from './components/profile';
 import SubmissionResult from './problem_page_code_editor/SubmissionResult';
 import SubmissionsPage from './problem_page_code_editor/SubmissionPage';
+import ContestPage from './contest/ContestListPage';
+import ContestListPage from './contest/ContestListPage';
+import CoinRewardPage from './CoinReward/CoinRewardPage';
+import RankPage from './components/RankPage';
 
 function App() {
   return (
@@ -42,15 +46,19 @@ function App() {
           <Route path="/problem/page/:id" element={<ProblemPage />} />
           <Route path="/category/:category" element={<ProblemCategoryPage />} />
           <Route path="/problem/category" element={<ProblemCategoryList />} />
+          <Route path="/contest" element={<ContestListPage/>} />
           <Route path="/register" element={<Register />} />
           <Route path="/login" element={<Login />} />
           <Route path="/verify-email" element={<VerifyEmail />} />
+          <Route path="/ranking" element={<RankPage/>} />
+
 
           {/* ================= Protected Routes ================= */}
           {/* Shared access for all authenticated users */}
           <Route element={<ProtectedRoute roles={["NORMAL_USER", "CONTEST_USER", "ADMIN"]} />}>
             <Route path="/submission" element={<SubmissionsPage />} />
             <Route path="/submission-result" element={<SubmissionResult />} />
+            <Route path="/reward" element={<CoinRewardPage/>} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/submissions/history" element={<SubmissionHistory />} />
             <Route path="/logout" element={<Logout />} />

@@ -16,11 +16,14 @@ const SubmissionResult = () => {
 
   const [executionResult, setExecutionResult] = useState(null);
   const [loading, setLoading] = useState(true);
+  let didSubmit=false;
 
   useEffect(() => {
     if (!problem_id || !submission_code || !language) return;
 
     const submitCode = async () => {
+      if(didSubmit)return;
+      didSubmit=true;
       try {
         const token = localStorage.getItem("token");
         const res = await fetch(`${baseURL}/api/submission/v1/submit`, {
@@ -117,7 +120,7 @@ const SubmissionResult = () => {
           <table className={`w-full table-auto divide-y ${darkMode ? "divide-gray-700" : "divide-gray-300"}`}>
             <thead className={`${darkMode ? "bg-gray-800 text-gray-200" : "bg-gray-100 text-gray-800"}`}>
               <tr className="text-sm md:text-base">
-                <th className="px-3 md:px-4 py-2 text-left">Submission ID</th>
+                <th className="px-3 md:px-4 py-2 text-left">#SubmissionID</th>
                 <th className="px-3 md:px-4 py-2 text-left">Problem</th>
                 <th className="px-3 md:px-4 py-2 text-left">Language</th>
                 <th className="px-3 md:px-4 py-2 text-left">Date</th>
@@ -154,7 +157,8 @@ const SubmissionResult = () => {
           <table className={`w-full table-auto min-w-[600px] divide-y ${darkMode ? "divide-gray-700" : "divide-gray-300"}`}>
             <thead className={`${darkMode ? "bg-gray-800 text-gray-200" : "bg-gray-100 text-gray-800"}`}>
               <tr className="text-sm md:text-base">
-                <th className="px-3 md:px-4 py-2 text-left">#</th>
+                <th className="px-3 md:px-3 py-2 text-left">#Testcase</th>
+                
                 <th className="px-3 md:px-4 py-2 text-left">Status</th>
                 <th className="px-3 md:px-4 py-2 text-left">Expected</th>
                 <th className="px-3 md:px-4 py-2 text-left">Time (s)</th>

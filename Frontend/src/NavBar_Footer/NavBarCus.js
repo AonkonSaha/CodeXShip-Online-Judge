@@ -51,9 +51,13 @@ const NavBar = () => {
         <div className="hidden md:flex flex-grow justify-center space-x-4 text-sm">
           <NavLink to="/" className="hover:text-blue-500">Home</NavLink>
           <NavLink to="/problem/category" className="hover:text-blue-500">Problems</NavLink>
+          <NavLink to="/contest" className="hover:text-blue-500">Contests</NavLink>
           {(isNormalUser || isContestUser || isAdmin) && (<NavLink to="/submission" className="hover:text-blue-500">Submissions</NavLink>)}
-          <NavLink to="/contests" className="hover:text-blue-500">Contests</NavLink>
-          <NavLink to="/leaderboard" className="hover:text-blue-500">Leaderboard</NavLink>
+          <NavLink to="/ranking" className="hover:text-blue-500">Ranking</NavLink>
+
+          {(isNormalUser || isContestUser || isAdmin) && (<NavLink to="/reward" className="hover:text-blue-500">Reward</NavLink>)}
+
+          {/* <NavLink to="/leaderboard" className="hover:text-blue-500">Leaderboard</NavLink> */}
         </div>
 
         {/* Right Section */}
@@ -151,11 +155,11 @@ const NavBar = () => {
           </NavLink>
           {(isNormalUser || isContestUser || isAdmin) && (<NavLink to="/submission" className="hover:text-blue-500" onClick={toggleMenu}>Submissions</NavLink>)}
 
-          <NavLink to="/contests" className="hover:text-blue-500" onClick={toggleMenu}>
+          <NavLink to="/contest" className="hover:text-blue-500" onClick={toggleMenu}>
             Contests
           </NavLink>
-          <NavLink to="/leaderboard" className="hover:text-blue-500" onClick={toggleMenu}>
-            Leaderboard
+          <NavLink to="/reward" className="hover:text-blue-500" onClick={toggleMenu}>
+            Reward
           </NavLink>
 
           {/* Coins in Mobile */}
