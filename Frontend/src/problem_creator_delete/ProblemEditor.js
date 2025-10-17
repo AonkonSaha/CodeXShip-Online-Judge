@@ -4,20 +4,19 @@ import { useParams } from "react-router-dom";
 import Footer from "../NavBar_Footer/Footer";
 import RichTextEditor from "./RichTextEditor";
 import NavBar from "../NavBar_Footer/NavBarCus";
-import { AuthContext } from "../auth_component/AuthContext"; 
+import { AuthContext } from "../auth_component/AuthContext"; // Import dark mode context
 
 const ProblemEditor = () => {
   const { id } = useParams();
   const token = localStorage.getItem("token");
   const baseURL = process.env.REACT_APP_BACK_END_BASE_URL;
-  const { darkMode } = useContext(AuthContext); 
+  const { darkMode } = useContext(AuthContext); // Access dark mode context
 
   const [problem, setProblem] = useState({
     title: "",
     handle: "",
     difficulty: "",
     type: "",
-    coin:"",
     problemStatement: "",
   });
   const [files, setFiles] = useState([]);
@@ -30,8 +29,9 @@ const ProblemEditor = () => {
             `${baseURL}/api/problem/v1/get/${id}`,
             { headers: { Authorization: `Bearer ${token}` } }
           );
-          const { title, handle, difficulty, type, coin, problemStatement, testcase } = response.data.data;
-          setProblem({ title, handle, difficulty, type, coin, problemStatement });
+          const { title, handle, difficulty, type, problemStatement, testcase } = response.data.data;
+          alert(testcase);
+          setProblem({ title, handle, difficulty, type, problemStatement });
           setFiles(testcase.map((tc) => ({ name: tc.fileName, file: tc })));
         } catch (error) {
           alert("Problem Cannot Fetch for Updating!");
@@ -148,7 +148,7 @@ const ProblemEditor = () => {
 
               {/* File List */}
               {files.length > 0 && (
-                <ul className="bg-gray-900 p-4 rounded-md">
+                <ul className="bg-gray-100 p-4 rounded-md">
                   {files.map((file, index) => (
                     <li key={index} className="flex justify-between items-center py-1">
                       <span className="truncate">{file.name}</span>

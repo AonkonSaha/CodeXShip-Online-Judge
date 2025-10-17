@@ -54,11 +54,11 @@ public class User {
     private Boolean activityStatus;
 
     @Column(name = "total_coins_earned")
-    private Long TotalCoinsEarned = 0L;
+    private Long totalCoinsEarned = 0L;
     @Column(name= "total_coins_expend")
-    private Long TotalCoinsExpend = 0L;
+    private Long totalCoinsExpend = 0L;
     @Column(name= "total_present_coins")
-    private Long TotalPresentCoins = 0L;
+    private Long totalPresentCoins = 0L;
     @Column(name= "total_problems_solved")
     private Long totalProblemsSolved;
     @Column(name= "total_problems_attempted")

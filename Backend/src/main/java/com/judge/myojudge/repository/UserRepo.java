@@ -1,6 +1,8 @@
 package com.judge.myojudge.repository;
 
 import com.judge.myojudge.model.entity.User;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -24,7 +26,10 @@ public interface UserRepo extends JpaRepository<User, Long> {
 
     boolean existsByEmail(String email);
 
-    @Query("SELECT u FROM User u order by (u.totalProblemsSolved+u.TotalPresentCoins) ASC")
-    List<User> findAllUserByRank();
+    @Query(value = "SELECT * FROM musers u " +
+            "WHERE (:search IS NULL OR :search = '' OR LOWER(u.user_name) LIKE LOWER(CONCAT('%', :search, '%'))) " +
+            "ORDER BY (COALESCE(u.total_problems_solved,0) + COALESCE(u.total_present_coins,0)) DESC",
+            nativeQuery = true)
+    Page<User> findAllUserByRank(@Param("search") String search, Pageable pageable);
 }
 

@@ -1,6 +1,6 @@
 import React, { useContext, useState, useRef, useEffect } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
-import { Menu, X, Moon, Sun } from "lucide-react"; 
+import { Menu, X, Moon, Sun } from "lucide-react"; // Icons
 import { AuthContext } from "../auth_component/AuthContext";
 import Button from "../components/button";
 import { Avatar, AvatarImage, AvatarFallback } from "../components/avatar";
@@ -8,19 +8,18 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
 } from "../components/dropdown-menu";
-import { Coins } from "lucide-react"; // Coin icon
-import Logout from "../auth_component/Logout";
 
 const NavBar = () => {
-  const { user, darkMode, toggleDarkMode, coins, isAdmin, isContestUser, isNormalUser} = useContext(AuthContext);
-  const [isOpen, setIsOpen] = useState(false);
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const { user, logout, darkMode, toggleDarkMode } = useContext(AuthContext);
+  const [isOpen, setIsOpen] = useState(false); // Mobile menu
+  const [isProfileOpen, setIsProfileOpen] = useState(false); // Profile dropdown
   const profileRef = useRef(null);
   const navigate = useNavigate();
 
   const toggleMenu = () => setIsOpen(!isOpen);
   const toggleProfile = () => setIsProfileOpen(!isProfileOpen);
 
+  // Navigate to profile on avatar click
   const handleProfileClick = () => {
     navigate("/profile");
     setIsProfileOpen(false);
@@ -38,11 +37,7 @@ const NavBar = () => {
   }, []);
 
   return (
-    <header
-      className={`sticky top-0 z-50 border-b transition-all duration-300 ${
-        darkMode ? "bg-gray-900 text-white" : "bg-white text-gray-800"
-      }`}
-    >
+    <header className={`sticky top-0 z-50 border-b transition-all duration-300 ${darkMode ? "bg-gray-900 text-white" : "bg-white text-gray-800"}`}>
       <nav className="container mx-auto flex justify-between items-center py-2 px-4">
         {/* Logo */}
         <NavLink to="/" className="text-lg font-bold">CodeXShip</NavLink>
@@ -51,13 +46,9 @@ const NavBar = () => {
         <div className="hidden md:flex flex-grow justify-center space-x-4 text-sm">
           <NavLink to="/" className="hover:text-blue-500">Home</NavLink>
           <NavLink to="/problem/category" className="hover:text-blue-500">Problems</NavLink>
-          <NavLink to="/contest" className="hover:text-blue-500">Contests</NavLink>
-          {(isNormalUser || isContestUser || isAdmin) && (<NavLink to="/submission" className="hover:text-blue-500">Submissions</NavLink>)}
-          <NavLink to="/ranking" className="hover:text-blue-500">Ranking</NavLink>
-
-          {(isNormalUser || isContestUser || isAdmin) && (<NavLink to="/reward" className="hover:text-blue-500">Reward</NavLink>)}
-
-          {/* <NavLink to="/leaderboard" className="hover:text-blue-500">Leaderboard</NavLink> */}
+          <NavLink to="/submission" className="hover:text-blue-500">Submissions</NavLink>
+          <NavLink to="/contests" className="hover:text-blue-500">Contests</NavLink>
+          <NavLink to="/leaderboard" className="hover:text-blue-500">Leaderboard</NavLink>
         </div>
 
         {/* Right Section */}
@@ -65,14 +56,6 @@ const NavBar = () => {
           <Button variant="ghost" onClick={toggleDarkMode} className="p-1">
             {darkMode ? <Sun size={18} className="text-yellow-400" /> : <Moon size={18} />}
           </Button>
-
-          {/* Show Coins if user is logged in */}
-          {user && (
-            <div className="flex items-center gap-1 text-sm font-medium">
-              <Coins size={18} className="text-yellow-500" />
-              <span>{coins ?? 0}</span>
-            </div>
-          )}
 
           {!user ? (
             <>
@@ -92,37 +75,20 @@ const NavBar = () => {
               </button>
 
               {isProfileOpen && (
-                <div
-                  className={`absolute right-0 mt-2 w-48 rounded-md shadow-lg z-50 ${
-                    darkMode ? "bg-gray-900 text-white" : "bg-white text-gray-800"
-                  }`}
-                >
+                <div className={`absolute right-0 mt-2 w-48 rounded-md shadow-lg z-50 ${darkMode ? "bg-gray-900 text-white" : "bg-white text-gray-800"}`}>
                   <DropdownMenuContent>
-                    <DropdownMenuItem onClick={handleProfileClick}>
-                      Profile
-                    </DropdownMenuItem>
-                    {isAdmin && (
+                    <DropdownMenuItem onClick={handleProfileClick}>Profile</DropdownMenuItem>
+                    {user.role === "ADMIN" && (
                       <>
                         <DropdownMenuItem asChild>
-                          <NavLink to={`/editproblem/${null}`} onClick={() => setIsProfileOpen(false)}>
-                            Create Problem
-                          </NavLink>
+                          <NavLink to={`/editproblem/${null}`} onClick={() => setIsProfileOpen(false)}>Create Problem</NavLink>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
-                          <NavLink to="/deleteproblem" onClick={() => setIsProfileOpen(false)}>
-                            Delete Problem
-                          </NavLink>
+                          <NavLink to="/deleteproblem" onClick={() => setIsProfileOpen(false)}>Delete Problem</NavLink>
                         </DropdownMenuItem>
                       </>
                     )}
-                    <DropdownMenuItem
-                      onClick={() => {
-                        setIsProfileOpen(false);
-                        navigate("/logout");
-                      }}
-                    >
-                      Logout
-                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => { logout(); setIsProfileOpen(false); }}>Logout</DropdownMenuItem>
                   </DropdownMenuContent>
                 </div>
               )}
@@ -137,82 +103,34 @@ const NavBar = () => {
       </nav>
 
       {/* Mobile Menu */}
-      <div
-        className={`absolute top-14 left-0 w-full shadow-md md:hidden transition-all duration-300 ${
-          isOpen ? "block" : "hidden"
-        }`}
-      >
-        <div
-          className={`flex flex-col space-y-2 p-3 ${
-            darkMode ? "bg-gray-900 text-white" : "bg-white text-gray-800"
-          }`}
-        >
-          <NavLink to="/" className="hover:text-blue-500" onClick={toggleMenu}>
-            Home
-          </NavLink>
-          <NavLink to="/problem/category" className="hover:text-blue-500" onClick={toggleMenu}>
-            Problems
-          </NavLink>
-          {(isNormalUser || isContestUser || isAdmin) && (<NavLink to="/submission" className="hover:text-blue-500" onClick={toggleMenu}>Submissions</NavLink>)}
+      <div className={`absolute top-14 left-0 w-full shadow-md md:hidden transition-all duration-300 ${isOpen ? "block" : "hidden"}`}>
+        <div className={`flex flex-col space-y-2 p-3 ${darkMode ? "bg-gray-900 text-white" : "bg-white text-gray-800"}`}>
+          <NavLink to="/" className="hover:text-blue-500" onClick={toggleMenu}>Home</NavLink>
+          <NavLink to="/problem/category" className="hover:text-blue-500" onClick={toggleMenu}>Problems</NavLink>
+          <NavLink to="/submission" className="hover:text-blue-500" onClick={toggleMenu}>Submissions</NavLink>
 
-          <NavLink to="/contest" className="hover:text-blue-500" onClick={toggleMenu}>
-            Contests
-          </NavLink>
-          <NavLink to="/reward" className="hover:text-blue-500" onClick={toggleMenu}>
-            Reward
-          </NavLink>
-
-          {/* Coins in Mobile */}
-          {user && (
-            <div className="flex items-center gap-1 text-sm font-medium">
-              <Coins size={18} className="text-yellow-500" />
-              <span>{coins ?? 0}</span>
-            </div>
-          )}
+          <NavLink to="/contests" className="hover:text-blue-500" onClick={toggleMenu}>Contests</NavLink>
+          <NavLink to="/leaderboard" className="hover:text-blue-500" onClick={toggleMenu}>Leaderboard</NavLink>
 
           <Button variant="ghost" onClick={toggleDarkMode} className="text-sm">
-            {darkMode ? (
-              <Sun size={18} className="text-yellow-400" />
-            ) : (
-              <Moon size={18} />
-            )}{" "}
-            Toggle Theme
+            {darkMode ? <Sun size={18} className="text-yellow-400" /> : <Moon size={18} />} Toggle Theme
           </Button>
 
           {!user ? (
             <>
-              <NavLink to="/login" className="hover:text-blue-500" onClick={toggleMenu}>
-                Login
-              </NavLink>
-              <NavLink to="/register" className="hover:text-blue-500" onClick={toggleMenu}>
-                Register
-              </NavLink>
+              <NavLink to="/login" className="hover:text-blue-500" onClick={toggleMenu}>Login</NavLink>
+              <NavLink to="/register" className="hover:text-blue-500" onClick={toggleMenu}>Register</NavLink>
             </>
           ) : (
             <>
-              <NavLink to="/profile" className="hover:text-blue-500" onClick={toggleMenu}>
-                Profile
-              </NavLink>
-              {isAdmin && (
+              <NavLink to="/profile" className="hover:text-blue-500" onClick={toggleMenu}>Profile</NavLink>
+              {user.role === "ADMIN" && (
                 <>
-                  <NavLink to={`/editproblem/${null}`} className="hover:text-blue-500" onClick={toggleMenu}>
-                    Create Problem
-                  </NavLink>
-                  <NavLink to="/deleteproblem" className="hover:text-blue-500" onClick={toggleMenu}>
-                    Delete Problem
-                  </NavLink>
+                  <NavLink to={`/editproblem/${null}`} className="hover:text-blue-500" onClick={toggleMenu}>Create Problem</NavLink>
+                  <NavLink to="/deleteproblem" className="hover:text-blue-500" onClick={toggleMenu}>Delete Problem</NavLink>
                 </>
               )}
-              <button
-                onClick={() => {
-                  toggleMenu();
-                  navigate("/logout");
-                }}
-                className="hover:text-blue-500"
-                
-              >
-                Logout
-              </button>
+              <button onClick={() => { logout(); toggleMenu(); }} className="hover:text-blue-500">Logout</button>
             </>
           )}
         </div>

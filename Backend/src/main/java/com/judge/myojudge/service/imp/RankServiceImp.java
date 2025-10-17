@@ -4,6 +4,8 @@ import com.judge.myojudge.model.entity.User;
 import com.judge.myojudge.repository.UserRepo;
 import com.judge.myojudge.service.RankService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -13,10 +15,10 @@ import java.util.List;
 public class RankServiceImp implements RankService {
     private final UserRepo userRepo;
     @Override
-    public List<User> getRanking() {
-        List<User> userRankingList=userRepo.findAllUserByRank();
-        return userRankingList;
+    public Page<User> getRanking(String search, Pageable pageable) {
+        return userRepo.findAllUserByRank(search,pageable);
     }
+
 
     @Override
     public List<User> getTop10() {

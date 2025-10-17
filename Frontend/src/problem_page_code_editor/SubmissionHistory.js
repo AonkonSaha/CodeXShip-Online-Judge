@@ -23,6 +23,7 @@ const SubmissionHistory = () => {
             const decoded = jwtDecode(token);
             setRole(decoded.role);
         }
+        alert("D");
         const fetchSubmissions = async () => {
             try {
                 
