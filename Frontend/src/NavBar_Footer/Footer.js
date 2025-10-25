@@ -42,9 +42,9 @@ const Footer = () => {
           &copy; 2024 YourCompany. All rights reserved. |{" "}
           <a
             href="https://web.facebook.com/aonkon.saha.12/"
-            className="text-blue-400 hover:text-blue-600 transition duration-300"
+            className="text-blue-400  hover:text-blue-600 transition duration-300"
           >
-            Development By Aonkon Saha
+            Developed By Aonkon Saha
           </a>
         </p>
       </div>
