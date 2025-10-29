@@ -14,7 +14,7 @@ import logo from "../assets/logo.png";
 import header from "../assets/header.png"
 
 const NavBar = () => {
-  const { user, darkMode, toggleDarkMode, coins, isAdmin, isContestUser, isNormalUser} = useContext(AuthContext);
+  const { user, darkMode, toggleDarkMode, coins, isAdmin, isContestUser, isNormalUser, isProblemEditor} = useContext(AuthContext);
   const [isOpen, setIsOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const profileRef = useRef(null);
@@ -111,28 +111,41 @@ const NavBar = () => {
                     <DropdownMenuItem onClick={handleProfileClick}>
                       Profile
                     </DropdownMenuItem>
-                    {isAdmin && (
+                    {(isAdmin || isProblemEditor) && (
                       <>
                         <DropdownMenuItem asChild>
                           <NavLink to={`/editproblem/${null}`} onClick={() => setIsProfileOpen(false)}>
                             Create Problem
                           </NavLink>
                         </DropdownMenuItem>
+                      
+                        <DropdownMenuItem asChild>
+                          <NavLink to="/product/create" onClick={() => setIsProfileOpen(false)}>
+                            Register Product
+                          </NavLink>
+                        </DropdownMenuItem>
+                      </>
+                    )}
+                    {isAdmin && (
+                      <>
+                        
                         <DropdownMenuItem asChild>
                           <NavLink to="/deleteproblem" onClick={() => setIsProfileOpen(false)}>
                             Delete Problem
                           </NavLink>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
-                          <NavLink to="/product/create" onClick={() => setIsProfileOpen(false)}>
-                            Register Product
+                          <NavLink to="/users" onClick={() => setIsProfileOpen(false)}>
+                            User Management
                           </NavLink>
                         </DropdownMenuItem>
+
                         <DropdownMenuItem asChild>
-                          <NavLink to="/users" onClick={() => setIsProfileOpen(false)}>
-                          Users
-                         </NavLink>
+                          <NavLink to="/product/order/manage" onClick={() => setIsProfileOpen(false)}>
+                            Order Management
+                          </NavLink>
                         </DropdownMenuItem>
+                        
                       </>
                     )}
                     <DropdownMenuItem
@@ -216,16 +229,26 @@ const NavBar = () => {
               <NavLink to="/profile" className="hover:text-blue-500" onClick={toggleMenu}>
                 Profile
               </NavLink>
-              {isAdmin && (
+
+              {(isAdmin | isProblemEditor) && (
                 <>
                   <NavLink to={`/editproblem/${null}`} className="hover:text-blue-500" onClick={toggleMenu}>
                     Create Problem
                   </NavLink>
-                  <NavLink to="/deleteproblem" className="hover:text-blue-500" onClick={toggleMenu}>
-                    Delete Problem
-                  </NavLink>
                   <NavLink to="/product/create" className="hover:text-blue-500" onClick={toggleMenu}>
                     Register Product
+                  </NavLink>
+                </>
+              )}
+              {isAdmin && (
+                <>
+                
+                   <NavLink to="/product/order/manage" className="hover:text-blue-500" onClick={toggleMenu}>
+                    Order Management 
+                  </NavLink>
+
+                  <NavLink to="/deleteproblem" className="hover:text-blue-500" onClick={toggleMenu}>
+                    Delete Problem
                   </NavLink>
                   <NavLink to="/users" className="hover:text-blue-500" onClick={toggleMenu}>
                     Users

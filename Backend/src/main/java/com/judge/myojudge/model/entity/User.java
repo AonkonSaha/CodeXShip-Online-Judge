@@ -98,7 +98,7 @@ public class User {
     private Set<Submission> submissions=new HashSet<>();
 
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST,CascadeType.MERGE})
-    private Set<BuyProduct> buyProduct = new HashSet<>();
+    private Set<Order> order = new HashSet<>();
 
 
 

@@ -157,7 +157,8 @@ const ProblemDetail = () => {
       });
 
       const data = await res.json();
-      setSampleResult([data.data]);
+      setSampleResult(data.data);
+      console.log(data.data);
     } catch (err) {
       console.error("Sample run failed:", err);
       toast.error("Sample test failed. Try again.");
@@ -207,12 +208,13 @@ const ProblemDetail = () => {
             </div>
           </div>
 
-          <div
+           <div
             className="prose dark:prose-invert"
             dangerouslySetInnerHTML={{
               __html: fileContent.problemStatement || "",
             }}
-          />
+          /> 
+
 
           {/* ✅ Sample Input/Output */}
           {(fileContent.sampleTestcase || fileContent.sampleOutput) && (
@@ -383,18 +385,18 @@ const ProblemDetail = () => {
                       <th className="px-4 py-2 border">#</th>
                       <th className="px-4 py-2 border">Status</th>
                       <th className="px-4 py-2 border">Input</th>
-                      <th className="px-4 py-2 border">Expected Output</th>
+                      <th className="px-4 py-2 border">Your Output</th>
                       <th className="px-4 py-2 border">Actual Output</th>
                       <th className="px-4 py-2 border">Time</th>
                       <th className="px-4 py-2 border">Memory</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {sampleResult.map((res, idx) => (
+                    {sampleResult.results.map((res, idx) => (
                       <tr
                         key={idx}
                         className={
-                          res.verdict === "Accepted"
+                          res.status === "Accepted"
                             ? darkMode
                               ? "bg-green-900/20"
                               : "bg-green-100"
@@ -409,12 +411,12 @@ const ProblemDetail = () => {
                         <td className="px-4 py-2 border text-center">
                           <span
                             className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                              res.verdict === "Accepted"
+                              res.status === "Accepted"
                                 ? "bg-green-500 text-white"
                                 : "bg-red-500 text-white"
                             }`}
                           >
-                            {res.verdict}
+                            {res.status}
                           </span>
                         </td>
                         <td className="px-4 py-2 border">
@@ -424,12 +426,12 @@ const ProblemDetail = () => {
                         </td>
                         <td className="px-4 py-2 border">
                           <pre className="whitespace-pre-wrap">
-                            {res.expectedOutput || "-"}
+                            {res.stdout || "-"}
                           </pre>
                         </td>
                         <td className="px-4 py-2 border">
                           <pre className="whitespace-pre-wrap">
-                            {res.actualOutput || "-"}
+                            {res.expected_output || "-"}
                           </pre>
                         </td>
                         <td className="px-4 py-2 border text-center">

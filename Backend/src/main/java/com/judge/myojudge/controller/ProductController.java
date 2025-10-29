@@ -1,9 +1,11 @@
 package com.judge.myojudge.controller;
 
+import com.judge.myojudge.model.dto.OrderDTO;
 import com.judge.myojudge.model.dto.ProductDTO;
 import com.judge.myojudge.model.mapper.ProductMapper;
 import com.judge.myojudge.response.ApiResponse;
 import com.judge.myojudge.service.ProductService;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -11,6 +13,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -64,5 +67,36 @@ public class ProductController {
                         .message("Successfully buy product")
                         .data("Successfully buy product")
                         .build());
+    }
+
+    @GetMapping("/v1/order/all")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Transactional
+    public ResponseEntity<ApiResponse<Page<OrderDTO>>> getAllProducts(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int size,
+            @RequestParam(required = false) String search
+    ){
+        Pageable pageable = PageRequest.of(page,size);
+        List<OrderDTO> products = productMapper.toOrderDTOs(productService.getOderDetails(search,pageable));
+        return ResponseEntity.ok(
+                ApiResponse.<Page<OrderDTO>>builder()
+                        .success(true)
+                        .statusCode(HttpStatus.OK.value())
+                        .message("Product Fetch Successfully")
+                        .data(new PageImpl<>(products,pageable,products.size()))
+                        .build());
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/v1/order/{action}/{id}")
+    public ResponseEntity<Void> declineProduct(@PathVariable Long id,
+                                               @PathVariable String action) {
+        if(action.equals("decline")) {
+            productService.declineOrder(id);
+        }else{
+            productService.markedShipped(id);
+        }
+        return ResponseEntity.noContent().build();
     }
 }

@@ -20,6 +20,7 @@ export const AuthProvider = ({ children }) => {
   const isAdmin = hasRole("ADMIN");
   const isContestUser = hasRole("CONTEST_USER");
   const isNormalUser = hasRole("NORMAL_USER");
+  const isProblemEditor = hasRole("PROBLEM_EDITOR");
 
   // ================== Coins API ==================
   const fetchUserCoins = useCallback(
@@ -156,6 +157,9 @@ export const AuthProvider = ({ children }) => {
   const updateUserCoins = (uCoins) =>{
       setCoins(coins+uCoins);
   }
+  const minusUserCoins = (uCoins) =>{
+      setCoins(coins-uCoins);
+  }
   // ================== Dark Mode ==================
   const toggleDarkMode = () => {
     const newMode = !darkMode;
@@ -175,6 +179,7 @@ export const AuthProvider = ({ children }) => {
         user,
         updateUserImage,
         updateUserCoins,
+        minusUserCoins,
         coins,
         darkMode,
         toggleDarkMode,
@@ -185,6 +190,7 @@ export const AuthProvider = ({ children }) => {
         isAdmin,
         isContestUser,
         isNormalUser,
+        isProblemEditor,
         loading,
       }}
     >

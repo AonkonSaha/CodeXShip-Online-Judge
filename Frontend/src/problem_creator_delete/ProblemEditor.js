@@ -22,6 +22,7 @@ const ProblemEditor = () => {
     type: "",
     coins: "",
     problem_statement: "",
+    explanation: "",
   });
 
   const [files, setFiles] = useState([]);
@@ -47,14 +48,16 @@ const ProblemEditor = () => {
             type,
             coins,
             problem_statement,
+            explanation,
             testCaseNameWithPath,
+          
           } = data;
 
           const existingFiles = Object.entries(testCaseNameWithPath || {}).map(
             ([name, path]) => ({ name, path })
           );
 
-          setProblem({ title, handle, difficulty, type, coins, problem_statement });
+          setProblem({ title, handle, difficulty, type, coins, problem_statement, explanation });
           setFiles(existingFiles);
           toast.success("✅ Problem loaded successfully!");
         } catch (error) {
@@ -92,7 +95,7 @@ const ProblemEditor = () => {
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    if (!problem.title || !problem.handle || !problem.problem_statement) {
+    if (!problem.title || !problem.handle || !problem.problem_statement ) {
       toast.error("⚠️ Please fill all required fields.");
       return;
     }
@@ -103,6 +106,7 @@ const ProblemEditor = () => {
     formData.append("difficulty", problem.difficulty);
     formData.append("type", problem.type);
     formData.append("problemStatement", problem.problem_statement);
+    formData.append("explanation", problem.explanation);
     formData.append("coin", problem.coins || 0);
 
     // Append only new uploaded files
@@ -192,6 +196,20 @@ const ProblemEditor = () => {
                     setProblem({ ...problem, problem_statement: content })
                   }
                   darkMode={darkMode}
+                  heading= "Problem Statement"
+
+                />
+              </div>
+
+              {/* ✅ Fixed Rich Text Editor */}
+              <div>
+                <RichTextEditor
+                  value={problem.explanation}
+                  onChange={(content) =>
+                    setProblem({ ...problem, explanation: content })
+                  }
+                  darkMode={darkMode}
+                  heading= "Explanation"
                 />
               </div>
 

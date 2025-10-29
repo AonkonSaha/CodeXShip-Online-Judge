@@ -24,6 +24,7 @@ import CoinRewardPage from './CoinReward/CoinRewardPage';
 import RankPage from './components/RankPage';
 import UsersPage from './components/UsersPage';
 import AddProductPage from './product/AddProductPage';
+import OrderManagementPage from './product/OrderManagementPage';
 
 function App() {
   return (
@@ -75,13 +76,15 @@ function App() {
 
           {/* Admin-only routes */}
           <Route element={<ProtectedRoute roles={["ADMIN"]} />}>
-            <Route path="/editproblem/:id" element={<ProblemEditor />} />
             <Route path="/deleteproblem" element={<DeleteProblem />} />
-            <Route path="/product/create" element={<AddProductPage/> } />
-
             <Route path="/users" element={<UsersPage/>} />
+            <Route path="/product/order/manage" element={<OrderManagementPage/>}/>
+          </Route>
 
-            
+          {/* Admin-PROBLEM_EDITOR routes */}
+          <Route element={<ProtectedRoute roles={["ADMIN","PROBLEM_EDITOR"]} />}>
+            <Route path="/editproblem/:id" element={<ProblemEditor />} />
+            <Route path="/product/create" element={<AddProductPage/> } />
           </Route>
         </Routes>
       </AuthProvider>

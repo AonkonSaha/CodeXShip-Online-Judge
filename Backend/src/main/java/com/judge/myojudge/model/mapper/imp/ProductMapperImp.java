@@ -1,6 +1,8 @@
 package com.judge.myojudge.model.mapper.imp;
 
+import com.judge.myojudge.model.dto.OrderDTO;
 import com.judge.myojudge.model.dto.ProductDTO;
+import com.judge.myojudge.model.entity.Order;
 import com.judge.myojudge.model.entity.Product;
 import com.judge.myojudge.model.mapper.ProductMapper;
 import lombok.Data;
@@ -42,5 +44,32 @@ public class ProductMapperImp implements ProductMapper {
                             .build());
         }
         return productDTOS;
+    }
+
+    @Override
+    public List<OrderDTO> toOrderDTOs(List<Order> oderDetails) {
+        System.out.println("Hello World I am here");
+        List<OrderDTO> orderDTOS=new ArrayList<>();
+        for (Order order:oderDetails) {
+            orderDTOS.add(
+                    OrderDTO.builder()
+                            .orderId(order.getId())
+                            .userId(order.getId())
+                            .username(order.getUser().getUsername())
+                            .mobile(order.getUser().getMobileNumber())
+                            .country(order.getUser().getCountry())
+                            .city(order.getUser().getCity())
+                            .state(order.getUser().getState())
+                            .postalCode(order.getUser().getPostalCode())
+                            .productTitle(order.getProduct().getTitle())
+                            .productType(order.getProduct().getType())
+                            .coins(order.getProduct().getCoins())
+                            .orderAt(order.getCreatedAt())
+                            .deliveryAt(order.getDeliveryDate())
+                            .status(order.getStatus())
+                            .build()
+            );}
+
+        return orderDTOS;
     }
 }

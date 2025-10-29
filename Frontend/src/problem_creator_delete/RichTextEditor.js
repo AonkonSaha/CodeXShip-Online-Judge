@@ -2,11 +2,11 @@ import React from "react";
 import ReactQuill from "react-quill";
 import 'react-quill/dist/quill.snow.css'; // Import Quill styles
 
-const RichTextEditor = ({ value, onChange, darkMode }) => {
+const RichTextEditor = ({ value, onChange, darkMode, heading }) => {
   return (
     <div className="space-y-4">
       <label className={`text-gray-700 font-medium ${darkMode ? 'text-white' : 'text-black'}`} htmlFor="editor">
-        Problem Description
+        {heading}
       </label>
       <ReactQuill
         value={value}

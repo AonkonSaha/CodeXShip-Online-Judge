@@ -25,5 +25,5 @@ public class Product {
     private Long coins;
 
     @OneToMany(mappedBy = "product", fetch = FetchType.LAZY, cascade = { CascadeType.MERGE, CascadeType.PERSIST })
-    private Set<BuyProduct> buyProduct;
+    private Set<Order> order;
 }
