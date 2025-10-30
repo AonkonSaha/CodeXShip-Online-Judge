@@ -2,6 +2,8 @@ package com.judge.myojudge.controller;
 
 import com.judge.myojudge.model.dto.OrderDTO;
 import com.judge.myojudge.model.dto.ProductDTO;
+import com.judge.myojudge.model.entity.Order;
+import com.judge.myojudge.model.entity.Product;
 import com.judge.myojudge.model.mapper.ProductMapper;
 import com.judge.myojudge.response.ApiResponse;
 import com.judge.myojudge.service.ProductService;
@@ -47,13 +49,13 @@ public class ProductController {
             @RequestParam(required = false) String search
     ) {
         Pageable pageable = PageRequest.of(page,size);
-        List<ProductDTO> products = productMapper.toProductDTOS(productService.getProduct(search,pageable).getContent());
-        return ResponseEntity.ok(
+        Page<Product> products = productService.getProduct(search,pageable);
+        List<ProductDTO> productDTOS = productMapper.toProductDTOS(products.getContent());        return ResponseEntity.ok(
                 ApiResponse.<Page<ProductDTO>>builder()
                         .success(true)
                         .statusCode(HttpStatus.OK.value())
                         .message("Product Fetch Successfully")
-                        .data(new PageImpl<>(products,pageable,products.size()))
+                        .data(new PageImpl<>(productDTOS,pageable,products.getTotalElements()))
                         .build());
 
     }
@@ -69,7 +71,7 @@ public class ProductController {
                         .build());
     }
 
-    @GetMapping("/v1/order/all")
+    @GetMapping("/v1/history/order/all")
     @PreAuthorize("hasRole('ADMIN')")
     @Transactional
     public ResponseEntity<ApiResponse<Page<OrderDTO>>> getAllProducts(
@@ -78,13 +80,14 @@ public class ProductController {
             @RequestParam(required = false) String search
     ){
         Pageable pageable = PageRequest.of(page,size);
-        List<OrderDTO> products = productMapper.toOrderDTOs(productService.getOderDetails(search,pageable));
+        Page<Order> orders = productService.getOderDetailsByUser(search,pageable);
+        List<OrderDTO> products = productMapper.toOrderDTOs(orders.getContent());
         return ResponseEntity.ok(
                 ApiResponse.<Page<OrderDTO>>builder()
                         .success(true)
                         .statusCode(HttpStatus.OK.value())
                         .message("Product Fetch Successfully")
-                        .data(new PageImpl<>(products,pageable,products.size()))
+                        .data(new PageImpl<>(products,pageable,orders.getTotalElements()))
                         .build());
     }
 
@@ -97,6 +100,13 @@ public class ProductController {
         }else{
             productService.markedShipped(id);
         }
+        return ResponseEntity.noContent().build();
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @DeleteMapping("/v1/order/delete/{id}")
+    public ResponseEntity<Void> deleteProductOrder(@PathVariable Long id) {
+        productService.deleteOrder(id);
         return ResponseEntity.noContent().build();
     }
 }

@@ -2,6 +2,7 @@ package com.judge.myojudge.repository;
 
 import com.judge.myojudge.model.entity.Order;
 import jakarta.transaction.Transactional;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -22,4 +23,10 @@ public interface OrderRepo extends JpaRepository<Order,Long> {
             "OR LOWER(TRIM(o.product.title)) LIKE LOWER(concat('%',TRIM(:search),'%'))) " +
             "Order By o.createdAt DESC")
     List<Order> getAllWithFilter(@Param("search") String search, Pageable pageable);
+
+
+    @Query("SELECT o FROM Order o WHERE o.user.mobileNumber= :contact ORDER BY o.createdAt DESC")
+    Page<Order> getOrderByMobile(@Param("contact") String contact,
+                                 @Param("search") String search,
+                                 Pageable pageable);
 }

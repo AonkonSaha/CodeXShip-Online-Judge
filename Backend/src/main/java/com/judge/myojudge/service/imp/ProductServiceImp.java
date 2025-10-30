@@ -100,4 +100,16 @@ public class ProductServiceImp implements ProductService {
         order.setStatus(OrderStatus.SHIPPED.name());
         orderRepo.save(order);
     }
+
+    @Override
+    @Transactional
+    public Page<Order> getOderDetailsByUser(String search, Pageable pageable) {
+        String contact = SecurityContextHolder.getContext().getAuthentication().getName();
+        return orderRepo.getOrderByMobile(contact,search,pageable);
+    }
+
+    @Override
+    public void deleteOrder(Long id) {
+        orderRepo.deleteById(id);
+    }
 }

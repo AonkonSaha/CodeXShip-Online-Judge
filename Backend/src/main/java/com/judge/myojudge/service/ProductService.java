@@ -18,4 +18,8 @@ public interface ProductService {
     void declineOrder(Long id);
 
     void markedShipped(Long id);
+
+    Page<Order> getOderDetailsByUser(String search, Pageable pageable);
+
+    void deleteOrder(Long id);
 }
