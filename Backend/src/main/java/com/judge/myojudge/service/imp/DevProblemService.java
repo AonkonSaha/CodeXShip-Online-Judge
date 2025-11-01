@@ -7,6 +7,7 @@ import com.judge.myojudge.model.entity.Problem;
 import com.judge.myojudge.model.entity.TestCase;
 import com.judge.myojudge.repository.ProblemRepo;
 import com.judge.myojudge.repository.TestCaseRepo;
+import com.judge.myojudge.repository.UserRepo;
 import com.judge.myojudge.service.ProblemService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -14,6 +15,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -35,6 +37,7 @@ public class DevProblemService implements ProblemService {
     public String testCaseFolderPath;
     private final ProblemRepo problemRepo;
     private final TestCaseRepo testCaseRepo;
+    private final UserRepo userRepo;
 
     @Override
     public void saveProblem(String title,
@@ -278,9 +281,16 @@ public class DevProblemService implements ProblemService {
     }
 
     @Override
-    public Page<ProblemWithSample> findProblemAllByCategory(String category,String search,String difficulty, Pageable pageable) {
-        List<ProblemWithSample> problemWithSamples=new ArrayList<>();
-        Page<Problem> problems=problemRepo.findByCategoryORFilter(category,search,difficulty,pageable);
+    public Page<ProblemWithSample> findProblemAllByCategory(String category,String search,String difficulty,String solvedFilter, Pageable pageable) {
+        String contact = SecurityContextHolder.getContext().getAuthentication().getName();
+        List<ProblemWithSample> problemWithSamples = new ArrayList<>();
+        Page<Problem> problems = null;
+        if(userRepo.existsByMobileNumber(contact) && solvedFilter != null && !solvedFilter.isEmpty()){
+            problems = problemRepo.findByCategoryWithSolvedOrNotFilter(contact,category,search, difficulty, solvedFilter, pageable);
+        }
+        else{
+            problems = problemRepo.findByCategoryWithFilter(category, search, difficulty, solvedFilter, pageable);
+        }
         if(problems.isEmpty()){
             throw new ProblemNotFoundException("There is no problem By "+category+" category..!");
         }

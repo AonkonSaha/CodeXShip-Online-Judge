@@ -77,10 +77,11 @@ public class ProblemController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "5") int size,
             @RequestParam(required = false) String search,
-            @RequestParam(required = false) String difficulty
+            @RequestParam(required = false) String difficulty,
+            @RequestParam(name = "solved_filter",required = false, defaultValue = "") String solvedFilter
     )  {
         Pageable pageable= PageRequest.of(page,size);
-        Page<ProblemWithSample> problemWithSamples = problemService.findProblemAllByCategory(category,search,difficulty,pageable);
+        Page<ProblemWithSample> problemWithSamples = problemService.findProblemAllByCategory(category,search,difficulty,solvedFilter,pageable);
         ApiResponse<Page<ProblemWithSample>> problemWithSample=ApiResponse.<Page<ProblemWithSample>>builder()
                 .success(true)
                 .statusCode(HttpStatus.OK.value())

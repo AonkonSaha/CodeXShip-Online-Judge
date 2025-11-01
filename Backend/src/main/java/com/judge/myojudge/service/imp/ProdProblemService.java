@@ -240,10 +240,16 @@ public class ProdProblemService implements ProblemService {
 
     @Override
     @Transactional
-    public Page<ProblemWithSample> findProblemAllByCategory(String category, String search, String difficulty, Pageable pageable) {
+    public Page<ProblemWithSample> findProblemAllByCategory(String category, String search, String difficulty,String solvedFilter, Pageable pageable) {
+        String contact = SecurityContextHolder.getContext().getAuthentication().getName();
         List<ProblemWithSample> problemWithSamples = new ArrayList<>();
-        Page<Problem> problems = problemRepo.findByCategoryORFilter(category, search, category, pageable);
-        for (Problem problem : problems.getContent()) {
+        Page<Problem> problems = null;
+        if(userRepo.existsByMobileNumber(contact) && solvedFilter != null && !solvedFilter.isEmpty()){
+            problems = problemRepo.findByCategoryWithSolvedOrNotFilter(contact,category,search, difficulty, solvedFilter, pageable);
+        }
+        else{
+            problems = problemRepo.findByCategoryWithFilter(category, search, difficulty, solvedFilter, pageable);
+        }        for (Problem problem : problems.getContent()) {
 
             TestCase sampleTestcase = null;
             TestCase sampleOutput = null;

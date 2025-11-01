@@ -35,6 +35,6 @@ public interface ProblemService {
     public void saveProblemWithId(long id, String title, String handle, String difficulty, String type,
                                   String problemStatement,Long coins, List<MultipartFile> multipartFiles) throws IOException;
 
-    public Page<ProblemWithSample> findProblemAllByCategory(String category,String search, String difficulty, Pageable pageable);
+    public Page<ProblemWithSample> findProblemAllByCategory(String category,String search, String difficulty,String solvedFilter, Pageable pageable);
 
 }
