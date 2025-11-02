@@ -53,6 +53,12 @@ public class User {
 
     @Column(name = "activity_status")
     private Boolean activityStatus;
+    @Column(name = "last_login")
+    private LocalDateTime lastLogin;
+    @Column(name = "num_of_days_login")
+    private Long numOfDaysLogin;
+    @Column(name = "is_addition_daily_coin")
+    private Boolean isAdditionDailyCoin;
 
     @Column(name = "total_coins_earned")
     private Long totalCoinsEarned = 0L;

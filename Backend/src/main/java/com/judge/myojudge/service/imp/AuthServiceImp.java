@@ -23,6 +23,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Optional;
 
@@ -48,6 +50,14 @@ public class AuthServiceImp implements AuthService {
            throw new BadCredentialsException("Incorrect Password");
         }
         user.setActivityStatus(true);
+        if(Duration.between(
+                (user.getLastLogin()==null? LocalDateTime.now():user.getLastLogin()),LocalDateTime.now()).toHours() >= 24L){
+            user.setTotalPresentCoins(user.getTotalPresentCoins()==null?5:user.getTotalPresentCoins()+ 5);
+            user.setTotalCoinsEarned(user.getTotalCoinsEarned()==null?5:user.getTotalCoinsEarned()+5);
+            user.setIsAdditionDailyCoin(true);
+            user.setNumOfDaysLogin(user.getNumOfDaysLogin()==null?1:user.getNumOfDaysLogin()+1);
+        }
+        user.setLastLogin(LocalDateTime.now());
         userRepository.save(user);
         return jwtUtil.generateToken(user,user.getMobileNumber(),user.getActivityStatus());
     }
