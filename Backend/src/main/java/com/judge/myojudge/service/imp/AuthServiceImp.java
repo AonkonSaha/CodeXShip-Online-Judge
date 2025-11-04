@@ -1,5 +1,6 @@
 package com.judge.myojudge.service.imp;
 
+import com.judge.myojudge.enums.Role;
 import com.judge.myojudge.exception.InvalidPasswordArgumentException;
 import com.judge.myojudge.exception.InvalidUserArgumentException;
 import com.judge.myojudge.exception.UserNotFoundException;
@@ -9,6 +10,7 @@ import com.judge.myojudge.model.dto.PasswordDTO;
 import com.judge.myojudge.model.dto.UpdateUserDTO;
 import com.judge.myojudge.model.entity.BlockedToken;
 import com.judge.myojudge.model.entity.User;
+import com.judge.myojudge.model.entity.UserRole;
 import com.judge.myojudge.repository.BlockedTokenRepo;
 import com.judge.myojudge.repository.UserRepo;
 import com.judge.myojudge.service.AuthService;
@@ -27,6 +29,8 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -45,35 +49,45 @@ public class AuthServiceImp implements AuthService {
     @Override
     @Transactional
     public String login(LoginDTO loginDTO) {
-        User user = userRepository.findByMobileNumber(loginDTO.getMobile()).get();
+        User user = null;
+        if(loginDTO.getMobile().contains("@")){
+            user = userRepository.findByEmail(loginDTO.getMobile()).orElseThrow(()->new BadCredentialsException("User Not Found"));
+        }else{
+            user = userRepository.findByMobileNumber(loginDTO.getMobile()).orElseThrow(() -> new BadCredentialsException("User Not Found"));
+        }
         if(!passwordEncoder.matches(loginDTO.getPassword(), user.getPassword())) {
            throw new BadCredentialsException("Incorrect Password");
         }
         user.setActivityStatus(true);
-        if(Duration.between(
-                (user.getLastLogin()==null? LocalDateTime.now():user.getLastLogin()),LocalDateTime.now()).toHours() >= 24L){
+
+        if(user.getLastLogin()==null || Duration.between(
+                user.getLastLogin(),LocalDateTime.now()).toHours() >= 24L){
             user.setTotalPresentCoins(user.getTotalPresentCoins()==null?5:user.getTotalPresentCoins()+ 5);
             user.setTotalCoinsEarned(user.getTotalCoinsEarned()==null?5:user.getTotalCoinsEarned()+5);
             user.setIsAdditionDailyCoin(true);
             user.setNumOfDaysLogin(user.getNumOfDaysLogin()==null?1:user.getNumOfDaysLogin()+1);
         }
+
         user.setLastLogin(LocalDateTime.now());
+        String token = jwtUtil.generateToken(user,user.getMobileNumber(),user.getActivityStatus());
+        user.setIsAdditionDailyCoin(false);
         userRepository.save(user);
-        return jwtUtil.generateToken(user,user.getMobileNumber(),user.getActivityStatus());
+        return token;
     }
 
-
-
     @Override
-    public void logout(String mobileNumber,String token)
+    public void logout(String mobileOrEmail,String token)
     {
-        Optional<User> user=userRepository.findByMobileNumber(mobileNumber);
-        if(user.isEmpty()){
-          throw new UserNotFoundException("User not found");
+        User user = null;
+        if(mobileOrEmail.contains("@")){
+            user = userRepository.findByEmail(mobileOrEmail).orElseThrow(()->new UserNotFoundException("User Not Found"));
+        }else{
+            user = userRepository.findByMobileNumber(mobileOrEmail).orElseThrow(() -> new UserNotFoundException("User Not Found"));
         }
-        user.get().setActivityStatus(false);
+
+        user.setActivityStatus(false);
         blockedTokenRepo.save(BlockedToken.builder().token(token).build());
-        userRepository.save(user.get());
+        userRepository.save(user);
     }
 
     @Override
@@ -87,52 +101,69 @@ public class AuthServiceImp implements AuthService {
     }
 
     @Override
-    public User updateUserDetails(String mobile,UpdateUserDTO updateUserDTO) {
-        User user = userRepository.findByMobileNumber(mobile).orElseThrow(()->new UserNotFoundException("User not found"));
-        user.setUsername(updateUserDTO.getUsername());
-        if(!mobile.equals(updateUserDTO.getMobile())){
+    public User updateUserDetails(String mobileOrEmail,UpdateUserDTO updateUserDTO) {
+        User user = null;
+        if(mobileOrEmail.contains("@")){
+            user = userRepository.findByEmail(mobileOrEmail).orElseThrow(()->new UserNotFoundException("User Not Found"));
+        }else{
+            user = userRepository.findByMobileNumber(mobileOrEmail).orElseThrow(() -> new UserNotFoundException("User Not Found"));
+        }
+        user.setUsername(updateUserDTO.getUsername()==null?user.getUsername():updateUserDTO.getUsername());
+        if(!mobileOrEmail.equals(updateUserDTO.getMobile())){
             Optional<User> userByMobileNumber=userRepository.findByMobileNumber(updateUserDTO.getMobile());
             if(userByMobileNumber.isPresent()){
                 throw new InvalidUserArgumentException("Mobile number already exists");
             }
         }
-        if(!user.getEmail().equalsIgnoreCase(updateUserDTO.getEmail())){
-            Optional<User> userByEmail=userRepository.findByEmail(updateUserDTO.getEmail());
-            if(userByEmail.isPresent()){
-                throw new InvalidUserArgumentException("Email already exists");
+        if(!mobileOrEmail.equals(updateUserDTO.getEmail())){
+            if(userRepository.existsByEmail(mobileOrEmail)){
+                throw new InvalidUserArgumentException("Mobile number already exists");
             }
         }
         user.setMobileNumber(updateUserDTO.getMobile());
         user.setEmail(updateUserDTO.getEmail());
-        user.setCountry(updateUserDTO.getCountry());
-        user.setState(updateUserDTO.getState());
-        user.setGithubUrl(updateUserDTO.getGithubUrl());
-        user.setLinkedinUrl(updateUserDTO.getLinkedinUrl());
-        user.setFacebookUrl(updateUserDTO.getFacebookUrl());
-        user.setDateOfBirth(updateUserDTO.getBirthday());
-        user.setCity(updateUserDTO.getCity());
-        user.setPostalCode(updateUserDTO.getPostalCode());
-        user.setGender(updateUserDTO.getGender());
+        user.setCountry(updateUserDTO.getCountry()==null?user.getCountry():updateUserDTO.getCountry());
+        user.setState(updateUserDTO.getState()==null?user.getState():updateUserDTO.getState());
+        user.setGithubUrl(updateUserDTO.getGithubUrl()==null?user.getGithubUrl():updateUserDTO.getGithubUrl());
+        user.setLinkedinUrl(updateUserDTO.getLinkedinUrl()==null?user.getLinkedinUrl():updateUserDTO.getLinkedinUrl());
+        user.setFacebookUrl(updateUserDTO.getFacebookUrl()==null?user.getFacebookUrl():updateUserDTO.getFacebookUrl());
+        user.setDateOfBirth(updateUserDTO.getBirthday()==null?user.getDateOfBirth():updateUserDTO.getBirthday());
+        user.setCity(updateUserDTO.getCity()==null?user.getCity():updateUserDTO.getCity());
+        user.setPostalCode(updateUserDTO.getPostalCode()==null?user.getPostalCode():updateUserDTO.getPostalCode());
+        user.setGender(updateUserDTO.getGender()==null?user.getGender():updateUserDTO.getGender());
         return userRepository.save(user);
 
     }
 
     @Override
-    public void updateUserPassword(String mobile,PasswordDTO passwordDTO) {
-        User user = userRepository.findByMobileNumber(mobile).orElseThrow(()->new UserNotFoundException("User not found"));
+    public void updateUserPassword(String mobileOrEmail,PasswordDTO passwordDTO) {
+        User user = null;
+        if(mobileOrEmail.contains("@")){
+            user = userRepository.findByEmail(mobileOrEmail).orElseThrow(()->new UserNotFoundException("User Not Found"));
+        }else {
+           user = userRepository.findByMobileNumber(mobileOrEmail).orElseThrow(() -> new UserNotFoundException("User Not Found"));
+        }
         if(!passwordDTO.getNewPassword().equals(passwordDTO.getConfirmPassword())){
             throw new InvalidPasswordArgumentException("Passwords do not match");
         }
-        if(!passwordEncoder.matches(passwordDTO.getOldPassword(), user.getPassword())){
+        if((user.getIsGoogleUser() && user.getIsGoogleUserSetPassword())
+                && user.getPassword()!=null && !user.getPassword().isEmpty()
+                && !passwordEncoder.matches(passwordDTO.getOldPassword(), user.getPassword()
+        )){
             throw new BadCredentialsException("Password incorrect");
         }
+        user.setIsGoogleUserSetPassword(true);
         user.setPassword(passwordEncoder.encode(passwordDTO.getNewPassword()));
         userRepository.save(user);
     }
 
     @Override
-    public User fetchUserDetails(String mobile) {
-        return userRepository.findByMobileNumber(mobile).orElseThrow(()->new UserNotFoundException("User not found"));
+    public User fetchUserDetails(String mobileOrEmail) {
+        if(mobileOrEmail.contains("@")){
+            return userRepository.findByEmail(mobileOrEmail).orElseThrow(()->new UserNotFoundException("User Not Found"));
+        }else {
+            return userRepository.findByMobileNumber(mobileOrEmail).orElseThrow(() -> new UserNotFoundException("User Not Found"));
+        }
     }
 
     @Override
@@ -141,8 +172,12 @@ public class AuthServiceImp implements AuthService {
     }
 
     @Override
-    public User getUserCoinWithImgUrl(String contact) {
-        return userRepository.findByMobileNumber(contact).orElseThrow(()->new UserNotFoundException("User not found"));
+    public User getUserCoinWithImgUrl(String mobileOrEmail) {
+        if(mobileOrEmail.contains("@")){
+            return userRepository.findByEmail(mobileOrEmail).orElseThrow(()->new UserNotFoundException("User Not Found"));
+        }else{
+            return userRepository.findByMobileNumber(mobileOrEmail).orElseThrow(() -> new UserNotFoundException("User Not Found"));
+        }
     }
 
     @Override
@@ -152,9 +187,14 @@ public class AuthServiceImp implements AuthService {
 
     @Override
     public String updateProfileImage(MultipartFile file) throws Exception {
-        String contact= SecurityContextHolder.getContext().getAuthentication().getName();
-        User user = userRepository.findByMobileNumber(contact).orElseThrow(()->new UserNotFoundException("User not found"));
-        if(user.getImageFileKey()!=null ){
+        String mobileOrEmail= SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = null;
+        if (mobileOrEmail.contains("@")){
+            user = userRepository.findByEmail(mobileOrEmail).orElseThrow(()->new UserNotFoundException("User Not Found"));
+        }else {
+            user = userRepository.findByMobileNumber(mobileOrEmail).orElseThrow(() -> new UserNotFoundException("User Not Found"));
+        }
+        if(user.getImageFileKey()!=null){
             cloudinaryService.deleteCloudinaryFile(user.getImageFileKey(),"image");
         }
         Map uploadedImage = cloudinaryService.uploadImage(file);
@@ -171,10 +211,84 @@ public class AuthServiceImp implements AuthService {
 
     @Override
     @Transactional
-    public void deleteUser(String mobileNumber) {
-        User user=userRepository.findByMobileNumber(mobileNumber).orElseThrow(()->new UserNotFoundException("User not found"));
+    public void deleteUser(String email) {
+        User user=userRepository.findByEmail(email).orElseThrow(()->new UserNotFoundException("User not found"));
         user.getProblems().forEach((problem)-> problem.setUser(null));
         user.getSubmissions().forEach((submission -> submission.setUser(null)));
         userRepository.delete(user);
+    }
+
+    @Override
+    public void updateUserDetailsByAdmin(UpdateUserDTO updateUserDTO) {
+        User user = null;
+        if(updateUserDTO.getEmail()!=null && !updateUserDTO.getEmail().isEmpty()){
+            user = userRepository.findByEmail(updateUserDTO.getEmail()).orElseThrow(()->new UserNotFoundException("User Not Found"));
+        }else{
+            user = userRepository.findByMobileNumber(updateUserDTO.getMobile()).orElseThrow(() -> new UserNotFoundException("User Not Found"));
+        }
+        user.setUsername(updateUserDTO.getUsername()==null?user.getUsername():updateUserDTO.getUsername());
+        user.setMobileNumber(updateUserDTO.getMobile()==null?user.getMobileNumber():updateUserDTO.getMobile());
+        user.setEmail(updateUserDTO.getEmail()==null?user.getEmail():updateUserDTO.getEmail() );
+        user.setCountry(updateUserDTO.getCountry()==null?user.getCountry():updateUserDTO.getCountry() );
+        user.setState(updateUserDTO.getState()==null?user.getState():updateUserDTO.getState());
+        user.setGithubUrl(updateUserDTO.getGithubUrl()==null?user.getGithubUrl():updateUserDTO.getGithubUrl());
+        user.setLinkedinUrl(updateUserDTO.getLinkedinUrl()==null?user.getLinkedinUrl():updateUserDTO.getLinkedinUrl());
+        user.setFacebookUrl(updateUserDTO.getFacebookUrl()==null?user.getFacebookUrl():updateUserDTO.getFacebookUrl());
+        user.setTotalPresentCoins(updateUserDTO.getTotalPresentCoins()==null?user.getTotalPresentCoins():updateUserDTO.getTotalPresentCoins());
+        user.setDateOfBirth(updateUserDTO.getBirthday()==null?user.getDateOfBirth():updateUserDTO.getBirthday());
+        user.setTotalProblemsSolved(updateUserDTO.getTotalProblemsSolved()==null?user.getTotalProblemsSolved():updateUserDTO.getTotalProblemsSolved());
+        user.setTotalProblemsWA(updateUserDTO.getTotalProblemsAttempted()==null?user.getTotalProblemsWA():updateUserDTO.getTotalProblemsAttempted());
+        user.setTotalProblemsAttempted(updateUserDTO.getTotalProblemsAttempted()==null?user.getTotalProblemsAttempted():updateUserDTO.getTotalProblemsAttempted());
+        user.setActivityStatus(updateUserDTO.isActivityStatus());
+        user.setTotalProblemsCE(updateUserDTO.getTotalProblemsCE()==null?user.getTotalProblemsCE():updateUserDTO.getTotalProblemsCE());
+        user.setTotalProblemsRE(updateUserDTO.getTotalProblemsRE()==null?user.getTotalProblemsRE():updateUserDTO.getTotalProblemsRE());
+        user.setTotalProblemsTLE(updateUserDTO.getTotalProblemsTLE()==null?user.getTotalProblemsTLE():updateUserDTO.getTotalProblemsTLE());
+        user.setCity(updateUserDTO.getCity()==null?user.getCity():updateUserDTO.getCity());
+        user.setPostalCode(updateUserDTO.getPostalCode()==null?user.getPostalCode():updateUserDTO.getPostalCode());
+        user.setGender(updateUserDTO.getGender()==null?user.getGender():updateUserDTO.getGender());
+
+        userRepository.save(user);
+
+    }
+
+    @Override
+    @Transactional
+    public String loginByGoogle(String email, String name, String picture) {
+        User user = userRepository.findByEmail(email).orElse(null);
+        UserRole role = null;
+        if(user==null) {
+            user = new User();
+            user.setEmail(email);
+            user.setUsername(name);
+            user.setImageUrl(picture);
+            user.setIsGoogleUser(true);
+            user.setIsGoogleUserSetPassword(false);
+            user.setPassword(UUID.randomUUID().toString());
+            role = new UserRole();
+            role.setRoleName(Role.NORMAL_USER.name());
+            role.setUsers(Set.of(user));
+            user.setUserRoles(Set.of(role));
+        }
+
+        user.setActivityStatus(true);
+
+        if(user.getLastLogin()==null || Duration.between(
+                user.getLastLogin(),LocalDateTime.now()).toHours() >= 24L){
+            user.setTotalPresentCoins(user.getTotalPresentCoins()==null?5:user.getTotalPresentCoins()+ 5);
+            user.setTotalCoinsEarned(user.getTotalCoinsEarned()==null?5:user.getTotalCoinsEarned()+5);
+            user.setIsAdditionDailyCoin(true);
+            user.setNumOfDaysLogin(user.getNumOfDaysLogin()==null?1:user.getNumOfDaysLogin()+1);
+        }
+
+        user.setLastLogin(LocalDateTime.now());
+        String token = jwtUtil.generateToken(user,user.getEmail(),user.getActivityStatus());
+        user.setIsAdditionDailyCoin(false);
+        userRepository.save(user);
+        return token;
+    }
+
+    @Override
+    public User fetchUserByEmail(String email) {
+        return userRepository.findByEmail(email).orElseThrow(()->new UserNotFoundException("User not found"));
     }
 }

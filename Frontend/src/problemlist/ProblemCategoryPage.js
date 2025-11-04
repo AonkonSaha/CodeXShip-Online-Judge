@@ -8,8 +8,8 @@ import React, {
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { FaCheckCircle, FaTimesCircle, FaEdit, FaTrash } from "react-icons/fa";
-import { BadgeDollarSign } from "lucide-react";
+import { FaEdit, FaTrash, FaMedal } from "react-icons/fa";
+import { CheckCircle, XCircle } from "lucide-react";
 import NavBar from "../NavBar_Footer/NavBarCus";
 import Footer from "../NavBar_Footer/Footer";
 import { AuthContext } from "../auth_component/AuthContext";
@@ -32,21 +32,23 @@ const ProblemCategoryPage = () => {
   const [solvedFilter, setSolvedFilter] = useState("");
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
-  const isFetchingRef = useRef(false); // prevent multiple fetches
+
+  // Refs
+  const isFetchingRef = useRef(false);
   const observerInstance = useRef(null);
 
-  // Decode user info
+  // Decode token once
   useEffect(() => {
     if (token) {
       try {
         jwtDecode(token);
-      } catch (e) {
+      } catch {
         console.warn("Invalid token");
       }
     }
   }, [token]);
 
-  // Fetch solved problems
+  /** ✅ Fetch solved problems once per user **/
   const fetchSolvedProblems = useCallback(async () => {
     if (!token) return;
     try {
@@ -60,65 +62,72 @@ const ProblemCategoryPage = () => {
     }
   }, [token, baseURL]);
 
-  // Fetch problems
-  const fetchProblems = useCallback(async () => {
-    if (!hasMore || isFetchingRef.current) return;
+  /** ✅ Fetch problems with smart pagination **/
+  const fetchProblems = useCallback(
+    async (nextPage = page) => {
+      if (!hasMore || isFetchingRef.current) return;
 
-    isFetchingRef.current = true;
-    setLoading(true);
+      isFetchingRef.current = true;
+      setLoading(true);
 
-    try {
-      const headers = token ? { Authorization: `Bearer ${token}` } : {};
-      const res = await axios.get(
-        `${baseURL}/api/problem/v1/category/${category}`,
-        {
-          headers,
-          params: {
-            page,
-            size: 6,
-            search: searchTerm.trim(),
-            difficulty: difficultyFilter,
-          },
+      try {
+        const headers = token ? { Authorization: `Bearer ${token}` } : {};
+        const res = await axios.get(
+          `${baseURL}/api/problem/v1/category/${category}`,
+          {
+            headers,
+            params: {
+              page: nextPage,
+              size: 6, // load 10 per request for smoother pagination
+              search: searchTerm.trim(),
+              difficulty: difficultyFilter,
+              solved_filter: solvedFilter
+            },
+          }
+        );
+
+        const data = res.data.data;
+        const newProblems = data?.content || [];
+
+        if (newProblems.length === 0) {
+          setHasMore(false);
+          return;
         }
-      );
 
-      const newProblems = res.data.data?.content || [];
-      if (!newProblems.length) {
+        const filteredProblems = newProblems.filter((p) => {
+          if (solvedFilter === "solved") return solvedProblems.has(p.id);
+          if (solvedFilter === "unsolved") return !solvedProblems.has(p.id);
+          return true;
+        });
+
+        setProblems((prev) =>
+          nextPage === 0 ? filteredProblems : [...prev, ...filteredProblems]
+        );
+
+        setHasMore(!data?.last);
+      } catch (err) {
+        console.error("Error fetching problems:", err.message);
+        setError("Failed to load problems. Please try again later.");
         setHasMore(false);
-        return;
+      } finally {
+        setLoading(false);
+        isFetchingRef.current = false;
       }
+    },
+    [
+      token,
+      baseURL,
+      category,
+      page,
+      searchTerm,
+      difficultyFilter,
+      solvedFilter,
+      solvedProblems,
+      hasMore,
+    ]
+  );
 
-      const filteredProblems = newProblems.filter((p) => {
-        if (solvedFilter === "solved") return solvedProblems.has(p.id);
-        if (solvedFilter === "unsolved") return !solvedProblems.has(p.id);
-        return true;
-      });
-
-      setProblems((prev) =>
-        page === 0 ? filteredProblems : [...prev, ...filteredProblems]
-      );
-      setHasMore(!res.data.data?.last);
-    } catch (err) {
-      console.error("Error fetching problems:", err.message);
-      setError("Failed to load problems. Please try again later.");
-      setHasMore(false);
-    } finally {
-      setLoading(false);
-      isFetchingRef.current = false;
-    }
-  }, [
-    token,
-    category,
-    baseURL,
-    page,
-    searchTerm,
-    difficultyFilter,
-    solvedFilter,
-    solvedProblems,
-    hasMore,
-  ]);
-
-  // Reset when filters/category/search change
+  /** Reset when filters change **/
   useEffect(() => {
     setProblems([]);
     setPage(0);
@@ -126,34 +135,32 @@ const ProblemCategoryPage = () => {
     fetchSolvedProblems();
   }, [category, searchTerm, difficultyFilter, solvedFilter, fetchSolvedProblems]);
 
-  // Infinite scroll setup
+  /** Intersection Observer for infinite scroll **/
   useEffect(() => {
     if (observerInstance.current) observerInstance.current.disconnect();
 
     observerInstance.current = new IntersectionObserver(
       (entries) => {
         const first = entries[0];
-        if (first.isIntersecting && !isFetchingRef.current && hasMore) {
+        if (first.isIntersecting && hasMore && !isFetchingRef.current) {
           setPage((prev) => prev + 1);
         }
       },
       { threshold: 1 }
     );
 
-    const currentRef = observerRef.current;
-    if (currentRef) observerInstance.current.observe(currentRef);
+    const current = observerRef.current;
+    if (current) observerInstance.current.observe(current);
 
-    return () => {
-      if (observerInstance.current) observerInstance.current.disconnect();
-    };
+    return () => observerInstance.current?.disconnect();
   }, [hasMore]);
 
-  // Fetch problems when page changes
+  /** Trigger data load when page changes **/
   useEffect(() => {
-    fetchProblems();
+    fetchProblems(page);
   }, [page, fetchProblems]);
 
-  // Delete problem (Admin only)
+  /** Delete Problem (Admin Only) **/
   const handleDelete = async (handle) => {
     if (!window.confirm("Are you sure you want to delete this problem?")) return;
     try {
@@ -245,7 +252,7 @@ const ProblemCategoryPage = () => {
           {problems.map((problem) => (
             <div
               key={problem.id}
-              className={`p-4 border-t-4 shadow-md rounded-xl hover:shadow-lg transition-transform transform hover:scale-[1.02] ${
+              className={`p-4 border-l-4 shadow-md rounded-xl hover:shadow-lg transition-transform transform hover:scale-[1.02] ${
                 darkMode ? "bg-gray-700 border-gray-600" : "bg-white border-gray-800"
               }`}
             >
@@ -277,25 +284,23 @@ const ProblemCategoryPage = () => {
                   </p>
                 </div>
 
-                <div className="flex items-center space-x-2">
-                  <div className="flex items-center gap-1 bg-yellow-400 text-gray-900 px-2 py-1 rounded-full font-semibold text-sm">
-                    <BadgeDollarSign size={16} />
+                <div className="flex items-center space-x-3">
+                  {/* New Coin Icon */}
+                  <div className="flex items-center gap-1 bg-gradient-to-r from-yellow-400 to-yellow-300 text-gray-900 px-2 py-1 rounded-full font-semibold text-sm shadow-sm">
+                    <FaMedal size={16} className="text-amber-700" />
                     {problem.coins || 0}
                   </div>
 
+                  {/* New Solved Status */}
                   {isSolved(problem.id) ? (
-                    <div
-                      className="px-4 py-2 rounded-full bg-green-600 flex justify-center items-center"
-                      aria-label="Problem Solved"
-                    >
-                      <FaCheckCircle className="text-white text-xl" />
+                    <div className="flex items-center gap-1 bg-green-100 text-green-700 border border-green-300 px-3 py-1 rounded-full text-sm font-medium">
+                      <CheckCircle size={16} />
+                      Solved
                     </div>
                   ) : (
-                    <div
-                      className="px-4 py-2 rounded-full bg-red-600 flex justify-center items-center"
-                      aria-label="Problem Not Solved"
-                    >
-                      <FaTimesCircle className="text-white text-xl" />
+                    <div className="flex items-center gap-1 bg-red-100 text-red-700 border border-red-300 px-3 py-1 rounded-full text-sm font-medium">
+                      <XCircle size={16} />
+                      Unsolved
                     </div>
                   )}
                 </div>

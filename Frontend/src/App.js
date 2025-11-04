@@ -25,6 +25,7 @@ import RankPage from './components/RankPage';
 import UsersPage from './components/UsersPage';
 import AddProductPage from './product/AddProductPage';
 import OrderManagementPage from './product/OrderManagementPage';
+import MyOrderPage from './product/MyOrder';
 
 function App() {
   return (
@@ -64,7 +65,9 @@ function App() {
             <Route path="/submission" element={<SubmissionsPage />} />
             <Route path="/submission-result" element={<SubmissionResult />} />
             <Route path="/profile" element={<Profile />} />
-            <Route path="/reward" element={<CoinRewardPage/>} />
+            <Route path="/gift-dock" element={<CoinRewardPage/>} />
+            <Route path="/history/my-order" element={<MyOrderPage/>} />
+
             <Route path="/submissions/history" element={<SubmissionHistory />} />
             <Route path="/logout" element={<Logout/>} />
           </Route>

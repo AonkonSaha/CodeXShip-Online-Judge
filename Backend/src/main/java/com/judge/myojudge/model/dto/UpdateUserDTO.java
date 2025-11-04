@@ -38,12 +38,40 @@ public class UpdateUserDTO {
     @JsonProperty("github_url")
     private String githubUrl;
 
+    private Long coins=0L;
+    @JsonProperty("total_coins_earned")
+    private Long totalCoinsEarned = 0L;
+    @JsonProperty("total_coins_expend")
+    private Long totalCoinsExpend = 0L;
+    @JsonProperty("total_present_coins")
+    private Long totalPresentCoins = 0L;
+    @JsonProperty("total_problems_solved")
+    private Long totalProblemsSolved = 0L;
+    @JsonProperty("total_problems_attempted")
+    private Long totalProblemsAttempted = 0L;
+    @JsonProperty("total_problems_failed")
+    private Long totalProblemsFailed = 0L;
+    @JsonProperty("total_problems_pending")
+    private Long totalProblemsPending = 0L;
+    @JsonProperty("total_problems_tle")
+    private Long totalProblemsTLE = 0L;
+    @JsonProperty("total_problems_re")
+    private Long totalProblemsRE = 0L;
+    @JsonProperty("total_problems_wa")
+    private Long totalProblemsWA = 0L;
+    @JsonProperty("total_problems_ce")
+    private Long totalProblemsCE = 0L;
+
+
+
+
     private String country;
     private String state;
     private String city;
     @JsonProperty("postal_code")
     private String postalCode;
-
+    @JsonProperty("activity_status")
+    private boolean activityStatus;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     @JsonProperty("date_of_birth")
     @Past(message = "Birthdate can't be future")

@@ -5,7 +5,7 @@ import MonacoEditor from "@monaco-editor/react";
 import NavBar from "../NavBar_Footer/NavBarCus";
 import Footer from "../NavBar_Footer/Footer";
 import { AuthContext } from "../auth_component/AuthContext";
-import { BadgeDollarSign } from "lucide-react";
+import { BadgeDollarSign, Coins } from "lucide-react";
 import { toast } from "react-hot-toast";
 
 const ProblemDetail = () => {
@@ -203,8 +203,9 @@ const ProblemDetail = () => {
                 {fileContent.difficulty || "Medium"}
               </span>
               <span className="bg-yellow-400 text-gray-900 px-3 py-1 rounded-full text-sm font-semibold flex items-center gap-1">
-                <BadgeDollarSign size={16} /> {fileContent.coins || 0}
+                <Coins size={16} /> {fileContent.coins || 0}
               </span>
+          
             </div>
           </div>
 

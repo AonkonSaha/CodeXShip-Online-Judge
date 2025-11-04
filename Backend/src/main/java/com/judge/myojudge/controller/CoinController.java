@@ -23,12 +23,12 @@ public class CoinController {
     @PreAuthorize( "hasAnyRole('ADMIN','NORMAL_USER')")
     @GetMapping("/get")
     public ResponseEntity<ApiResponse<UserDTO>> getCoinWithImageUrl(){
-        String contact= SecurityContextHolder.getContext().getAuthentication().getName();
+        String mobileOrEmail= SecurityContextHolder.getContext().getAuthentication().getName();
         ApiResponse<UserDTO> apiResponse=ApiResponse.<UserDTO>builder()
                 .success(true)
                 .statusCode(HttpStatus.OK.value())
                 .message("Fetch User Coins")
-                .data(userMapper.toUserUrlCoin(authService.getUserCoinWithImgUrl(contact)))
+                .data(userMapper.toUserUrlCoin(authService.getUserCoinWithImgUrl(mobileOrEmail)))
                 .build();
         return ResponseEntity.status(HttpStatus.OK).body(apiResponse);
     }

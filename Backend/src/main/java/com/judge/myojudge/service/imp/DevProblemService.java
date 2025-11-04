@@ -7,7 +7,6 @@ import com.judge.myojudge.model.entity.Problem;
 import com.judge.myojudge.model.entity.TestCase;
 import com.judge.myojudge.repository.ProblemRepo;
 import com.judge.myojudge.repository.TestCaseRepo;
-import com.judge.myojudge.repository.UserRepo;
 import com.judge.myojudge.service.ProblemService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -15,7 +14,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -37,7 +35,6 @@ public class DevProblemService implements ProblemService {
     public String testCaseFolderPath;
     private final ProblemRepo problemRepo;
     private final TestCaseRepo testCaseRepo;
-    private final UserRepo userRepo;
 
     @Override
     public void saveProblem(String title,
@@ -45,7 +42,8 @@ public class DevProblemService implements ProblemService {
                             String difficulty,
                             String type,
                             Long coin,
-                            String problemStatement
+                            String problemStatement,
+                            String explanation
     )  {
         Problem problem=new Problem();
         problem.setTitle(title);
@@ -54,13 +52,14 @@ public class DevProblemService implements ProblemService {
         problem.setType(type);
         problem.setCoins(coin);
         problem.setProblemStatement(problemStatement);
+        problem.setExplanation(explanation);
         problemRepo.save(problem);
         System.out.println("Problem Saved Successfully in Problems Function");
     }
 
     @Override
     public void saveProblemWithId(long id, String title, String handle, String difficulty, String type,
-                                  String problemStatement,Long coins, List<MultipartFile> multipartFiles) {
+                                  String problemStatement,String explanation, Long coins, List<MultipartFile> multipartFiles) {
 
         Problem problem = problemRepo.findById(id)
                 .orElseThrow(() -> new ProblemNotFoundException("Problem not found with ID: " + id));
@@ -282,15 +281,8 @@ public class DevProblemService implements ProblemService {
 
     @Override
     public Page<ProblemWithSample> findProblemAllByCategory(String category,String search,String difficulty,String solvedFilter, Pageable pageable) {
-        String contact = SecurityContextHolder.getContext().getAuthentication().getName();
-        List<ProblemWithSample> problemWithSamples = new ArrayList<>();
-        Page<Problem> problems = null;
-        if(userRepo.existsByMobileNumber(contact) && solvedFilter != null && !solvedFilter.isEmpty()){
-            problems = problemRepo.findByCategoryWithSolvedOrNotFilter(contact,category,search, difficulty, solvedFilter, pageable);
-        }
-        else{
-            problems = problemRepo.findByCategoryWithFilter(category, search, difficulty, solvedFilter, pageable);
-        }
+        List<ProblemWithSample> problemWithSamples=new ArrayList<>();
+        Page<Problem> problems=problemRepo.findByCategoryWithFilter(category,search,difficulty,solvedFilter,pageable);
         if(problems.isEmpty()){
             throw new ProblemNotFoundException("There is no problem By "+category+" category..!");
         }

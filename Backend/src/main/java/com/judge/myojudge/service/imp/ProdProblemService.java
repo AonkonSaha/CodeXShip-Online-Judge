@@ -9,6 +9,7 @@ import com.judge.myojudge.model.entity.Problem;
 import com.judge.myojudge.model.entity.TestCase;
 import com.judge.myojudge.model.entity.User;
 import com.judge.myojudge.repository.ProblemRepo;
+import com.judge.myojudge.repository.SubmissionRepo;
 import com.judge.myojudge.repository.TestCaseRepo;
 import com.judge.myojudge.repository.UserRepo;
 import com.judge.myojudge.service.CloudinaryService;
@@ -36,7 +37,7 @@ public class ProdProblemService implements ProblemService {
     private final Cloudinary cloudinary;
     private final CloudinaryService cloudinaryService;
     private final UserRepo userRepo;
-
+    private final SubmissionRepo submissionRepo;
     @Override
     public List<ProblemWithSample> findProblemAll() {
         List<ProblemWithSample> problemList = new ArrayList<>();
@@ -48,6 +49,7 @@ public class ProdProblemService implements ProblemService {
             problemWithSample.setTitle(problem.getTitle());
             problemWithSample.setHandle(problem.getHandleName());
             problemWithSample.setProblemStatement(problem.getProblemStatement());
+            problemWithSample.setExplanation(problem.getExplanation());
             problemWithSample.setType(problem.getType());
             problemWithSample.setDifficulty(problem.getDifficulty());
 
@@ -82,9 +84,16 @@ public class ProdProblemService implements ProblemService {
                             String difficulty,
                             String type,
                             Long coin,
-                            String problemStatement) {
-        String contact= SecurityContextHolder.getContext().getAuthentication().getName();
-        User user = userRepo.findByMobileNumber(contact).orElseThrow(() -> new UserNotFoundException("User not found with mobile number: " + contact));
+                            String problemStatement,
+                            String explanation
+                            ) {
+        String mobileOrEmail= SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = null;
+        if(mobileOrEmail.contains("@")){
+            user = userRepo.findByEmail(mobileOrEmail).orElseThrow(() -> new UserNotFoundException("User not found"));
+        }else{
+            user = userRepo.findByMobileNumber(mobileOrEmail).orElseThrow(() -> new UserNotFoundException("User not found"));
+        }
         Problem problem = new Problem();
         problem.setTitle(title);
         problem.setHandleName(handle);
@@ -92,6 +101,7 @@ public class ProdProblemService implements ProblemService {
         problem.setType(type);
         problem.setCoins(coin);
         problem.setProblemStatement(problemStatement);
+        problem.setExplanation(explanation);
         problem.setUser(user);
         user.getProblems().add(problem);
         problemRepo.save(problem);
@@ -123,6 +133,7 @@ public class ProdProblemService implements ProblemService {
     }
 
     @Override
+    @Transactional
     public void deleteProblemByHandle(String handle) {
         Optional<Problem> problem = problemRepo.findByHandleName(handle);
         if (problem.isEmpty()) {
@@ -145,6 +156,7 @@ public class ProdProblemService implements ProblemService {
         problemWithSample.setId(problem.getId());
         problemWithSample.setTitle(problem.getTitle());
         problemWithSample.setProblemStatement(problem.getProblemStatement());
+        problemWithSample.setExplanation(problem.getExplanation());
         problemWithSample.setDifficulty(problem.getDifficulty());
         problemWithSample.setType(problem.getType());
         problemWithSample.setHandle(problem.getHandleName());
@@ -184,6 +196,8 @@ public class ProdProblemService implements ProblemService {
         problemDTO.setHandle(problem.get().getHandleName());
         problemDTO.setCoins(problem.get().getCoins());
         problemDTO.setProblemStatement(problem.get().getProblemStatement());
+        problemDTO.setExplanation(problem.get().getExplanation());
+
         for(TestCase testCase:problem.get().getTestcases()){
             testCaseNameWithPath.put(testCase.getFileName(),testCase.getFilePath());
         }
@@ -194,7 +208,7 @@ public class ProdProblemService implements ProblemService {
     @Override
     @Transactional
     public void saveProblemWithId(long id, String title, String handle, String difficulty, String type,
-                                  String problemStatement,Long coins, List<MultipartFile> multipartFiles) throws IOException {
+                                  String problemStatement,String explanation ,Long coins, List<MultipartFile> multipartFiles) throws IOException {
         Problem problem = problemRepo.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Problem not found with ID: " + id));
         problem.setTitle(title);
@@ -212,7 +226,6 @@ public class ProdProblemService implements ProblemService {
             for (MultipartFile testCaseFile : multipartFiles) {
                 if (!testCaseFile.isEmpty()) {
                     String fileName = testCaseFile.getOriginalFilename();
-                    System.out.println("FileName: "+fileName);
                     if(oldTestCases.containsKey(fileName)){
                         problem.getTestcases().remove(oldTestCases.get(fileName));
                         needDeleteTestCases.add(oldTestCases.get(fileName));
@@ -241,19 +254,19 @@ public class ProdProblemService implements ProblemService {
     @Override
     @Transactional
     public Page<ProblemWithSample> findProblemAllByCategory(String category, String search, String difficulty,String solvedFilter, Pageable pageable) {
-        String contact = SecurityContextHolder.getContext().getAuthentication().getName();
+        String mobileOrEmail = SecurityContextHolder.getContext().getAuthentication().getName();
         List<ProblemWithSample> problemWithSamples = new ArrayList<>();
         Page<Problem> problems = null;
-        if(userRepo.existsByMobileNumber(contact) && solvedFilter != null && !solvedFilter.isEmpty()){
-            problems = problemRepo.findByCategoryWithSolvedOrNotFilter(contact,category,search, difficulty, solvedFilter, pageable);
+        if((userRepo.existsByMobileNumber(mobileOrEmail) || userRepo.existsByEmail(mobileOrEmail)) && solvedFilter != null && !solvedFilter.isEmpty()){
+            problems = problemRepo.findByCategoryWithSolvedOrNotFilter(mobileOrEmail,category,search, difficulty, solvedFilter, pageable);
         }
         else{
             problems = problemRepo.findByCategoryWithFilter(category, search, difficulty, solvedFilter, pageable);
-        }        for (Problem problem : problems.getContent()) {
+        }
 
+        for (Problem problem : problems.getContent()) {
             TestCase sampleTestcase = null;
             TestCase sampleOutput = null;
-
             for (TestCase testCase : problem.getTestcases()) {
                 if (testCase.getFileName().equals("1.in")) {
                     sampleTestcase = testCase;
@@ -268,6 +281,7 @@ public class ProdProblemService implements ProblemService {
             ProblemWithSample problemWithSample = ProblemWithSample.builder()
                     .id(problem.getId())
                     .problemStatement(problem.getProblemStatement())
+                    .explanation(problem.getExplanation())
                     .title(problem.getTitle())
                     .handle(problem.getHandleName())
                     .type(problem.getType())

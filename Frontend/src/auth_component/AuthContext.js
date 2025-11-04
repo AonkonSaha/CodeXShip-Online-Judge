@@ -13,6 +13,10 @@ export const AuthProvider = ({ children }) => {
   const [darkMode, setDarkMode] = useState(true);
   const [loading, setLoading] = useState(true);
   const logoutTimerRef = useRef(null);
+  const [dailyCoins,setDailyCoins] = useState(0);
+  const [isAddDailyCoin,setIsAddDailyCoin] = useState(false);
+  const [streak,setStreak] = useState(0);
+
 
   // ================== Helpers ==================
   const isAuthenticated = !!user;
@@ -138,8 +142,18 @@ export const AuthProvider = ({ children }) => {
     try {
       const decoded = jwtDecode(token);
       const roles = normalizeRoles(decoded);
-      const userData = { username: decoded.sub, roles, image_url: decoded.image_url,userId:decoded.user_id };
+      const userData = {
+        username: decoded.sub,
+        roles,
+        image_url: decoded.image_url,
+        userId:decoded.user_id,
+      };
+
+      setIsAddDailyCoin(decoded.is_add_daily_coin || false);
+      setDailyCoins(decoded.daily_reward_coin || 0);
+      setStreak(decoded.num_of_days_login || 0 );
       setUser(userData);
+      console.log(decoded.is_add_daily_coin)
       fetchUserCoins(token);
       scheduleAutoLogout(decoded.exp);
     } catch (err) {
@@ -185,6 +199,10 @@ export const AuthProvider = ({ children }) => {
         toggleDarkMode,
         login,
         logout,
+        isAddDailyCoin,
+        setIsAddDailyCoin,
+        streak,
+        dailyCoins,
         clearUserInfo,
         isAuthenticated,
         isAdmin,

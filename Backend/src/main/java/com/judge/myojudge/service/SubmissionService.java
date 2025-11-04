@@ -9,5 +9,5 @@ public interface SubmissionService {
 
     public SubmissionResponse runSubmissionCode(SubmissionRequest submissionRequest);
     public SubmissionResponse runSampleTestCaseCode(SubmissionRequest submissionRequest);
-    Page<SubmissionResponse> getAllSubmissionByUser(String contact,String search, Sort sort, int page, int size);
+    Page<SubmissionResponse> getAllSubmissionByUser(String mobileOrEmail,String search, Sort sort, int page, int size);
 }

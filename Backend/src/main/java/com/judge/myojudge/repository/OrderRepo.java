@@ -9,8 +9,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
-
 @Repository
 public interface OrderRepo extends JpaRepository<Order,Long> {
 
@@ -22,11 +20,10 @@ public interface OrderRepo extends JpaRepository<Order,Long> {
             "OR LOWER(TRIM(o.product.type)) LIKE LOWER(concat('%',TRIM(:search),'%')) " +
             "OR LOWER(TRIM(o.product.title)) LIKE LOWER(concat('%',TRIM(:search),'%'))) " +
             "Order By o.createdAt DESC")
-    List<Order> getAllWithFilter(@Param("search") String search, Pageable pageable);
+    Page<Order> getAllWithFilter(@Param("search") String search, Pageable pageable);
 
-
-    @Query("SELECT o FROM Order o WHERE o.user.mobileNumber= :contact ORDER BY o.createdAt DESC")
-    Page<Order> getOrderByMobile(@Param("contact") String contact,
+    @Query("SELECT o FROM Order o WHERE (o.user.mobileNumber= :mobileOrEmail OR o.user.email = :mobileOrEmail) ORDER BY o.createdAt DESC")
+    Page<Order> getOrderByMobileOrEmail(@Param("mobileOrEmail") String mobileOrEmail,
                                  @Param("search") String search,
                                  Pageable pageable);
 }

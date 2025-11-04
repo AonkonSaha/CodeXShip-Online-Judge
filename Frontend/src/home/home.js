@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import React, { useContext, useState} from "react";
 import { motion } from "framer-motion";
 import { useInView } from "react-intersection-observer";
 import NavBar from "../NavBar_Footer/NavBarCus";
@@ -15,9 +15,13 @@ import {
   FaBullhorn, 
   FaGavel 
 } from "react-icons/fa";
+import DailyRewardModal from "../CoinReward/DailyRewardModal";
 
 const HomePage = () => {
-  const { darkMode } = useContext(AuthContext);
+  const { darkMode,isAddDailyCoin, dailyCoins,streak } = useContext(AuthContext);
+  const [dailyRewardOpen, setDailyRewardOpen] = useState(false);
+  // const [rewardCoins, setRewardCoins] = useState(0);
+  // const [streak, setStreak] = useState(0);
 
   const features = [
     { title: "Problems", desc: "Sharpen your skills with diverse algorithmic challenges.", icon: <FaCode className="text-4xl text-blue-500 mb-4 " /> },
@@ -102,6 +106,17 @@ const HomePage = () => {
   return (
     <div className={`${darkMode ? "bg-gray-900 text-white" : "bg-gray-50 text-gray-900"} min-h-screen transition-colors duration-500`}>
       <NavBar />
+
+ {/* Daily Reward Modal */}
+ 
+{isAddDailyCoin && (
+  <DailyRewardModal
+    isOpen={true}
+    coins={dailyCoins}
+    streak={streak}
+    onClose={() => setDailyRewardOpen(false)}
+  />
+)}
 
       {/* Hero Section */}
       <main className="relative z-10">

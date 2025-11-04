@@ -36,19 +36,20 @@ public interface ProblemRepo extends JpaRepository<Problem,Long> {
 @Query("SELECT p FROM Problem p where lower(p.type)=lower(:category) ")
     List<Problem> findByType(@Param("category") String category);
 
+
     @Query("SELECT DISTINCT p FROM Problem p JOIN p.submissions s ON p.id = s.problem.id " +
             "WHERE (" +
             ":solvedFilter IS NULL OR ((lower(trim(CASE when lower(trim(s.status)) = 'accepted' THEN 'solved' else 'unsolved' end))) = lower(trim(:solvedFilter)))) " +
             "AND lower(trim(p.type))= lower(trim(:category)) " +
-            "AND p.user.mobileNumber = :contact " +
+            "AND (p.user.mobileNumber = :mobileOrEmail OR p.user.email = : mobileOrEmail) " +
             "AND (:search IS NULL OR ((lower(trim(p.title)) Like concat('%',lower(trim(:search)),'%')) " +
             "OR (lower(trim(p.type)) Like concat('%', lower(trim(:search)),'%')))) " +
             "AND (:difficulty IS NULL OR lower(trim(p.difficulty)) Like concat('%',lower(trim(:difficulty)),'%')) "+
             "order by p.id ASC")
-    Page<Problem> findByCategoryWithSolvedOrNotFilter(@Param("contact") String contact,
-                                                      @Param("category") String category,
-                                                      @Param("search") String search,
-                                                      @Param("difficulty") String difficulty,
-                                                      @Param("solvedFilter") String solvedFilter,
-                                                      Pageable pageable);
+    Page<Problem> findByCategoryWithSolvedOrNotFilter(@Param("mobileOrEmail") String mobileOrEmail,
+                                          @Param("category") String category,
+                                          @Param("search") String search,
+                                          @Param("difficulty") String difficulty,
+                                          @Param("solvedFilter") String solvedFilter,
+                                          Pageable pageable);
 }

@@ -79,7 +79,7 @@ const UsersPage = () => {
     try {
       await axios.post(
         `${baseURL}/api/role/v1/register`,
-        { mobile: selectedUser.mobile, role_name: roleName },
+        { email: selectedUser.email, role_name: roleName },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       toast.success(`Role '${roleName}' assigned successfully`);
@@ -95,7 +95,7 @@ const UsersPage = () => {
     try {
       await axios.delete(`${baseURL}/api/role/v1/remove`, {
         headers: { Authorization: `Bearer ${token}` },
-        data: { mobile: user.mobile, role_name: role },
+        data: { email: user.email, role_name: role },
       });
       toast.success(`Role '${role}' removed from ${user.username}`);
       fetchUsers();
@@ -109,7 +109,7 @@ const UsersPage = () => {
     if (!window.confirm(`Are you sure you want to delete ${user.username}?`))
       return;
     try {
-      await axios.delete(`${baseURL}/api/auth/v1/delete/${user.mobile}`, {
+      await axios.delete(`${baseURL}/api/auth/v1/delete/${user.email}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       toast.success(`User '${user.username}' deleted successfully`);

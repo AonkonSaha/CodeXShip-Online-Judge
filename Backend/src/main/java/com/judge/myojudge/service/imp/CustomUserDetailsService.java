@@ -21,9 +21,13 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     @Override
     @Transactional
-    public UserDetails loadUserByUsername(String mobile) {
-         User user = userRepo.findByMobileNumber(mobile)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+    public UserDetails loadUserByUsername(String mobileOrEmail) {
+        User user = null;
+        if(mobileOrEmail.contains("@")) {
+            user = userRepo.findByEmail(mobileOrEmail).orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        }else{
+            user = userRepo.findByMobileNumber(mobileOrEmail).orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        }
 
         Set<SimpleGrantedAuthority> authorities = new HashSet<>();
         for (UserRole userRole : user.getUserRoles()) {

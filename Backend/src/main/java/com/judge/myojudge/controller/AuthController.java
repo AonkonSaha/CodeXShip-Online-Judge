@@ -1,10 +1,12 @@
 package com.judge.myojudge.controller;
 
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.judge.myojudge.model.dto.*;
 import com.judge.myojudge.model.entity.User;
 import com.judge.myojudge.model.mapper.UserMapper;
 import com.judge.myojudge.response.ApiResponse;
 import com.judge.myojudge.service.AuthService;
+import com.judge.myojudge.service.GoogleTokenVerifierService;
 import com.judge.myojudge.service.RankService;
 import com.judge.myojudge.validation.ValidationService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -18,6 +20,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -34,6 +37,7 @@ public class AuthController {
     private final UserMapper userMapper;
     private final ValidationService validationService;
     private final RankService rankService;
+    private final GoogleTokenVerifierService googleTokenVerifierService;
 
     @PostMapping("/v1/register")
     public ResponseEntity<ApiResponse<RegisterUserDTO>> register(@RequestBody @Valid RegisterUserDTO registerUserDTO) {
@@ -57,34 +61,83 @@ public class AuthController {
                 .build();
         return ResponseEntity.ok(apiResponse);
     }
+    @PostMapping("/v2/login/google")
+    public ResponseEntity<ApiResponse<Map<String, String>>> googleLogin(@RequestBody Map<String, String> body) {
+
+        String email = null;
+        String name = null;
+        String picture = null;
+
+        try {
+            String idToken = body.get("credential");
+            if (idToken == null || idToken.isEmpty()) {
+                throw new BadCredentialsException("Missing Google credential token");
+            }
+
+            GoogleIdToken.Payload payload = googleTokenVerifierService.verifyGoogleIdToken(idToken);
+            if (payload == null) {
+                throw new BadCredentialsException("Invalid Google IDToken");
+            }
+
+            email = payload.getEmail();
+            name = (String) payload.get("name");
+            picture = (String) payload.get("picture");
+
+            String appJwt = authService.loginByGoogle(email, name, picture);
+
+            ApiResponse<Map<String, String>> response = ApiResponse.<Map<String, String>>builder()
+                    .success(true)
+                    .statusCode(HttpStatus.OK.value())
+                    .message("Login Success..!")
+                    .data(Map.of("token", appJwt))
+                    .build();
+
+            return ResponseEntity.ok(response);
+
+        } catch (BadCredentialsException e) {
+            // handle invalid tokens clearly
+            e.printStackTrace();
+            throw e;
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new BadCredentialsException("Login Failed..!", e);
+        }
+    }
+
     @PostMapping("/v1/logout")
     public ResponseEntity<Void> logout(HttpServletRequest request) {
         String token= request.getHeader("Authorization").substring(7);
-        String mobileNumber=SecurityContextHolder.getContext().getAuthentication().getName();
-        authService.logout(mobileNumber,token);
+        String mobileOrEmail=SecurityContextHolder.getContext().getAuthentication().getName();
+        authService.logout(mobileOrEmail,token);
         return  ResponseEntity.noContent().build() ;
     }
 
     @PutMapping("/v1/update")
     @PreAuthorize("hasAnyRole('ADMIN','NORMAL_USER')")
     public ResponseEntity<Void> updateUser(@RequestBody @Valid UpdateUserDTO updateUserDTO) {
-        String mobile= SecurityContextHolder.getContext().getAuthentication().getName();
-        authService.updateUserDetails(mobile,updateUserDTO);
+        String mobileOrEmail= SecurityContextHolder.getContext().getAuthentication().getName();
+        authService.updateUserDetails(mobileOrEmail,updateUserDTO);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/v2/update")
+    @PreAuthorize("hasAnyRole('ADMIN')")
+    public ResponseEntity<Void> updateUserByAdmin(@RequestBody @Valid UpdateUserDTO updateUserDTO) {
+        authService.updateUserDetailsByAdmin(updateUserDTO);
         return ResponseEntity.noContent().build();
     }
 
     @PutMapping("/v1/update/password")
     @PreAuthorize("hasAnyRole('ADMIN','NORMAL_USER')")
     public ResponseEntity<Void> updatePassword(@RequestBody @Valid PasswordDTO passwordDTO) throws BadRequestException {
-        String mobile= SecurityContextHolder.getContext().getAuthentication().getName();
-        authService.updateUserPassword(mobile,passwordDTO);
+        String mobileOrEmail= SecurityContextHolder.getContext().getAuthentication().getName();
+        authService.updateUserPassword(mobileOrEmail,passwordDTO);
         return ResponseEntity.noContent().build();
     }
 
     @PutMapping("/v1/update/profile-pic")
     @PreAuthorize("hasAnyRole('ADMIN','NORMAL_USER')")
     public ResponseEntity<ApiResponse<String>> updateProfilePic(@RequestParam("file") MultipartFile file) throws Exception {
-        String mobile= SecurityContextHolder.getContext().getAuthentication().getName();
         if(file==null || file.isEmpty()){
             throw new FileNotFoundException("File Not Found");
         }
@@ -100,16 +153,15 @@ public class AuthController {
     @GetMapping("/v1/profile")
     @PreAuthorize("hasAnyRole('ADMIN','NORMAL_USER')")
     public ResponseEntity<ApiResponse<UserDTO>> getUserDetails(){
-     String mobile = SecurityContextHolder.getContext().getAuthentication().getName();
+     String mobileOrEmail = SecurityContextHolder.getContext().getAuthentication().getName();
      ApiResponse<UserDTO> apiResponse=ApiResponse.<UserDTO>builder()
              .success(true)
              .statusCode(HttpStatus.OK.value())
              .message("User Data Fetched Successfully..!")
-             .data(userMapper.toUpdateUserDTO(authService.fetchUserDetails(mobile)))
+             .data(userMapper.toUpdateUserDTO(authService.fetchUserDetails(mobileOrEmail)))
              .build();
      return ResponseEntity.ok(apiResponse);
     }
-
     @GetMapping("/v1/profile/{username}/{userId}")
     public ResponseEntity<ApiResponse<UserDTO>> getUserDetailsByUsername(@PathVariable String username,@PathVariable Long userId){
         ApiResponse<UserDTO> apiResponse=ApiResponse.<UserDTO>builder()
@@ -140,9 +192,9 @@ public class AuthController {
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @DeleteMapping("/v1/delete/{mobileNumber}")
-    public ResponseEntity<Void> deleteUser(@PathVariable String mobileNumber){
-        authService.deleteUser(mobileNumber);
+    @DeleteMapping("/v1/delete/{email}")
+    public ResponseEntity<Void> deleteUser(@PathVariable String email){
+        authService.deleteUser(email);
         return ResponseEntity.noContent().build();
     }
 

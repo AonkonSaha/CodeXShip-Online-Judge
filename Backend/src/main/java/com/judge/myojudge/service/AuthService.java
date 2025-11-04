@@ -16,19 +16,19 @@ public interface AuthService {
 
     public String login(LoginDTO loginDTO);
 
-    public void logout(String mobileNumber,String token);
+    public void logout(String mobileOrEmail,String token);
 
     public User saveUser(User user);
 
-    public User updateUserDetails(String mobile, UpdateUserDTO updateUserDTO);
+    public User updateUserDetails(String mobileOrEmail, UpdateUserDTO updateUserDTO);
 
-    public void updateUserPassword(String mobile, PasswordDTO passwordDTO);
+    public void updateUserPassword(String mobileOrEmail, PasswordDTO passwordDTO);
 
-    public User fetchUserDetails(String mobile);
+    public User fetchUserDetails(String mobileOrEmail);
 
     public Optional<User> fetchUserByMobileNumber(String mobile);
 
-    public User getUserCoinWithImgUrl(String contact);
+    public User getUserCoinWithImgUrl(String mobileOrEmail);
 
     User fetchUserDetailsByUsername(String username,Long userId);
 
@@ -36,5 +36,11 @@ public interface AuthService {
 
     Page<User> getUsers(String search, Pageable pageable);
 
-    void deleteUser(String mobileNumber);
+    void deleteUser(String email);
+
+    void updateUserDetailsByAdmin(UpdateUserDTO updateUserDTO);
+
+    String loginByGoogle(String email, String name, String picture);
+
+    User fetchUserByEmail(String email);
 }

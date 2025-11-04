@@ -17,6 +17,7 @@ public class ProblemWithSample {
     private String handle;
     private String title;
     private String problemStatement;
+    private String explanation;
     private String difficulty;
     private String type;
     private Long coins;

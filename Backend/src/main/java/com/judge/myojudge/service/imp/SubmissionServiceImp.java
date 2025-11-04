@@ -2,6 +2,7 @@ package com.judge.myojudge.service.imp;
 
 import com.judge.myojudge.config.Judge0Config;
 import com.judge.myojudge.exception.ProblemNotFoundException;
+import com.judge.myojudge.exception.UserNotFoundException;
 import com.judge.myojudge.model.dto.ExecuteTestCase;
 import com.judge.myojudge.model.dto.SubmissionRequest;
 import com.judge.myojudge.model.dto.SubmissionResponse;
@@ -45,7 +46,13 @@ public class SubmissionServiceImp implements SubmissionService {
     @Override
     @Transactional
     public SubmissionResponse runSubmissionCode(SubmissionRequest req) {
-        User user= userRepo.findByMobileNumber(SecurityContextHolder.getContext().getAuthentication().getName()).orElseThrow(() -> new RuntimeException("User Not Found"));
+        String mobileOrEmail = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = null;
+        if(mobileOrEmail.contains("@")){
+            user = userRepo.findByEmail(mobileOrEmail).orElseThrow(()->new UserNotFoundException("User Not Found"));
+        }else{
+            user = userRepo.findByMobileNumber(mobileOrEmail).orElseThrow(()->new UserNotFoundException("User Not Found"));
+        }
         Problem problem = problemRepo.findById(req.getProblemId()).orElseThrow(() -> new ProblemNotFoundException("Problem Not Found With ID: " + req.getProblemId()));
         List<ExecuteTestCase> testcases = testCaseService.getTestCaseWithFile(req.getProblemId());
         Integer languageId = mapLanguageToId(req.getLanguage());
@@ -112,7 +119,6 @@ public class SubmissionServiceImp implements SubmissionService {
         SubmissionResponse response = new SubmissionResponse();
         response.setResults(passedTestcases);
         response.setTotal(results.size());
-
         if(!flag && verdict.equals("Compilation Error"))response.setPassed(0);
         if(!flag && !verdict.equals("Compilation Error"))response.setPassed(passedTestcases.size()-1);
         else response.setPassed(passedTestcases.size());
@@ -136,7 +142,7 @@ public class SubmissionServiceImp implements SubmissionService {
                 .build();
         problem.getSubmissions().add(submission);
         user.getSubmissions().add(submission);
-        List<Submission> coinFlag= submissionQueryService.getSubmissionsByUserWithAccepted(user.getMobileNumber(),problem.getHandleName(),"Accepted");
+        List<Submission> coinFlag= submissionQueryService.getSubmissionsByUserWithAccepted(mobileOrEmail,problem.getHandleName(),"Accepted");
         if(coinFlag.isEmpty() && flag){
             response.setCoins(problem.getCoins());
             user.setTotalCoinsEarned((user.getTotalCoinsEarned()==null?0: user.getTotalCoinsEarned())+problem.getCoins());
@@ -153,13 +159,19 @@ public class SubmissionServiceImp implements SubmissionService {
 
     @Override
     public SubmissionResponse runSampleTestCaseCode(SubmissionRequest req) {
-        User user= userRepo.findByMobileNumber(SecurityContextHolder.getContext().getAuthentication().getName()).orElseThrow(() -> new RuntimeException("User Not Found"));
+        String mobileOrEmail = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = null;
+        if(mobileOrEmail.contains("@")){
+            user = userRepo.findByEmail(mobileOrEmail).orElseThrow(()-> new UserNotFoundException("User not found"));
+        }else{
+            user = userRepo.findByMobileNumber(mobileOrEmail).orElseThrow(()-> new UserNotFoundException("User not found"));
+        }
         Problem problem = problemRepo.findById(req.getProblemId()).orElseThrow(() -> new ProblemNotFoundException("Problem Not Found With ID: " + req.getProblemId()));
         ExecuteTestCase testcase = testCaseService.getSampleTestCaseWithFile(req.getProblemId());
         Integer languageId = mapLanguageToId(req.getLanguage());
         TestcaseResultDTO result = executeSingleTestcase(req.getSubmissionCode(), languageId, testcase);
         SubmissionResponse response = new SubmissionResponse();
-        response.setResults(Collections.singletonList(result));
+        response.setResults(List.of(result));
         response.setTotal(1);
         response.setPassed(0);
         response.setVerdict(result.getStatus());
@@ -170,9 +182,9 @@ public class SubmissionServiceImp implements SubmissionService {
 
     @Override
     @Transactional
-    public Page<SubmissionResponse> getAllSubmissionByUser(String contact, String search, Sort sort, int page, int size) {
+    public Page<SubmissionResponse> getAllSubmissionByUser(String mobileOrEmail, String search, Sort sort, int page, int size) {
         Pageable pageable = PageRequest.of(page,size,sort);
-        Page<SubmissionResponse> submissionResponses = submissionRepo.findSubmissionsByContact(contact,search,pageable).map(submissionMapper::toSubmissionResponse);
+        Page<SubmissionResponse> submissionResponses = submissionRepo.findSubmissionsByMobileOrEmail(mobileOrEmail,search,pageable).map(submissionMapper::toSubmissionResponse);
         return submissionResponses;
     }
 
@@ -219,7 +231,7 @@ public class SubmissionServiceImp implements SubmissionService {
                 tr.getStdout().trim().equals(testcase.getOutput().trim()) &&
                 "Accepted".equalsIgnoreCase(tr.getStatus());
         tr.setPassed(passed);
-//        System.out.println(tr);
+       System.out.println(tr);
         return tr;
     }
 

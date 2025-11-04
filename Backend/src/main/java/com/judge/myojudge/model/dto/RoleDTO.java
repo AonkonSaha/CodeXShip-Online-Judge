@@ -15,4 +15,5 @@ public class RoleDTO {
     private String roleName;
     private String description;
     private String mobile;
+    private String email;
 }

@@ -60,6 +60,7 @@ public class SecurityConfig  {
             ProblemApiRoute.PROBLEM_FETCH_BY_CATEGORY,
             "/api/ranking/**",
             "/api/auth/v1/profile/{username}/{userId}",
+            "/api/auth/v2/login/google"
 
     };
 

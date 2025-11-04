@@ -15,8 +15,8 @@ public class SubmissionQueryServiceImp implements SubmissionQueryService {
 
     @Override
     @Transactional(value = Transactional.TxType.REQUIRES_NEW)
-    public List<Submission> getSubmissionsByUserWithAccepted(String contact, String handle, String accept) {
-        return submissionRepo.findByContactAndHandleAndStatus(contact,handle,"Accepted");
+    public List<Submission> getSubmissionsByUserWithAccepted(String mobileOrEmail, String handle, String accept) {
+        return submissionRepo.findByMobileOrEmailAndHandleAndStatus(mobileOrEmail,handle,"Accepted");
 
     }
 }

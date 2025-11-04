@@ -50,7 +50,7 @@ public class UserMapperImp implements UserMapper {
 
     @Override
     public UserDTO toUpdateUserDTO(User user) {
-        List<Submission> submissions=submissionRepo.findAllSubmissionByContactAndStatus(user.getMobileNumber(),"ACCEPTED");
+        List<Submission> submissions=submissionRepo.findAllSubmissionByEmailAndStatus(user.getEmail(),"ACCEPTED");
         Set<Long> problemsSolved=new HashSet<>();
         for(Submission submission:submissions){
             problemsSolved.add(submission.getProblem().getId());

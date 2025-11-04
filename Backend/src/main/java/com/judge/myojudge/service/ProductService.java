@@ -13,7 +13,7 @@ public interface ProductService {
     public void buyProduct(Long id);
 
     Page<Product> getProduct(String search, Pageable pageable);
-    List<Order> getOderDetails(String search, Pageable pageable);
+    Page<Order> getOderDetails(String search, Pageable pageable);
 
     void declineOrder(Long id);
 

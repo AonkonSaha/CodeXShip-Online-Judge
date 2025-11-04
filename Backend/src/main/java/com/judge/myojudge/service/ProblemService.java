@@ -18,7 +18,7 @@ public interface ProblemService {
     public List<ProblemWithSample> findProblemAll();
 
     public void saveProblem(String title, String handle, String difficulty,
-                            String type,Long coin, String problemStatement);
+                            String type,Long coin, String problemStatement, String explanation);
 
     public boolean findProblemByHandleExit(String handle) ;
 
@@ -33,8 +33,8 @@ public interface ProblemService {
     public ProblemDTO fetchOneProblemByID(long id);
 
     public void saveProblemWithId(long id, String title, String handle, String difficulty, String type,
-                                  String problemStatement,Long coins, List<MultipartFile> multipartFiles) throws IOException;
+                                  String problemStatement,String explanation , Long coins, List<MultipartFile> multipartFiles) throws IOException;
 
-    public Page<ProblemWithSample> findProblemAllByCategory(String category,String search, String difficulty,String solvedFilter, Pageable pageable);
+    public Page<ProblemWithSample> findProblemAllByCategory(String category,String search, String difficulty, String solvedFilter, Pageable pageable);
 
 }

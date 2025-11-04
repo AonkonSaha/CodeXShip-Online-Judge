@@ -47,9 +47,9 @@ const OrderManagementPage = () => {
     setLoading(true);
     try {
       const headers = token ? { Authorization: `Bearer ${token}` } : {};
-      const res = await axios.get(`${baseURL}/api/product/v1/order/all`, {
+      const res = await axios.get(`${baseURL}/api/product/v1/history/order/all`, {
         headers,
-        params: { page, size: 100, search: search.trim() },
+        params: { page, size: 8, search: search.trim() },
       });
       const newOrders = res.data.data?.content || [];
       if (!newOrders.length) {
@@ -98,8 +98,12 @@ const OrderManagementPage = () => {
     if (!window.confirm(`Are you sure to ${action} this order?`)) return;
     try {
       const headers = token ? { Authorization: `Bearer ${token}` } : {};
-      
+      if(action==="delete"){
+        alert("D");
+        await axios.delete(`${baseURL}/api/product/v1/order/delete/${id}`, { headers });
+      }else{
       await axios.post(`${baseURL}/api/product/v1/order/${action}/${id}`, {}, { headers });
+      }
       
       setOrders((prev) =>
         prev.map((o) =>
@@ -189,7 +193,7 @@ const OrderManagementPage = () => {
                     darkMode ? "border-gray-700" : "border-gray-200"
                   } hover:bg-gray-100 dark:hover:bg-gray-700 transition`}
                 >
-                  <td className="px-4 py-3 font-medium">{order.order_id}</td>
+                  <td className="px-4 py-3 font-medium">#{order.order_id}</td>
                   <td className="px-4 py-3">
                     <div className="font-semibold">{order.username}</div>
                     <div className="text-xs text-gray-500">{order.mobile}</div>
@@ -245,10 +249,21 @@ const OrderManagementPage = () => {
                             onClick={() =>
                               handleAction(order.order_id, "decline")
                             }
-                            className="p-2 bg-red-600 hover:bg-red-500 rounded-full text-white"
+                            className="p-2 bg-yellow-600 hover:bg-red-500 rounded-full text-white"
                             title="Decline"
                           >
+                            
                             <FaTimesCircle />
+                          </button>
+                          <button
+                            onClick={() =>
+                              handleAction(order.order_id, "delete")
+                            }
+                            className="p-2 bg-red-600 hover:bg-red-500 rounded-full text-white"
+                            title="Delete"
+                          >
+                            
+                         <FaTimesCircle />
                           </button>
                         </>
                       )}

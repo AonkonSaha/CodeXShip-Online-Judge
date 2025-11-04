@@ -67,8 +67,8 @@ public class ProductServiceImp implements ProductService {
     }
 
     @Override
-    public List<Order> getOderDetails(String search, Pageable pageable) {
-        List<Order> orders = orderRepo.getAllWithFilter(search,pageable);
+    public Page<Order> getOderDetails(String search, Pageable pageable) {
+        Page<Order> orders = orderRepo.getAllWithFilter(search,pageable);
         return orders;
     }
 
@@ -104,8 +104,8 @@ public class ProductServiceImp implements ProductService {
     @Override
     @Transactional
     public Page<Order> getOderDetailsByUser(String search, Pageable pageable) {
-        String contact = SecurityContextHolder.getContext().getAuthentication().getName();
-        return orderRepo.getOrderByMobile(contact,search,pageable);
+        String mobileOrEmail = SecurityContextHolder.getContext().getAuthentication().getName();
+        return orderRepo.getOrderByMobileOrEmail(mobileOrEmail,search,pageable);
     }
 
     @Override

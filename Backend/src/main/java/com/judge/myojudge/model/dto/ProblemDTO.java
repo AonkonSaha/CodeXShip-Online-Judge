@@ -23,13 +23,15 @@ public class ProblemDTO {
     private Map<String,String> testCaseNameWithPath;
     private List<MultipartFile> files;
     private Long coins;
+    private String explanation;
 
-    public ProblemDTO(String title, String handle, String difficulty, String type, String problemStatement, List<MultipartFile> files) {
+    public ProblemDTO(String title, String handle, String difficulty, String type, String problemStatement, String explanation, List<MultipartFile> files) {
         this.title = title;
         this.handle = handle;
         this.difficulty = difficulty;
         this.type = type;
         this.problemStatement = problemStatement;
+        this.explanation = explanation;
         this.files = files ;
     }
 

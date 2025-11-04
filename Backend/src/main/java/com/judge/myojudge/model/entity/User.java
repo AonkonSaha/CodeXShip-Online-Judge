@@ -35,6 +35,8 @@ public class User {
 
     @Column(name = "image_url")
     private String imageUrl;
+    private Boolean isGoogleUser;
+    private Boolean isGoogleUserSetPassword;
     private String imageFileKey;
     private String gender;
     private String country;

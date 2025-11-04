@@ -13,7 +13,7 @@ import java.util.List;
 public interface SubmissionRepo extends JpaRepository<Submission,Long> {
 
     @Query("SELECT s FROM Submission s " +
-            "WHERE s.user.mobileNumber = :contact " +
+            "WHERE (s.user.mobileNumber = :mobileOrEmail OR s.user.email = :mobileOrEmail) " +
             "AND (:search IS NULL OR " +
             "     LOWER(s.problem.title) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
             "     LOWER(s.status) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
@@ -23,19 +23,18 @@ public interface SubmissionRepo extends JpaRepository<Submission,Long> {
             "     CAST(s.time AS string) LIKE CONCAT('%', :search, '%') OR " +
             "     CAST(s.memory AS string) LIKE CONCAT('%', :search, '%')" +
             ")")
-    Page<Submission> findSubmissionsByContact(
-            @Param("contact") String contact,
+    Page<Submission> findSubmissionsByMobileOrEmail(
+            @Param("mobileOrEmail") String mobileOrEmail,
             @Param("search") String search,
             Pageable pageable);
 
-   @Query("SELECT s FROM Submission s WHERE s.user.mobileNumber = :contact AND lower(s.handle) = lower(:handleName) AND lower(s.status) = lower(:accepted)")
-   List<Submission> findByContactAndHandleAndStatus(@Param("contact") String mobileNumber,
+   @Query("SELECT s FROM Submission s WHERE (s.user.mobileNumber = :mobileOrEmail OR s.user.email = :mobileOrEmail) AND lower(s.handle) = lower(:handleName) AND lower(s.status) = lower(:accepted)")
+   List<Submission> findByMobileOrEmailAndHandleAndStatus(@Param("mobileOrEmail") String mobileOrEmail,
                                               @Param("handleName") String handleName,
                                               @Param("accepted") String accepted);
-    @Query("SELECT s FROM Submission s WHERE s.user.mobileNumber = :contact AND lower(s.status) = lower(:accepted)")
-    List<Submission> findAllSubmissionByContactAndStatus(@Param("contact") String mobileNumber,
+    @Query("SELECT s FROM Submission s WHERE s.user.email = :email AND lower(s.status) = lower(:accepted)")
+    List<Submission> findAllSubmissionByEmailAndStatus(@Param("email") String email,
                                                      @Param("accepted") String accepted);
-
 
 
 }

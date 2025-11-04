@@ -30,7 +30,13 @@ public class JwtUtil {
     }
 
     @Transactional(value = Transactional.TxType.REQUIRED)
-    public String generateToken(User user,String username, boolean isActive) {
+    public String generateToken(User user,String email, boolean isActive) {
+        String username;
+        if(user.getMobileNumber()!=null && user.getMobileNumber().length()>0){
+            username = user.getMobileNumber();
+        }else{
+            username = user.getEmail();
+        }
         List<String> roles=new ArrayList<>();
         for(UserRole userRole:user.getUserRoles()){
             roles.add(userRole.getRoleName());

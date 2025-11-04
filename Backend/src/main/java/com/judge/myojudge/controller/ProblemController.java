@@ -76,8 +76,8 @@ public class ProblemController {
             @PathVariable String category,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "5") int size,
-            @RequestParam(required = false) String search,
-            @RequestParam(required = false) String difficulty,
+            @RequestParam(required = false, defaultValue = "") String search,
+            @RequestParam(required = false, defaultValue = "") String difficulty,
             @RequestParam(name = "solved_filter",required = false, defaultValue = "") String solvedFilter
     )  {
         Pageable pageable= PageRequest.of(page,size);
@@ -93,7 +93,7 @@ public class ProblemController {
 
 
     @PostMapping(value="/v1/save" )
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','PROBLEM_EDITOR')")
     @Transactional
     public ResponseEntity<?> createProblemDetails(
             @RequestParam("title") String title,
@@ -102,12 +102,13 @@ public class ProblemController {
             @RequestParam("type")String type,
             @RequestParam("coin")Long coin,
             @RequestParam("problemStatement") String problemStatement,
+            @RequestParam("explanation") String explanation,
             @RequestParam("testCaseFile") List<MultipartFile> multipartFiles
 
     ) throws IOException {
             validationService.validateProblemDetails(new ProblemDTO(title, handle, difficulty, type,
-                                                                  problemStatement, multipartFiles));
-            problemService.saveProblem(title,handle,difficulty,type,coin,problemStatement);
+                                                                  problemStatement,explanation, multipartFiles));
+            problemService.saveProblem(title,handle,difficulty,type,coin,problemStatement,explanation);
             testCaseService.saveTestCases(handle,title, multipartFiles);
             ApiResponse<String> apiResponse=ApiResponse.<String>builder()
                     .success(true)
@@ -128,12 +129,13 @@ public class ProblemController {
             @RequestParam("type") String type,
             @RequestParam("coin") Long coins,
             @RequestParam("problemStatement") String problemStatement,
+            @RequestParam("explanation") String explanation,
             @RequestParam(value = "testCaseFile", required = false) List<MultipartFile> multipartFiles
     ) throws IOException {
 //            validationService.validateProblemDetails(new ProblemDTO(title, handle, difficulty,
 //                                                     type,problemStatement, multipartFiles));
 
-            problemService.saveProblemWithId(problemId, title, handle, difficulty, type, problemStatement,coins, multipartFiles);
+            problemService.saveProblemWithId(problemId, title, handle, difficulty, type, problemStatement,explanation ,coins, multipartFiles);
             return ResponseEntity.noContent().build();
 
     }

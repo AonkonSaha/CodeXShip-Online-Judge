@@ -1,4 +1,4 @@
-import { useState, useContext } from "react";
+import { useState, useContext, useEffect } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { AuthContext } from "./AuthContext";
 import NavBar from "../NavBar_Footer/NavBarCus";
@@ -10,6 +10,7 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const baseURL = process.env.REACT_APP_BACK_END_BASE_URL;
+  const googleClientId = process.env.REACT_APP_GOOGLE_CLIENT_ID;
 
   const toastStyle = {
     style: {
@@ -29,11 +30,59 @@ const Login = () => {
     },
   };
 
+  // 🔹 GOOGLE LOGIN: Initialize & Render Google Button
+  useEffect(() => {
+    if (window.google && googleClientId) {
+        window.google.accounts.id.initialize({
+        client_id: googleClientId,
+        callback: handleGoogleResponse,
+      });
+
+      window.google.accounts.id.renderButton(
+        document.getElementById("googleSignInDiv"),
+        {
+          theme: darkMode ? "filled_black" : "outline",
+          size: "large",
+          width: "100%",
+          text: "signin_with",
+          shape: "rectangular",
+        }
+      );
+    }
+  }, [darkMode, googleClientId]);
+
+  // 🔹 GOOGLE LOGIN CALLBACK
+  const handleGoogleResponse = async (response) => {
+    toast.dismiss();
+    const toastId = toast.loading("Signing in with Google...", toastStyle);
+    try {
+      const res = await fetch(`${baseURL}/api/auth/v2/login/google`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ credential: response.credential, }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        login(data.jwt || data.data?.token);
+        toast.success("Google login successful! Redirecting...", { id: toastId, ...toastStyle });
+        setTimeout(() => navigate("/"), 1000);
+      } else {
+        toast.error(data.message || "Google login failed.", { id: toastId, ...toastStyle });
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Google login error. Please try again.", { id: toastId, ...toastStyle });
+    }
+  };
+
+  // 🔹 PASSWORD LOGIN HANDLER
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
     toast.dismiss();
-    const toastId = ("Verifying credentials...", toastStyle);
+    const toastId = toast.loading("Verifying credentials...", toastStyle);
 
     try {
       const response = await fetch(`${baseURL}/api/auth/v1/login`, {
@@ -44,6 +93,7 @@ const Login = () => {
       const data = await response.json();
 
       if (response.ok) {
+
         login(data.data.token);
         toast.success("Login successful! Redirecting...", { id: toastId, ...toastStyle });
         setTimeout(() => navigate("/"), 1000);
@@ -142,7 +192,7 @@ const Login = () => {
             {["mobile", "password"].map((field) => (
               <div key={field}>
                 <label htmlFor={field} className="block text-sm font-medium mb-1">
-                  {field === "mobile" ? "Mobile Number" : "Password"}
+                  {field === "mobile" ? "" : ""}
                 </label>
                 <input
                   type={field === "mobile" ? "text" : "password"}
@@ -150,7 +200,7 @@ const Login = () => {
                   value={credentials[field]}
                   onChange={(e) => setCredentials({ ...credentials, [field]: e.target.value })}
                   required
-                  placeholder={field === "mobile" ? "Enter your mobile number" : "Enter your password"}
+                  placeholder={field === "mobile" ? "Enter your email or mobile" : "Enter your password"}
                   className={`w-full px-4 py-3 border rounded-lg shadow-sm focus:outline-none focus:ring-2 ${
                     darkMode
                       ? "bg-gray-700 border-gray-600 text-white focus:ring-blue-400"
@@ -171,11 +221,20 @@ const Login = () => {
             </button>
           </form>
 
+          {/* 🔹 Google Sign-In Button */}
+          <div className="my-6 flex items-center justify-center">
+            <div className="w-full border-t border-gray-400"></div>
+            <span className="px-3 text-sm text-gray-500">OR</span>
+            <div className="w-full border-t border-gray-400"></div>
+          </div>
+
+          <div id="googleSignInDiv" className="flex justify-center"></div>
+
           <div className="text-center mt-6">
             <p className="text-sm">
               Don’t have an account?{" "}
               <NavLink to="/register" className="font-medium text-blue-500 hover:text-blue-600">
-                Register here
+                Register here      
               </NavLink>
             </p>
           </div>

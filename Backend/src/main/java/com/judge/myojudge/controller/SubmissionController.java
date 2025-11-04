@@ -56,12 +56,12 @@ public class SubmissionController {
             @RequestParam(defaultValue = "asc") String sortBy,
             @RequestParam(name = "search", required = false) String search
     ){
-        String contact= SecurityContextHolder.getContext().getAuthentication().getName();
+        String mobileOrEmail= SecurityContextHolder.getContext().getAuthentication().getName();
         Sort sort = sortBy.equalsIgnoreCase("asc")
                 ? Sort.by(sortField).ascending()
                 : Sort.by(sortField).descending();
 
-        Page<SubmissionResponse> submissionResponse = submissionService.getAllSubmissionByUser(contact,search,sort,page,size);
+        Page<SubmissionResponse> submissionResponse = submissionService.getAllSubmissionByUser(mobileOrEmail,search,sort,page,size);
         ApiResponse<Page<SubmissionResponse>> apiResponse=ApiResponse.<Page<SubmissionResponse>>builder()
                 .success(true)
                 .statusCode(HttpStatus.OK.value())

@@ -4,6 +4,7 @@ import { Menu, X, Moon, Sun } from "lucide-react";
 import { AuthContext } from "../auth_component/AuthContext";
 import Button from "../components/button";
 import { Avatar, AvatarImage, AvatarFallback } from "../components/avatar";
+import {  FaBoxOpen } from "react-icons/fa";
 import {
   DropdownMenuContent,
   DropdownMenuItem,
@@ -66,7 +67,10 @@ const NavBar = () => {
           {(isNormalUser || isContestUser || isAdmin) && (<NavLink to="/submission" className="hover:text-blue-500">Submissions</NavLink>)}
           <NavLink to="/leaderboard" className="hover:text-blue-500">Leaderboard</NavLink>
 
-          {(isNormalUser || isContestUser || isAdmin) && (<NavLink to="/reward" className="hover:text-blue-500">GiftDock</NavLink>)}
+          {(isNormalUser || isContestUser || isAdmin) && (<NavLink to="/gift-dock" className="hover:text-blue-500">GiftDock🎁</NavLink>)}
+          {(isNormalUser || isContestUser || isAdmin) && (<NavLink to="/history/my-order" className="hover:text-blue-500">
+          📦MyOrder
+          </NavLink>)}
 
         </div>
 
@@ -191,12 +195,16 @@ const NavBar = () => {
           <NavLink to="/contest" className="hover:text-blue-500" onClick={toggleMenu}>
             Contests
           </NavLink>
-          { (isNormalUser || isContestUser || isAdmin) && (<NavLink to="/reward" className="hover:text-blue-500" onClick={toggleMenu}>
-            GiftDock
-          </NavLink>) }
           <NavLink to="/leaderboard" className="hover:text-blue-500" onClick={toggleMenu}>
             Leaderboard
           </NavLink>
+          { (isNormalUser || isContestUser || isAdmin) && (<NavLink to="/gift-dock" className="hover:text-blue-500" onClick={toggleMenu}>
+            GiftDock🎁
+          </NavLink>) }
+            { (isNormalUser || isContestUser || isAdmin) && (<NavLink to="/history/my-order" className="hover:text-blue-500" onClick={toggleMenu}>
+            📦MyOrder
+          </NavLink>) }
+
 
           {/* Coins in Mobile */}
           {user && (
@@ -251,7 +259,7 @@ const NavBar = () => {
                     Delete Problem
                   </NavLink>
                   <NavLink to="/users" className="hover:text-blue-500" onClick={toggleMenu}>
-                    Users
+                    User Management
                   </NavLink>
                 </>
               )}

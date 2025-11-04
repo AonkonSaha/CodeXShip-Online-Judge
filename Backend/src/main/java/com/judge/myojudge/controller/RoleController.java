@@ -6,10 +6,7 @@ import com.judge.myojudge.service.AuthService;
 import com.judge.myojudge.service.RoleService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/role")
@@ -21,14 +18,14 @@ public class RoleController {
 
     @PostMapping("/v1/register")
     public ResponseEntity<Void> addRole(@RequestBody RoleDTO roleDTO){
-        User user=authService.fetchUserByMobileNumber(roleDTO.getMobile()).get();
+        User user=authService.fetchUserByEmail(roleDTO.getEmail());
         roleService.addRole(user,roleDTO.getRoleName());
         return ResponseEntity.noContent().build();
     }
 
-    @PostMapping("/v1/remove")
+    @DeleteMapping("/v1/remove")
     public ResponseEntity<Void> removeRole(@RequestBody RoleDTO roleDTO){
-        User user=authService.fetchUserByMobileNumber(roleDTO.getMobile()).get();
+        User user=authService.fetchUserByEmail(roleDTO.getEmail());
         roleService.deleteRole(user,roleDTO.getRoleName());
         return ResponseEntity.noContent().build();
     }
