@@ -26,6 +26,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Optional;
@@ -60,8 +61,7 @@ public class AuthServiceImp implements AuthService {
         }
         user.setActivityStatus(true);
 
-        if(user.getLastLogin()==null || Duration.between(
-                user.getLastLogin(),LocalDateTime.now()).toHours() >= 24L){
+        if(user.getLastLogin()==null || user.getLastLogin().toLocalDate().isBefore(LocalDate.now())){
             user.setTotalPresentCoins(user.getTotalPresentCoins()==null?5:user.getTotalPresentCoins()+ 5);
             user.setTotalCoinsEarned(user.getTotalCoinsEarned()==null?5:user.getTotalCoinsEarned()+5);
             user.setIsAdditionDailyCoin(true);
@@ -272,8 +272,7 @@ public class AuthServiceImp implements AuthService {
 
         user.setActivityStatus(true);
 
-        if(user.getLastLogin()==null || Duration.between(
-                user.getLastLogin(),LocalDateTime.now()).toHours() >= 24L){
+        if(user.getLastLogin()==null || user.getLastLogin().toLocalDate().isBefore(LocalDate.now())){
             user.setTotalPresentCoins(user.getTotalPresentCoins()==null?5:user.getTotalPresentCoins()+ 5);
             user.setTotalCoinsEarned(user.getTotalCoinsEarned()==null?5:user.getTotalCoinsEarned()+5);
             user.setIsAdditionDailyCoin(true);
