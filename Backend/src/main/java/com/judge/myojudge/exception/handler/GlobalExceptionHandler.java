@@ -14,6 +14,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import java.io.FileNotFoundException;
 import java.time.LocalDateTime;
@@ -80,6 +81,16 @@ public class GlobalExceptionHandler {
                                                                  HttpServletRequest request) {
         log.error("User Not Found Exception: {}", exception.getMessage());
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(buildError(HttpStatus.NOT_FOUND, exception.getMessage(), request.getRequestURI()));
+    }
+    @ExceptionHandler(ImageSizeLimitExceededException.class)
+    public ResponseEntity<ErrorResponse> handleFileExitException(ImageSizeLimitExceededException exception,HttpServletRequest request) {
+        log.error("Image Size Limit Exceeded Exception: {}", exception.getMessage());
+        return ResponseEntity.status(HttpStatus.OK).body(buildError(HttpStatus.OK, exception.getMessage(), request.getRequestURI()));
+    }
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ErrorResponse> handleFileExitException(MaxUploadSizeExceededException exception,HttpServletRequest request) {
+        log.error("Max File Size Limit Exceeded Exception: {}", exception.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body(buildError(HttpStatus.NOT_ACCEPTABLE, "This file size is too large", request.getRequestURI()));
     }
     @ExceptionHandler(FileNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleFileExitException(FileNotFoundException exception,HttpServletRequest request) {

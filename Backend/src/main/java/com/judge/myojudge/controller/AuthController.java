@@ -1,6 +1,7 @@
 package com.judge.myojudge.controller;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
+import com.judge.myojudge.exception.ImageSizeLimitExceededException;
 import com.judge.myojudge.model.dto.*;
 import com.judge.myojudge.model.entity.User;
 import com.judge.myojudge.model.mapper.UserMapper;
@@ -140,6 +141,9 @@ public class AuthController {
     public ResponseEntity<ApiResponse<String>> updateProfilePic(@RequestParam("file") MultipartFile file) throws Exception {
         if(file==null || file.isEmpty()){
             throw new FileNotFoundException("File Not Found");
+        }
+        if(file.getSize()>5*1024*1024){
+            throw new ImageSizeLimitExceededException("Image size doesn't exceed in 5MB");
         }
         ApiResponse<String> apiResponse=ApiResponse.<String>builder()
                 .success(true)
