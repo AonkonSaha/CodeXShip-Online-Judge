@@ -1,5 +1,6 @@
 package com.judge.myojudge.model.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -20,7 +21,13 @@ public class ProblemWithSample {
     private String explanation;
     private String difficulty;
     private String type;
+    @JsonProperty("is_solved")
+    private boolean isSolved=false;
     private Long coins;
+    @JsonProperty("time_limit")
+    private double timeLimit;
+    @JsonProperty("memory_limit")
+    private double memoryLimit;
     private List<String> sampleTestcase;
     private List<String> sampleOutput;
 }

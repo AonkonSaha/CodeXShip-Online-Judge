@@ -48,20 +48,6 @@ const ProblemCategoryPage = () => {
     }
   }, [token]);
 
-  /** ✅ Fetch solved problems once per user **/
-  const fetchSolvedProblems = useCallback(async () => {
-    if (!token) return;
-    try {
-      const res = await axios.get(`${baseURL}/api/auth/v1/profile`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const solvedIds = new Set(res.data.data.userSolvedProblems || []);
-      setSolvedProblems(solvedIds);
-    } catch (e) {
-      console.warn("Could not fetch solved problems:", e.message);
-    }
-  }, [token, baseURL]);
-
   /** ✅ Fetch problems with smart pagination **/
   const fetchProblems = useCallback(
     async (nextPage = page) => {
@@ -95,7 +81,7 @@ const ProblemCategoryPage = () => {
         }
 
         const filteredProblems = newProblems.filter((p) => {
-          if (solvedFilter === "solved") return solvedProblems.has(p.id);
+          if (solvedFilter === "solved") return !solvedProblems.has(p.id);
           if (solvedFilter === "unsolved") return !solvedProblems.has(p.id);
           return true;
         });
@@ -132,8 +118,7 @@ const ProblemCategoryPage = () => {
     setProblems([]);
     setPage(0);
     setHasMore(true);
-    fetchSolvedProblems();
-  }, [category, searchTerm, difficultyFilter, solvedFilter, fetchSolvedProblems]);
+  }, [category, searchTerm, difficultyFilter, solvedFilter]);
 
   /** Intersection Observer for infinite scroll **/
   useEffect(() => {

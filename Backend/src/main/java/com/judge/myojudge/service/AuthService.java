@@ -3,6 +3,7 @@ package com.judge.myojudge.service;
 import com.judge.myojudge.model.dto.LoginDTO;
 import com.judge.myojudge.model.dto.PasswordDTO;
 import com.judge.myojudge.model.dto.UpdateUserDTO;
+import com.judge.myojudge.model.dto.UserDTO;
 import com.judge.myojudge.model.entity.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -43,4 +44,6 @@ public interface AuthService {
     String loginByGoogle(String email, String name, String picture);
 
     User fetchUserByEmail(String email);
+    UserDTO fetchUserByProblemSolvedHistory(String mobileOrEmail);
+
 }

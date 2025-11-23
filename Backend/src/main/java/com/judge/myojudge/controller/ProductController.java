@@ -116,11 +116,14 @@ public class ProductController {
     @PostMapping("/v1/order/{action}/{id}")
     public ResponseEntity<Void> declineProductOrder(@PathVariable Long id,
                                                @PathVariable String action) {
-        if(action.equals("decline")) {
-            productService.declineOrder(id);
-        }else{
-            productService.markedShipped(id);
-        }
+        if(action.equals("decline"))productService.declineOrder(id);
+        else productService.markedShipped(id);
+        return ResponseEntity.noContent().build();
+    }
+    @PreAuthorize("hasRole('ADMIN')")
+    @DeleteMapping("/v1/order/delete/{id}")
+    public ResponseEntity<Void> declineProductOrder(@PathVariable Long id) {
+        productService.deleteOrder(id);
         return ResponseEntity.noContent().build();
     }
 

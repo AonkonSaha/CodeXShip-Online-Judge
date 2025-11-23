@@ -64,7 +64,6 @@ public class AuthController {
     }
     @PostMapping("/v2/login/google")
     public ResponseEntity<ApiResponse<Map<String, String>>> googleLogin(@RequestBody Map<String, String> body) {
-
         String email = null;
         String name = null;
         String picture = null;
@@ -74,34 +73,24 @@ public class AuthController {
             if (idToken == null || idToken.isEmpty()) {
                 throw new BadCredentialsException("Missing Google credential token");
             }
-
             GoogleIdToken.Payload payload = googleTokenVerifierService.verifyGoogleIdToken(idToken);
             if (payload == null) {
                 throw new BadCredentialsException("Invalid Google IDToken");
             }
-
             email = payload.getEmail();
             name = (String) payload.get("name");
             picture = (String) payload.get("picture");
-
             String appJwt = authService.loginByGoogle(email, name, picture);
-
             ApiResponse<Map<String, String>> response = ApiResponse.<Map<String, String>>builder()
                     .success(true)
                     .statusCode(HttpStatus.OK.value())
                     .message("Login Success..!")
                     .data(Map.of("token", appJwt))
                     .build();
-
             return ResponseEntity.ok(response);
 
-        } catch (BadCredentialsException e) {
-            // handle invalid tokens clearly
-            e.printStackTrace();
-            throw e;
         } catch (Exception e) {
-            e.printStackTrace();
-            throw new BadCredentialsException("Login Failed..!", e);
+            throw new BadCredentialsException("Login Failed..!");
         }
     }
 

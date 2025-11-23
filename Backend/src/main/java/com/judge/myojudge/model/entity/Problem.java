@@ -31,6 +31,10 @@ public class Problem {
     private String difficulty;
     private String type;
     private Long coins;
+    @Column(nullable = true)
+    private Double timeLimit;
+    @Column(nullable = true)
+    private Double memoryLimit;
 
     @OneToMany(mappedBy = "problem", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<TestCase>  testcases;

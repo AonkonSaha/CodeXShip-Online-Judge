@@ -2,20 +2,25 @@ package com.judge.myojudge.service.imp;
 
 import com.cloudinary.Cloudinary;
 import com.judge.myojudge.exception.ProblemNotFoundException;
+import com.judge.myojudge.exception.TestCaseNotFoundException;
 import com.judge.myojudge.exception.UserNotFoundException;
 import com.judge.myojudge.model.dto.ProblemDTO;
 import com.judge.myojudge.model.dto.ProblemWithSample;
 import com.judge.myojudge.model.entity.Problem;
 import com.judge.myojudge.model.entity.TestCase;
 import com.judge.myojudge.model.entity.User;
+import com.judge.myojudge.model.mapper.ProblemMapper;
 import com.judge.myojudge.repository.ProblemRepo;
 import com.judge.myojudge.repository.SubmissionRepo;
 import com.judge.myojudge.repository.TestCaseRepo;
 import com.judge.myojudge.repository.UserRepo;
 import com.judge.myojudge.service.CloudinaryService;
 import com.judge.myojudge.service.ProblemService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -38,70 +43,26 @@ public class ProdProblemService implements ProblemService {
     private final CloudinaryService cloudinaryService;
     private final UserRepo userRepo;
     private final SubmissionRepo submissionRepo;
-    @Override
-    public List<ProblemWithSample> findProblemAll() {
-        List<ProblemWithSample> problemList = new ArrayList<>();
-        List<Problem> problems = problemRepo.findAll();
-
-        for (Problem problem : problems) {
-            ProblemWithSample problemWithSample = new ProblemWithSample();
-            problemWithSample.setId(problem.getId());
-            problemWithSample.setTitle(problem.getTitle());
-            problemWithSample.setHandle(problem.getHandleName());
-            problemWithSample.setProblemStatement(problem.getProblemStatement());
-            problemWithSample.setExplanation(problem.getExplanation());
-            problemWithSample.setType(problem.getType());
-            problemWithSample.setDifficulty(problem.getDifficulty());
-
-            TestCase sampleTestcase = null;
-            TestCase sampleOutput = null;
-
-            for (TestCase testCase : problem.getTestcases()) {
-                if (testCase.getFileName().equals("1.in")) {
-                    sampleTestcase = testCase;
-                } else if (testCase.getFileName().equals("1.out")) {
-                    sampleOutput = testCase;
-                }
-            }
-
-            List<String> sampleTestcaseContent = cloudinaryService.readCloudinaryFile(sampleTestcase.getFilePath());
-            List<String> sampleOutputContent = cloudinaryService.readCloudinaryFile(sampleOutput.getFilePath());
-
-            problemWithSample.setSampleTestcase(sampleTestcaseContent);
-            problemWithSample.setSampleOutput(sampleOutputContent);
-
-            problemList.add(problemWithSample);
-        }
-        return problemList;
-    }
-
-
+    private final ProblemMapper problemMapper;
 
     @Override
     @Transactional(value = Transactional.TxType.REQUIRES_NEW)
+    @CacheEvict(cacheNames = {"problems","singleProblemPerPage"},allEntries = true)
     public void saveProblem(String title,
                             String handle,
                             String difficulty,
                             String type,
                             Long coin,
+                            double timeLimit,
+                            double memoryLimit,
                             String problemStatement,
                             String explanation
-                            ) {
+    ){
         String mobileOrEmail= SecurityContextHolder.getContext().getAuthentication().getName();
-        User user = null;
-        if(mobileOrEmail.contains("@")){
-            user = userRepo.findByEmail(mobileOrEmail).orElseThrow(() -> new UserNotFoundException("User not found"));
-        }else{
-            user = userRepo.findByMobileNumber(mobileOrEmail).orElseThrow(() -> new UserNotFoundException("User not found"));
-        }
-        Problem problem = new Problem();
-        problem.setTitle(title);
-        problem.setHandleName(handle);
-        problem.setDifficulty(difficulty);
-        problem.setType(type);
-        problem.setCoins(coin);
-        problem.setProblemStatement(problemStatement);
-        problem.setExplanation(explanation);
+        User user = userRepo.findByMobileOrEmail(mobileOrEmail).orElseThrow(() -> new UserNotFoundException("User not found"));
+        Problem problem = problemMapper.toProblem(title,handle,difficulty,type,coin,timeLimit,
+                memoryLimit,problemStatement,explanation
+        );
         problem.setUser(user);
         user.getProblems().add(problem);
         problemRepo.save(problem);
@@ -119,6 +80,7 @@ public class ProdProblemService implements ProblemService {
 
     @Override
     @Transactional
+    @CacheEvict(cacheNames = {"problems","singleProblemPerPage"},allEntries = true)
     public void deleteEachProblem() {
         List<Problem> problems = problemRepo.findAll();
         if (problems.isEmpty()) {
@@ -139,7 +101,6 @@ public class ProdProblemService implements ProblemService {
         if (problem.isEmpty()) {
             throw new ProblemNotFoundException("Problem Not Found Handle By: " + handle);
         }
-
         for (TestCase testCase : problem.get().getTestcases()) {
             cloudinaryService.deleteCloudinaryFile(testCase.getFileKey(),"raw");
         }
@@ -149,55 +110,39 @@ public class ProdProblemService implements ProblemService {
 
     @Override
     @Transactional
-    public ProblemWithSample findProblemByID(Long id) {
-        Problem problem = problemRepo.findById(id)
+    @Cacheable(cacheNames = "singleProblemPerPage",key = "#problemId")
+    public ProblemWithSample getProblemPerPageById(Long problemId, HttpServletRequest httpServletRequest) {
+        String token = httpServletRequest.getHeader("Authorization");
+        String mobileOrEmail= SecurityContextHolder.getContext().getAuthentication().getName();
+        Problem problem = problemRepo.findById(problemId)
                 .orElseThrow(() -> new ProblemNotFoundException("Problem not found"));
-        ProblemWithSample problemWithSample = new ProblemWithSample();
-        problemWithSample.setId(problem.getId());
-        problemWithSample.setTitle(problem.getTitle());
-        problemWithSample.setProblemStatement(problem.getProblemStatement());
-        problemWithSample.setExplanation(problem.getExplanation());
-        problemWithSample.setDifficulty(problem.getDifficulty());
-        problemWithSample.setType(problem.getType());
-        problemWithSample.setHandle(problem.getHandleName());
-        problemWithSample.setCoins(problem.getCoins());
-
-        TestCase sampleTestcase = null;
-        TestCase sampleOutput = null;
-
-        for (TestCase testCase : problem.getTestcases()) {
-            if (testCase.getFileName().equals("1.in")) {
-                sampleTestcase = testCase;
-            } else if (testCase.getFileName().equals("1.out")) {
-                sampleOutput = testCase;
-            }
+        boolean is_solved = false;
+        if(token != null && token.startsWith("Bearer ") && token.length() > 7){
+            is_solved = userRepo.isProblemSolved(problemId,mobileOrEmail);
         }
 
+        TestCase sampleTestcase = getSampleInput(problem.getTestcases());
+        TestCase sampleOutput = getSampleOutput(problem.getTestcases());
+        if(sampleTestcase == null || sampleOutput==null){
+            throw new TestCaseNotFoundException("Sample testcase not found");
+        }
         List<String> sampleTestcaseContent = cloudinaryService.readCloudinaryFile(sampleTestcase.getFilePath());
         List<String> sampleOutputContent = cloudinaryService.readCloudinaryFile(sampleOutput.getFilePath());
-
+        ProblemWithSample problemWithSample = problemMapper.toProblemWithSample(problem);
+        problemWithSample.setSolved(is_solved);
         problemWithSample.setSampleTestcase(sampleTestcaseContent);
         problemWithSample.setSampleOutput(sampleOutputContent);
-
         return problemWithSample;
     }
 
     @Transactional
-    public ProblemDTO fetchOneProblemByID(long id) {
+    public ProblemDTO updateProblemByID(long id) {
         Optional<Problem> problem = problemRepo.findById(id);
         if (problem.isEmpty()) {
             throw new ProblemNotFoundException("Problem not found with ID: " + id);
         }
         Map<String,String> testCaseNameWithPath=new HashMap<>();
-        ProblemDTO problemDTO = new ProblemDTO();
-        problemDTO.setTitle(problem.get().getTitle());
-        problemDTO.setDifficulty(problem.get().getDifficulty());
-        problemDTO.setType(problem.get().getType());
-        problemDTO.setHandle(problem.get().getHandleName());
-        problemDTO.setCoins(problem.get().getCoins());
-        problemDTO.setProblemStatement(problem.get().getProblemStatement());
-        problemDTO.setExplanation(problem.get().getExplanation());
-
+        ProblemDTO problemDTO = problemMapper.toProblemDTO(problem.get());
         for(TestCase testCase:problem.get().getTestcases()){
             testCaseNameWithPath.put(testCase.getFileName(),testCase.getFilePath());
         }
@@ -207,21 +152,17 @@ public class ProdProblemService implements ProblemService {
 
     @Override
     @Transactional
+    @CacheEvict(cacheNames = {"problems","singleProblemPerPage"},allEntries = true)
     public void saveProblemWithId(long id, String title, String handle, String difficulty, String type,
-                                  String problemStatement,String explanation ,Long coins, List<MultipartFile> multipartFiles) throws IOException {
+                                  String problemStatement,String explanation ,Long coins,double timeLimit,double memoryLimit, List<MultipartFile> multipartFiles) throws IOException {
         Problem problem = problemRepo.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Problem not found with ID: " + id));
-        problem.setTitle(title);
-        problem.setHandleName(handle);
-        problem.setDifficulty(difficulty);
-        problem.setType(type);
-        problem.setCoins(coins);
-        problem.setProblemStatement(problemStatement);
+        //Problem Info Reset
+        resetProblemInfo(problem,title,handle,difficulty,type,coins,
+                timeLimit,memoryLimit,problemStatement,explanation
+        );
+        Map<String,TestCase> oldTestCases= getOlderTestCase(problem);
         List<TestCase> needDeleteTestCases=new ArrayList<>();
-        Map<String,TestCase> oldTestCases=new HashMap<>();
-        for(TestCase testCase:problem.getTestcases()){
-            oldTestCases.put(testCase.getFileName(),testCase);
-        }
         if (multipartFiles != null && !multipartFiles.isEmpty()) {
             for (MultipartFile testCaseFile : multipartFiles) {
                 if (!testCaseFile.isEmpty()) {
@@ -231,12 +172,14 @@ public class ProdProblemService implements ProblemService {
                         needDeleteTestCases.add(oldTestCases.get(fileName));
                     }
                     Map uploadResult = cloudinaryService.uploadTestcase(testCaseFile);
-                    TestCase testCase = new TestCase();
-                    testCase.setFileName(testCaseFile.getOriginalFilename());
-                    testCase.setFileKey(uploadResult.get("public_id").toString());
-                    testCase.setFilePath(uploadResult.get("secure_url").toString());
-                    testCase.setHandle(handle);
-                    testCase.setProblem(problem);
+                    TestCase testCase = TestCase.builder()
+                            .fileName(testCaseFile.getOriginalFilename())
+                            .fileKey(uploadResult.get("public_id").toString())
+                            .filePath(uploadResult.get("secure_url").toString())
+                            .handle(handle)
+                            .problem(problem)
+                            .build();
+
                     if(problem.getTestcases()==null)problem.setTestcases(new ArrayList<>(Collections.singleton(testCase)));
                     else problem.getTestcases().add(testCase);
                 }
@@ -251,47 +194,139 @@ public class ProdProblemService implements ProblemService {
         problemRepo.save(problem);
     }
 
+    @Transactional(value = Transactional.TxType.REQUIRED)
+    protected Map<String, TestCase> getOlderTestCase(Problem problem) {
+        Map<String,TestCase> oldTestCases= new HashMap<>();
+        for(TestCase testCase:problem.getTestcases()){
+            oldTestCases.put(testCase.getFileName(),testCase);
+        }
+        return oldTestCases;
+    }
+
+    @Transactional(value = Transactional.TxType.REQUIRED)
+    protected void resetProblemInfo(Problem problem, String title, String handle, String difficulty,
+                                 String type, Long coins, double timeLimit,
+                                 double memoryLimit, String problemStatement,
+                                 String explanation) {
+        problem.setTitle(title);
+        problem.setHandleName(handle);
+        problem.setDifficulty(difficulty);
+        problem.setType(type);
+        problem.setCoins(coins);
+        problem.setTimeLimit(timeLimit);
+        problem.setMemoryLimit(memoryLimit);
+        problem.setProblemStatement(problemStatement);
+        problem.setExplanation(explanation);
+
+    }
+
     @Override
     @Transactional
-    public Page<ProblemWithSample> findProblemAllByCategory(String category, String search, String difficulty,String solvedFilter, Pageable pageable) {
-        String mobileOrEmail = SecurityContextHolder.getContext().getAuthentication().getName();
+    @Cacheable(cacheNames = "problems",key ="T(java.util.Objects).hash(#mobileOrEmail,#category,#search,#difficulty,#solvedFilter,#pageable.pageSize,#pageable.pageNumber)")
+    public Page<ProblemWithSample> findProblemAllByCategory(String mobileOrEmail,String category, String search, String difficulty,String solvedFilter, Pageable pageable) {
+        System.out.println("I am Service Method Before DB Call");
         List<ProblemWithSample> problemWithSamples = new ArrayList<>();
-        Page<Problem> problems = null;
-        if((userRepo.existsByMobileNumber(mobileOrEmail) || userRepo.existsByEmail(mobileOrEmail)) && solvedFilter != null && !solvedFilter.isEmpty()){
-            problems = problemRepo.findByCategoryWithSolvedOrNotFilter(mobileOrEmail,category,search, difficulty, solvedFilter, pageable);
+        Page<?> dbResult = null;
+        List<Problem> problems= null;
+        List<String> userSolved= null;
+        if(userRepo.existsUserByMobileOrEmail(mobileOrEmail)){
+            System.out.println("Solved FIlter ------------: "+solvedFilter);
+//            Long startTime = System.currentTimeMillis();
+            dbResult = problemRepo.findByCategoryWithSolvedOrNotFilter(
+                    mobileOrEmail.trim(),
+                    category.trim().toLowerCase(),
+                    search.trim().toLowerCase(),
+                    difficulty.trim().toLowerCase(),
+                    solvedFilter.trim().toLowerCase(),
+                    pageable
+            );
+//            Long endTime = System.currentTimeMillis();
+//            System.out.println("Query Time----: "+(endTime-startTime));
+            problems = (List<Problem>) dbResult.getContent()
+                    .stream()
+                    .map(row -> {
+                        Object[] arr = (Object[]) row;
+                        return (Problem) arr[0];
+                    })
+                    .toList();
+            userSolved = dbResult.getContent()
+                    .stream()
+                    .map(row -> {
+                        Object[] arr = (Object[]) row;
+                        return (String) arr[1];
+                    })
+                    .toList();
+
         }
         else{
-            problems = problemRepo.findByCategoryWithFilter(category, search, difficulty, solvedFilter, pageable);
+            dbResult = problemRepo.findByCategoryWithFilter(category.trim().toLowerCase(),
+                    search.trim().toLowerCase(),
+                    difficulty.trim().toLowerCase(),
+                    solvedFilter.trim().toLowerCase(),
+                    pageable
+            );
+            problems = (List<Problem>) dbResult.getContent();
         }
 
-        for (Problem problem : problems.getContent()) {
-            TestCase sampleTestcase = null;
-            TestCase sampleOutput = null;
-            for (TestCase testCase : problem.getTestcases()) {
-                if (testCase.getFileName().equals("1.in")) {
-                    sampleTestcase = testCase;
-                } else if (testCase.getFileName().equals("1.out")) {
-                    sampleOutput = testCase;
-                }
+        for (int i=0;i<problems.size();i++) {
+            TestCase sampleTestcase = getSampleInput(problems.get(i).getTestcases());
+            TestCase sampleOutput = getSampleOutput(problems.get(i).getTestcases());
+            if(sampleTestcase == null || sampleOutput==null){
+                throw new TestCaseNotFoundException("Sample testcase not found");
             }
-
             List<String> sampleTestcaseContent = cloudinaryService.readCloudinaryFile(sampleTestcase.getFilePath());
             List<String> sampleOutputContent = cloudinaryService.readCloudinaryFile(sampleOutput.getFilePath());
 
-            ProblemWithSample problemWithSample = ProblemWithSample.builder()
-                    .id(problem.getId())
-                    .problemStatement(problem.getProblemStatement())
-                    .explanation(problem.getExplanation())
-                    .title(problem.getTitle())
-                    .handle(problem.getHandleName())
-                    .type(problem.getType())
-                    .difficulty(problem.getDifficulty())
-                    .coins(problem.getCoins())
-                    .sampleTestcase(sampleTestcaseContent)
-                    .sampleOutput(sampleOutputContent)
-                    .build();
+            ProblemWithSample problemWithSample = problemMapper.toProblemWithSample(problems.get(i));
+            problemWithSample.setSampleTestcase(sampleTestcaseContent);
+            problemWithSample.setSampleOutput(sampleOutputContent);
+            if(userSolved!=null && !userSolved.isEmpty())problemWithSample.setSolved(userSolved.get(i).equals("solved"));
             problemWithSamples.add(problemWithSample);
         }
-        return new PageImpl<>(problemWithSamples, pageable, problems.getTotalElements());
+        System.out.println("I am Service Method After DB Call");
+        return new PageImpl<>(problemWithSamples, pageable, dbResult.getTotalElements());
     }
+
+    private TestCase getSampleOutput(List<TestCase> testcases) {
+        for (TestCase testCase : testcases) {
+         if (testCase.getFileName().equals("1.out")) {
+                return testCase;
+            }
+        }
+        return null;
+    }
+
+    private TestCase getSampleInput(List<TestCase> testcases) {
+        for (TestCase testCase : testcases) {
+            if (testCase.getFileName().equals("1.in")) {
+                return testCase;
+            }
+        }
+        return null;
+    }
+
+
+    @Override
+    public List<ProblemWithSample> findProblemAll() {
+        List<ProblemWithSample> problemList = new ArrayList<>();
+        List<Problem> problems = problemRepo.findAll();
+        for (Problem problem : problems) {
+            TestCase sampleTestcase = getSampleInput(problem.getTestcases());
+            TestCase sampleOutput = getSampleOutput(problem.getTestcases());
+            if(sampleTestcase == null || sampleOutput==null){
+                throw new TestCaseNotFoundException("Sample testcase not found");
+            }
+            List<String> sampleTestcaseContent = cloudinaryService.readCloudinaryFile(sampleTestcase.getFilePath());
+            List<String> sampleOutputContent = cloudinaryService.readCloudinaryFile(sampleOutput.getFilePath());
+            ProblemWithSample problemWithSample = problemMapper.toProblemWithSample(problem);
+            problemWithSample.setSampleTestcase(sampleTestcaseContent);
+            problemWithSample.setSampleOutput(sampleOutputContent);
+            problemList.add(problemWithSample);
+        }
+        return problemList;
+    }
+
+
 }
+
+

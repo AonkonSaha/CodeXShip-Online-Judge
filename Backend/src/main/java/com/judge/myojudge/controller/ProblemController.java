@@ -7,6 +7,7 @@ import com.judge.myojudge.service.AuthService;
 import com.judge.myojudge.service.ProblemService;
 import com.judge.myojudge.service.TestCaseService;
 import com.judge.myojudge.validation.ValidationService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -15,6 +16,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -33,23 +35,22 @@ public class ProblemController {
 
     @GetMapping(value="/v1/get/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<ProblemDTO>>fetchProblemForUpdate(@PathVariable Long id
+    public ResponseEntity<ApiResponse<ProblemDTO>>getProblemForUpdate(@PathVariable Long id
     ) throws IOException {
-        ProblemDTO problemDTO= problemService.fetchOneProblemByID(id);
+        ProblemDTO problemDTO= problemService.updateProblemByID(id);
         ApiResponse<ProblemDTO> apiResponse= ApiResponse.<ProblemDTO>builder()
                 .success(true)
                 .statusCode(HttpStatus.OK.value())
                 .message("Fetching One Problem Success..!")
                 .data(problemDTO)
                 .build();
-
         return  ResponseEntity.status(HttpStatus.OK).body(apiResponse);
     }
 
     @GetMapping(value="/v2/get/{id}")
-    public ResponseEntity<ApiResponse<ProblemWithSample>>fetchProblemForPage(@PathVariable Long id
-    ) {
-        ProblemWithSample problemWithSample= problemService.findProblemByID(id);
+    public ResponseEntity<ApiResponse<ProblemWithSample>>getProblemForPage(@PathVariable Long id
+    , HttpServletRequest request) throws IOException {
+        ProblemWithSample problemWithSample= problemService.getProblemPerPageById(id,request);
         ApiResponse<ProblemWithSample> apiResponse=ApiResponse.<ProblemWithSample>builder()
                 .success(true)
                 .statusCode(HttpStatus.OK.value())
@@ -72,7 +73,7 @@ public class ProblemController {
         return ResponseEntity.status(HttpStatus.OK).body(problemWithSample);
     }
     @GetMapping(value="/v1/category/{category}")
-    public ResponseEntity<ApiResponse<Page<ProblemWithSample>>>searchAllProblemWithCategory(
+    public ResponseEntity<ApiResponse<Page<ProblemWithSample>>>getProblemsWithCategory(
             @PathVariable String category,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "5") int size,
@@ -80,8 +81,9 @@ public class ProblemController {
             @RequestParam(required = false, defaultValue = "") String difficulty,
             @RequestParam(name = "solved_filter",required = false, defaultValue = "") String solvedFilter
     )  {
+        String mobileOrEmail = SecurityContextHolder.getContext().getAuthentication().getName();
         Pageable pageable= PageRequest.of(page,size);
-        Page<ProblemWithSample> problemWithSamples = problemService.findProblemAllByCategory(category,search,difficulty,solvedFilter,pageable);
+        Page<ProblemWithSample> problemWithSamples = problemService.findProblemAllByCategory(mobileOrEmail,category,search,difficulty,solvedFilter,pageable);
         ApiResponse<Page<ProblemWithSample>> problemWithSample=ApiResponse.<Page<ProblemWithSample>>builder()
                 .success(true)
                 .statusCode(HttpStatus.OK.value())
@@ -101,6 +103,8 @@ public class ProblemController {
             @RequestParam("difficulty")String difficulty,
             @RequestParam("type")String type,
             @RequestParam("coin")Long coin,
+            @RequestParam("time_limit")double timeLimit,
+            @RequestParam("memory_limit")double memoryLimit,
             @RequestParam("problemStatement") String problemStatement,
             @RequestParam("explanation") String explanation,
             @RequestParam("testCaseFile") List<MultipartFile> multipartFiles
@@ -108,7 +112,7 @@ public class ProblemController {
     ) throws IOException {
             validationService.validateProblemDetails(new ProblemDTO(title, handle, difficulty, type,
                                                                   problemStatement,explanation, multipartFiles));
-            problemService.saveProblem(title,handle,difficulty,type,coin,problemStatement,explanation);
+            problemService.saveProblem(title,handle,difficulty,type,coin,timeLimit,memoryLimit,problemStatement,explanation);
             testCaseService.saveTestCases(handle,title, multipartFiles);
             ApiResponse<String> apiResponse=ApiResponse.<String>builder()
                     .success(true)
@@ -128,6 +132,8 @@ public class ProblemController {
             @RequestParam("difficulty") String difficulty,
             @RequestParam("type") String type,
             @RequestParam("coin") Long coins,
+            @RequestParam("time_limit")double timeLimit,
+            @RequestParam("memory_limit")double memoryLimit,
             @RequestParam("problemStatement") String problemStatement,
             @RequestParam("explanation") String explanation,
             @RequestParam(value = "testCaseFile", required = false) List<MultipartFile> multipartFiles
@@ -135,7 +141,7 @@ public class ProblemController {
 //            validationService.validateProblemDetails(new ProblemDTO(title, handle, difficulty,
 //                                                     type,problemStatement, multipartFiles));
 
-            problemService.saveProblemWithId(problemId, title, handle, difficulty, type, problemStatement,explanation ,coins, multipartFiles);
+            problemService.saveProblemWithId(problemId, title, handle, difficulty, type, problemStatement,explanation ,coins,timeLimit,memoryLimit, multipartFiles);
             return ResponseEntity.noContent().build();
 
     }

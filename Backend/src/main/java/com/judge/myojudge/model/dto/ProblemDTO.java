@@ -24,6 +24,10 @@ public class ProblemDTO {
     private List<MultipartFile> files;
     private Long coins;
     private String explanation;
+    @JsonProperty("time_limit")
+    private double timeLimit;
+    @JsonProperty("memory_limit")
+    private double memoryLimit;
 
     public ProblemDTO(String title, String handle, String difficulty, String type, String problemStatement, String explanation, List<MultipartFile> files) {
         this.title = title;

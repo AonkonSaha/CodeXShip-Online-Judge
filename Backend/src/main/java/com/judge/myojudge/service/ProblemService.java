@@ -3,6 +3,7 @@ package com.judge.myojudge.service;
 import com.judge.myojudge.model.dto.ProblemDTO;
 import com.judge.myojudge.model.dto.ProblemWithSample;
 import com.judge.myojudge.model.entity.Problem;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.multipart.MultipartFile;
@@ -13,12 +14,12 @@ import java.util.Optional;
 
 public interface ProblemService {
 
-
-
     public List<ProblemWithSample> findProblemAll();
 
-    public void saveProblem(String title, String handle, String difficulty,
-                            String type,Long coin, String problemStatement, String explanation);
+    public void saveProblem(
+            String title, String handle, String difficulty,String type,
+            Long coin,double timeLimit,double memoryLimit, String problemStatement, String explanation
+    );
 
     public boolean findProblemByHandleExit(String handle) ;
 
@@ -28,13 +29,19 @@ public interface ProblemService {
 
     public void deleteProblemByHandle(String handle) throws IOException;
 
-    public ProblemWithSample findProblemByID(Long id);
+    public ProblemWithSample getProblemPerPageById(Long id, HttpServletRequest request);
 
-    public ProblemDTO fetchOneProblemByID(long id);
+    public ProblemDTO updateProblemByID(long id);
 
-    public void saveProblemWithId(long id, String title, String handle, String difficulty, String type,
-                                  String problemStatement,String explanation , Long coins, List<MultipartFile> multipartFiles) throws IOException;
+    public void saveProblemWithId(
+            long id, String title, String handle, String difficulty, String type,
+            String problemStatement,String explanation , Long coins,
+            double timeLimit,double memoryLimit, List<MultipartFile> multipartFiles
+    ) throws IOException;
 
-    public Page<ProblemWithSample> findProblemAllByCategory(String category,String search, String difficulty, String solvedFilter, Pageable pageable);
+    public Page<ProblemWithSample> findProblemAllByCategory(
+            String mobileOrEmail,String category,String search, String difficulty,
+            String solvedFilter, Pageable pageable
+    );
 
 }

@@ -2,13 +2,13 @@ package com.judge.myojudge.service.imp;
 
 import com.judge.myojudge.model.entity.User;
 import com.judge.myojudge.model.entity.UserRole;
-import com.judge.myojudge.repository.UserRepo;
+import com.judge.myojudge.service.AuthService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.HashSet;
@@ -17,18 +17,14 @@ import java.util.Set;
 @Service
 @RequiredArgsConstructor
 public class CustomUserDetailsService implements UserDetailsService {
-    private final UserRepo userRepo;
+    private final AuthService authService;
 
     @Override
     @Transactional
-    public UserDetails loadUserByUsername(String mobileOrEmail) {
-        User user = null;
-        if(mobileOrEmail.contains("@")) {
-            user = userRepo.findByEmail(mobileOrEmail).orElseThrow(() -> new UsernameNotFoundException("User not found"));
-        }else{
-            user = userRepo.findByMobileNumber(mobileOrEmail).orElseThrow(() -> new UsernameNotFoundException("User not found"));
-        }
+    @Cacheable(value = "userDetails",key = "#mobileOrEmail")
 
+    public UserDetails loadUserByUsername(String mobileOrEmail) {
+        User user = authService.fetchUserDetails(mobileOrEmail);
         Set<SimpleGrantedAuthority> authorities = new HashSet<>();
         for (UserRole userRole : user.getUserRoles()) {
             authorities.add(new SimpleGrantedAuthority("ROLE_" + userRole.getRoleName()));

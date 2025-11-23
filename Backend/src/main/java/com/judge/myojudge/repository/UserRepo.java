@@ -42,5 +42,17 @@ public interface UserRepo extends JpaRepository<User, Long> {
     nativeQuery = true
     )
     Optional<User> findByUserName(@Param("username") String username);
+
+    @Query(value = "select COUNT(s)>0 From User u join u.submissions s " +
+            "where (s.user.mobileNumber = :mobileOrEmail OR s.user.email = :mobileOrEmail) " +
+            "AND s.problem.id=:problemId AND lower(s.status)=lower('Accepted')")
+    boolean isProblemSolved(@Param("problemId") Long problemId,
+                            @Param("mobileOrEmail") String mobileOrEmail);
+
+    @Query("SELECT COUNT(u)>0 FROM User u where u.mobileNumber=:mobileOrEmail OR u.email=:mobileOrEmail")
+    boolean existsUserByMobileOrEmail(@Param("mobileOrEmail") String mobileOrEmail);
+
+    @Query("SELECT u FROM User u where u.mobileNumber=:mobileOrEmail OR u.email=:mobileOrEmail")
+    Optional<User> findByMobileOrEmail(@Param("mobileOrEmail") String mobileOrEmail);
 }
 
