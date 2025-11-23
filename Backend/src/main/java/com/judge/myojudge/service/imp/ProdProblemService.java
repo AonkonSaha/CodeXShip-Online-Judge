@@ -224,14 +224,12 @@ public class ProdProblemService implements ProblemService {
     @Transactional
     @Cacheable(cacheNames = "problems",key ="T(java.util.Objects).hash(#mobileOrEmail,#category,#search,#difficulty,#solvedFilter,#pageable.pageSize,#pageable.pageNumber)")
     public Page<ProblemWithSample> findProblemAllByCategory(String mobileOrEmail,String category, String search, String difficulty,String solvedFilter, Pageable pageable) {
-        System.out.println("I am Service Method Before DB Call");
         List<ProblemWithSample> problemWithSamples = new ArrayList<>();
         Page<?> dbResult = null;
         List<Problem> problems= null;
         List<String> userSolved= null;
         if(userRepo.existsUserByMobileOrEmail(mobileOrEmail)){
-            System.out.println("Solved FIlter ------------: "+solvedFilter);
-//            Long startTime = System.currentTimeMillis();
+            Long startTime = System.currentTimeMillis();
             dbResult = problemRepo.findByCategoryWithSolvedOrNotFilter(
                     mobileOrEmail.trim(),
                     category.trim().toLowerCase(),
@@ -240,8 +238,8 @@ public class ProdProblemService implements ProblemService {
                     solvedFilter.trim().toLowerCase(),
                     pageable
             );
-//            Long endTime = System.currentTimeMillis();
-//            System.out.println("Query Time----: "+(endTime-startTime));
+            Long endTime = System.currentTimeMillis();
+            System.out.println("Query Time----: "+(endTime-startTime));
             problems = (List<Problem>) dbResult.getContent()
                     .stream()
                     .map(row -> {
@@ -269,21 +267,10 @@ public class ProdProblemService implements ProblemService {
         }
 
         for (int i=0;i<problems.size();i++) {
-            TestCase sampleTestcase = getSampleInput(problems.get(i).getTestcases());
-            TestCase sampleOutput = getSampleOutput(problems.get(i).getTestcases());
-            if(sampleTestcase == null || sampleOutput==null){
-                throw new TestCaseNotFoundException("Sample testcase not found");
-            }
-            List<String> sampleTestcaseContent = cloudinaryService.readCloudinaryFile(sampleTestcase.getFilePath());
-            List<String> sampleOutputContent = cloudinaryService.readCloudinaryFile(sampleOutput.getFilePath());
-
             ProblemWithSample problemWithSample = problemMapper.toProblemWithSample(problems.get(i));
-            problemWithSample.setSampleTestcase(sampleTestcaseContent);
-            problemWithSample.setSampleOutput(sampleOutputContent);
             if(userSolved!=null && !userSolved.isEmpty())problemWithSample.setSolved(userSolved.get(i).equals("solved"));
             problemWithSamples.add(problemWithSample);
         }
-        System.out.println("I am Service Method After DB Call");
         return new PageImpl<>(problemWithSamples, pageable, dbResult.getTotalElements());
     }
 
