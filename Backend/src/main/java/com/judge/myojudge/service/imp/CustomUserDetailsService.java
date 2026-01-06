@@ -22,7 +22,6 @@ public class CustomUserDetailsService implements UserDetailsService {
     @Override
     @Transactional
     @Cacheable(value = "userDetails",key = "#mobileOrEmail")
-
     public UserDetails loadUserByUsername(String mobileOrEmail) {
         User user = authService.fetchUserDetails(mobileOrEmail);
         Set<SimpleGrantedAuthority> authorities = new HashSet<>();

@@ -59,6 +59,7 @@ public class ProdTestCaseService implements TestCaseService {
     }
 
     @Override
+    @Transactional
     public List<ExecuteTestCase> getTestCaseWithFile(Long problemId) {
         Problem problem = problemRepo.findById(problemId)
                 .orElseThrow(() -> new ProblemNotFoundException("Problem Not Found With ID: " + problemId));

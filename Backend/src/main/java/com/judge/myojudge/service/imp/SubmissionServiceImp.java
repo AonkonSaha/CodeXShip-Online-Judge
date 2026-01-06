@@ -1,5 +1,7 @@
 package com.judge.myojudge.service.imp;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.judge.myojudge.config.Judge0Config;
 import com.judge.myojudge.exception.ProblemNotFoundException;
 import com.judge.myojudge.exception.UserNotFoundException;
@@ -18,20 +20,24 @@ import com.judge.myojudge.service.SubmissionQueryService;
 import com.judge.myojudge.service.SubmissionService;
 import com.judge.myojudge.service.TestCaseService;
 import jakarta.transaction.Transactional;
-import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
 
+import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 
 @Service
-@RequiredArgsConstructor
 public class SubmissionServiceImp implements SubmissionService {
 
     private final Judge0Config config;
@@ -42,36 +48,78 @@ public class SubmissionServiceImp implements SubmissionService {
     private final SubmissionRepo submissionRepo;
     private final SubmissionMapper submissionMapper;
     private final SubmissionQueryService submissionQueryService;
+    private final RestClient restClient;
+    private final ExecutorService executorService;
+
+    public SubmissionServiceImp(Judge0Config config,
+                                TestCaseService testCaseService,
+                                ProblemRepo problemRepo,
+                                WebClient webClient,
+                                UserRepo userRepo,
+                                SubmissionRepo submissionRepo,
+                                SubmissionMapper submissionMapper,
+                                SubmissionQueryService submissionQueryService,
+                                RestClient restClient,
+                                ExecutorService executorService) {
+        this.config = config;
+        this.testCaseService = testCaseService;
+        this.problemRepo = problemRepo;
+        this.webClient = webClient;
+        this.userRepo = userRepo;
+        this.submissionRepo = submissionRepo;
+        this.submissionMapper = submissionMapper;
+        this.submissionQueryService = submissionQueryService;
+        this.restClient = restClient;
+        this.executorService = executorService;
+    }
 
     @Override
+    public Submission getSubmission() {
+        System.out.println("Get Submission Function Thread Name: "+Thread.currentThread().getName());
+        Submission submission = new Submission();
+        submission.setCreatedAt(LocalDateTime.now());
+        submissionRepo.save(submission);
+        return submission;
+    }
     @Transactional
-    public SubmissionResponse runSubmissionCode(SubmissionRequest req) {
-        String mobileOrEmail = SecurityContextHolder.getContext().getAuthentication().getName();
-        User user = null;
-        if(mobileOrEmail.contains("@")){
-            user = userRepo.findByEmail(mobileOrEmail).orElseThrow(()->new UserNotFoundException("User Not Found"));
-        }else{
-            user = userRepo.findByMobileNumber(mobileOrEmail).orElseThrow(()->new UserNotFoundException("User Not Found"));
-        }
+    @CacheEvict(cacheNames = {"problems","userDetails","CoinWithImg","users","user"}, allEntries = true)
+    public SubmissionResponse runSubmissionCode(SubmissionRequest req,
+                                                Submission submission,
+                                                String mobileOrEmail) throws ExecutionException, InterruptedException {
+        System.out.println("Run Submission Function Thread Name: "+Thread.currentThread().getName());
         Problem problem = problemRepo.findById(req.getProblemId()).orElseThrow(() -> new ProblemNotFoundException("Problem Not Found With ID: " + req.getProblemId()));
         List<ExecuteTestCase> testcases = testCaseService.getTestCaseWithFile(req.getProblemId());
         Integer languageId = mapLanguageToId(req.getLanguage());
+        Future<List<TestcaseResultDTO>> testCaseResults= executorService.submit(()->judgingTestCases(req,languageId,testcases));
+        return saveSubmission(req,testCaseResults.get(),problem,submission,mobileOrEmail);
+    }
+
+    private List<TestcaseResultDTO> judgingTestCases(SubmissionRequest req,
+                                                     Integer languageId,
+                                                     List<ExecuteTestCase> testcases) throws InterruptedException {
+        System.out.println("Judging Testcases Function Thread Name: "+Thread.currentThread().getName());
 
         List<TestcaseResultDTO> results = new ArrayList<>();
-
         for (ExecuteTestCase testcase : testcases) {
             results.add(executeSingleTestcase(req.getSubmissionCode(), languageId, testcase));
         }
+        return results;
+    }
 
+    @Transactional(value = Transactional.TxType.REQUIRED)
+    public SubmissionResponse saveSubmission(SubmissionRequest req,
+                                             List<TestcaseResultDTO> results,
+                                             Problem problem,
+                                             Submission submission,
+                                             String mobileOrEmail) {
+        System.out.println("Save Submission Function Thread Name: "+Thread.currentThread().getName());
+        User user = userRepo.findByMobileOrEmail(mobileOrEmail).orElseThrow(() -> new UserNotFoundException(mobileOrEmail));
         float maxTimeTake=0; long maxSpaceTake=0;
         String verdict=""; boolean flag=true;
         List<TestcaseResultDTO> passedTestcases=new ArrayList<>();
-
         for(TestcaseResultDTO result:results){
-
             maxTimeTake=Math.max(maxTimeTake, Float.parseFloat(result.getTime()==null?"0":result.getTime()));
             maxSpaceTake=Math.max(maxSpaceTake, Integer.parseInt(result.getMemory()==null?"0":result.getMemory()));
-
             if(flag && result.getStatus().equalsIgnoreCase("Accepted")){
                 verdict="Accepted";
                 passedTestcases.add(result);
@@ -79,17 +127,15 @@ public class SubmissionServiceImp implements SubmissionService {
             else if(flag && result.getStatus().equalsIgnoreCase("Wrong Answer")){
                 verdict="Wrong Answer";
                 flag=false;
-                user.setTotalProblemsAttempted(user.getTotalProblemsAttempted()==null?1:user.getTotalProblemsAttempted()+1);
                 user.setTotalProblemsFailed(user.getTotalProblemsSolved()==null?0:user.getTotalProblemsSolved()+1);
                 user.setTotalProblemsWA(user.getTotalProblemsWA()==null?1:user.getTotalProblemsWA()+1);
                 passedTestcases.add(result);
                 break;
             }
-            else if(flag && result.getStatus().equalsIgnoreCase("Runtime Error")){
+            else if(flag && result.getStatus().equalsIgnoreCase("Runtime Error (NZEC)")){
                 verdict="Runtime Error";
                 flag=false;
                 passedTestcases.add(result);
-                user.setTotalProblemsAttempted(user.getTotalProblemsAttempted()==null?1:user.getTotalProblemsAttempted()+1);
                 user.setTotalProblemsFailed(user.getTotalProblemsSolved()==null?0:user.getTotalProblemsSolved()+1);
                 user.setTotalProblemsRE(user.getTotalProblemsRE()==null?1:user.getTotalProblemsRE()+1);
                 break;
@@ -97,7 +143,6 @@ public class SubmissionServiceImp implements SubmissionService {
             else if (flag && result.getStatus().equalsIgnoreCase("Compilation Error")) {
                 verdict="Compilation Error";
                 flag=false;
-                user.setTotalProblemsAttempted(user.getTotalProblemsAttempted()==null?1:user.getTotalProblemsAttempted()+1);
                 user.setTotalProblemsFailed(user.getTotalProblemsSolved()==null?0:user.getTotalProblemsSolved()+1);
                 user.setTotalProblemsCE(user.getTotalProblemsCE()==null?1:user.getTotalProblemsCE()+1);
                 break;
@@ -105,56 +150,101 @@ public class SubmissionServiceImp implements SubmissionService {
             else if (flag && result.getStatus().equalsIgnoreCase("Time Limit Exceeded")) {
                 verdict="Time Limit Exceeded";
                 flag=false;
-                user.setTotalProblemsAttempted(user.getTotalProblemsAttempted()==null?1:user.getTotalProblemsAttempted()+1);
                 user.setTotalProblemsFailed(user.getTotalProblemsSolved()==null?0:user.getTotalProblemsSolved()+1);
                 user.setTotalProblemsTLE(user.getTotalProblemsTLE()==null?1:user.getTotalProblemsTLE()+1);
                 break;
             }
         }
-
-        if(verdict.equalsIgnoreCase("Accepted")){
-            user.setTotalProblemsSolved(user.getTotalProblemsSolved()==null?1:user.getTotalProblemsSolved()+1);
-            user.setTotalProblemsAttempted(user.getTotalProblemsAttempted()==null?0:user.getTotalProblemsAttempted()+1);
-        }
-        SubmissionResponse response = new SubmissionResponse();
-        response.setResults(passedTestcases);
-        response.setTotal(results.size());
-        if(!flag && verdict.equals("Compilation Error"))response.setPassed(0);
-        if(!flag && !verdict.equals("Compilation Error"))response.setPassed(passedTestcases.size()-1);
-        else response.setPassed(passedTestcases.size());
-
-        response.setVerdict(verdict);
-        response.setTime(maxTimeTake);
-        response.setMemory(maxSpaceTake);
-        response.setProblemName(problem.getTitle());
-        Submission submission= Submission.builder()
-                .language(req.getLanguage())
-                .userCode(req.getSubmissionCode().trim())
-                .status(verdict)
-                .memory((long) maxSpaceTake)
-                .handle(problem.getHandleName())
-                .time(maxTimeTake)
-                .totalTestcases(response.getTotal())
-                .passedTestcases(response.getPassed())
-                .coinsEarned(problem.getCoins())
-                .problem(problem)
-                .user(user)
-                .build();
+        SubmissionResponse response = setSubmissionResponseData(
+                passedTestcases,
+                results,
+                problem,
+                submission,
+                verdict,
+                maxSpaceTake,
+                maxTimeTake,
+                flag
+        );
+        setSubmissionData(
+                user,
+                req,
+                problem,
+                submission,
+                response,
+                verdict,
+                maxSpaceTake,
+                maxTimeTake
+        );
         problem.getSubmissions().add(submission);
         user.getSubmissions().add(submission);
         List<Submission> coinFlag= submissionQueryService.getSubmissionsByUserWithAccepted(mobileOrEmail,problem.getHandleName(),"Accepted");
         if(coinFlag.isEmpty() && flag){
+            if(verdict.equalsIgnoreCase("Accepted")){
+                user.setTotalProblemsSolved(user.getTotalProblemsSolved()==null?1:user.getTotalProblemsSolved()+1);
+                user.setTotalProblemsAttempted(user.getTotalProblemsAttempted()==null?1:user.getTotalProblemsAttempted()+1);
+            }
             response.setCoins(problem.getCoins());
             user.setTotalCoinsEarned((user.getTotalCoinsEarned()==null?0: user.getTotalCoinsEarned())+problem.getCoins());
             user.setTotalPresentCoins((user.getTotalPresentCoins()==null?0:user.getTotalPresentCoins())+problem.getCoins());
         }else{
+            if(!flag){
+                user.setTotalProblemsAttempted(user.getTotalProblemsAttempted()==null?1:user.getTotalProblemsAttempted()+1);
+            }
             response.setCoins(0L);
             user.setTotalCoinsEarned((user.getTotalCoinsEarned()==null?0: user.getTotalCoinsEarned()));
             user.setTotalPresentCoins((user.getTotalPresentCoins()==null?0:user.getTotalPresentCoins()));
         }
-
         submissionRepo.save(submission);
+        System.out.println("Submission Details: "+submission);
         return response;
+    }
+
+    private SubmissionResponse setSubmissionResponseData(List<TestcaseResultDTO> passedTestcases,
+                                                         List<TestcaseResultDTO> results,
+                                                         Problem problem,
+                                                         Submission submission,
+                                                         String verdict,
+                                                         Long maxSpaceTake,
+                                                         Float maxTimeTake,
+                                                         Boolean flag
+    ) {
+        SubmissionResponse response = SubmissionResponse.builder()
+                .results(passedTestcases)
+                .total(results.size())
+                .verdict(verdict)
+                .time(maxTimeTake)
+                .memory(maxSpaceTake)
+                .problemName(problem.getTitle())
+                .id(submission.getId())
+                .createdAt(submission.getCreatedAt())
+                .build();
+        if(!flag && verdict.equals("Compilation Error"))response.setPassed(0);
+        if(!flag && !verdict.equals("Compilation Error"))response.setPassed(passedTestcases.size()-1);
+        else response.setPassed(passedTestcases.size());
+        return response;
+    }
+
+    @Transactional(value = Transactional.TxType.REQUIRED)
+    public void setSubmissionData(User user,
+                                  SubmissionRequest req,
+                                  Problem problem,
+                                  Submission submission,
+                                  SubmissionResponse response,
+                                  String verdict,
+                                  long maxSpaceTake,
+                                  float maxTimeTake) {
+        submission.setLanguage(req.getLanguage());
+        submission.setUserCode(req.getSubmissionCode().trim());
+        submission.setStatus(verdict);
+        submission.setMemory((long) maxSpaceTake);
+        submission.setHandle(problem.getHandleName());
+        submission.setTime(maxTimeTake);
+        submission.setCreatedAt(LocalDateTime.now());
+        submission.setTotalTestcases(response.getTotal());
+        submission.setPassedTestcases(response.getPassed());
+        submission.setCoinsEarned(problem.getCoins());
+        submission.setProblem(problem);
+        submission.setUser(user);
     }
 
     @Override
@@ -188,6 +278,7 @@ public class SubmissionServiceImp implements SubmissionService {
         return submissionResponses;
     }
 
+
     public TestcaseResultDTO executeSingleTestcase(String code, Integer languageId, ExecuteTestCase testcase) {
         String encodedCode = Base64.getEncoder().encodeToString(code.trim().getBytes());
         String encodedInput = Base64.getEncoder().encodeToString(testcase.getInput().getBytes());
@@ -201,15 +292,17 @@ public class SubmissionServiceImp implements SubmissionService {
         submission.put("wait", true);
 
         Map<String, Object> jr;
+        ObjectMapper objectMapper=new ObjectMapper();
         try {
-            jr = webClient.post()
+            jr = restClient.post()
                     .uri("/submissions?base64_encoded=true&wait=true")
-                    .bodyValue(submission)
+                    .body(objectMapper.writeValueAsString(submission))
                     .retrieve()
-                    .bodyToMono(Map.class)
-                    .block();
-        } catch (WebClientResponseException e) {
-            throw new RuntimeException("Error submitting code to Judge0: " + e.getResponseBodyAsString(), e);
+                    .body(Map.class);
+        } catch (RestClientException e) {
+            throw new RuntimeException("Error submitting code to Judge0: " + e.getMessage(), e);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
         }
 
         if (jr == null) throw new RuntimeException("Judge0 returned empty response");
@@ -231,8 +324,26 @@ public class SubmissionServiceImp implements SubmissionService {
                 tr.getStdout().trim().equals(testcase.getOutput().trim()) &&
                 "Accepted".equalsIgnoreCase(tr.getStatus());
         tr.setPassed(passed);
-       System.out.println(tr);
+        System.out.println(tr);
         return tr;
+    }
+    private Map<String, Integer> getLanguages() {
+
+        List<Map<String, Object>> response = webClient.get()
+                .uri("/languages")
+                .retrieve()
+                .bodyToMono(List.class)
+                .block();
+
+//        if (response == null) return Collections.emptyMap();
+
+        Map<String, Integer> languages = new HashMap<>();
+        for (Map<String, Object> lang : response) {
+            String name = ((String) lang.get("name")).toLowerCase();
+            Integer id = (Integer) lang.get("id");
+            languages.put(name, id);
+        }
+        return languages;
     }
 
     private String decodeBase64(String base64) {
@@ -242,22 +353,15 @@ public class SubmissionServiceImp implements SubmissionService {
 
     private Integer mapLanguageToId(String language) {
         return switch (language.toLowerCase()) {
-            case "python3" -> 19;
-            case "java" -> 13;
-            case "cpp" -> 7;
-            case "c" -> 2;
-            case "javascript" -> 63;
+            case "python-pypy-7.3.12-3.9" -> 27;
+            case "python-pypy-7.3.12-3.10" -> 28;
+            case "java-jdk-14.0.1" -> 4;
+            case "cpp-clang-9.0.1-14" -> 14;
+            case "cpp-clang-10.0.1-17" -> 2;
+            case "c-clang-10.0.1-17" -> 1;
+            case "csharp-sdk-3.1.406" -> 21;
+            case "csharp-sdk-8.0.302" -> 30;
             default -> null;
         };
     }
-//    private Integer mapLanguageToId(String language) {
-//        return switch (language.toLowerCase()) {
-//            case "python3" -> 71;
-//            case "java" -> 62;
-//            case "cpp" -> 7;
-//            case "c" -> 50;
-//            case "javascript" -> 63;
-//            default -> null;
-//        };
-//    }
 }

@@ -18,6 +18,7 @@ import com.judge.myojudge.service.AuthService;
 import com.judge.myojudge.service.CloudinaryService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -90,6 +91,7 @@ public class AuthServiceImp implements AuthService {
     }
 
     @Override
+    @CacheEvict(cacheNames = {"users","user"}, allEntries = true)
     @Transactional
     public User updateUserDetails(String mobileOrEmail,UpdateUserDTO updateUserDTO) {
         User user = userRepository.findByMobileOrEmail(mobileOrEmail).orElseThrow(() -> new UserNotFoundException("User not found"));
@@ -115,6 +117,7 @@ public class AuthServiceImp implements AuthService {
     }
 
     @Override
+    @CacheEvict(cacheNames = {"users","user"}, allEntries = true)
     public void updateUserPassword(String mobileOrEmail,PasswordDTO passwordDTO) {
         User user = userRepository.findByMobileOrEmail(mobileOrEmail).orElseThrow(() -> new UserNotFoundException("User not found"));
         if(!passwordDTO.getNewPassword().equals(passwordDTO.getConfirmPassword())){
@@ -132,6 +135,7 @@ public class AuthServiceImp implements AuthService {
     }
 
     @Override
+    @Cacheable(value = "user",key = "#mobileOrEmail")
     public User fetchUserDetails(String mobileOrEmail) {
       return userRepository.findByMobileOrEmail(mobileOrEmail).orElseThrow(()->new UserNotFoundException("User Not Found"));
     }
@@ -148,11 +152,13 @@ public class AuthServiceImp implements AuthService {
     }
 
     @Override
+    @Cacheable(value = "user",key = "T(java.util.Objects).hash(#username,#userId)")
     public User fetchUserDetailsByUsername(String username,Long userId) {
      return userRepository.findById(userId).orElseThrow(()->new UserNotFoundException("User not found"));
     }
 
     @Override
+    @CacheEvict(cacheNames = {"users","user"}, allEntries = true)
     public String updateProfileImage(MultipartFile file) throws Exception {
         String mobileOrEmail= SecurityContextHolder.getContext().getAuthentication().getName();
         User user = userRepository.findByMobileOrEmail(mobileOrEmail).orElseThrow(()->new UserNotFoundException("User Not Found"));
@@ -167,11 +173,13 @@ public class AuthServiceImp implements AuthService {
     }
 
     @Override
+    @Cacheable(value = "users",key = "T(java.util.Objects).hash(#search,#pageable.pageSize,#pageable.pageNumber)")
     public Page<User> getUsers(String search, Pageable pageable) {
         return userRepository.findAllUserByCreatedTime(search,pageable);
     }
 
     @Override
+    @CacheEvict(cacheNames = {"users","user"}, allEntries = true)
     @Transactional
     public void deleteUser(String email) {
         User user=userRepository.findByEmail(email).orElseThrow(()->new UserNotFoundException("User not found"));
@@ -181,6 +189,7 @@ public class AuthServiceImp implements AuthService {
     }
 
     @Override
+    @CacheEvict(cacheNames = {"users","user"}, allEntries = true)
     @Transactional
     public void updateUserDetailsByAdmin(UpdateUserDTO updateUserDTO) {
         User user = null;

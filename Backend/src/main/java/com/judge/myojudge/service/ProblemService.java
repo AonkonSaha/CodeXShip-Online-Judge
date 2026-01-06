@@ -29,7 +29,7 @@ public interface ProblemService {
 
     public void deleteProblemByHandle(String handle) throws IOException;
 
-    public ProblemWithSample getProblemPerPageById(Long id, HttpServletRequest request);
+    public ProblemWithSample getProblemPerPageById(Long id,String mobileOrEmail, HttpServletRequest request);
 
     public ProblemDTO updateProblemByID(long id);
 

@@ -3,6 +3,7 @@ package com.judge.myojudge.config;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -29,6 +30,15 @@ public class Judge0Config {
                 .baseUrl(url) // Base URL for Judge0 API
                 .defaultHeader("X-RapidAPI-Key", apiKey)
                 .defaultHeader("X-RapidAPI-Host", "judge0-extra-ce.p.rapidapi.com")
+                .defaultHeader("Content-Type", "application/json")
+                .build();
+    }
+    @Bean
+    public RestClient restClient(){
+        return RestClient.builder()
+                .baseUrl(url)
+                .defaultHeader("X-RapidAPI-Key",apiKey)
+                .defaultHeader("X-RapidAPI-Host","judge0-extra-ce.p.rapidapi.com")
                 .defaultHeader("Content-Type", "application/json")
                 .build();
     }

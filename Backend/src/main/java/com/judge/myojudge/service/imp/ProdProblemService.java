@@ -110,15 +110,23 @@ public class ProdProblemService implements ProblemService {
 
     @Override
     @Transactional
-    @Cacheable(cacheNames = "singleProblemPerPage",key = "#problemId")
-    public ProblemWithSample getProblemPerPageById(Long problemId, HttpServletRequest httpServletRequest) {
+    @Cacheable(cacheNames = "singleProblemPerPage",key = "T(java.util.Objects).hash(#problemId,#mobileOrEmail)")
+    public ProblemWithSample getProblemPerPageById(Long problemId,String mobileOrEmail, HttpServletRequest httpServletRequest) {
         String token = httpServletRequest.getHeader("Authorization");
-        String mobileOrEmail= SecurityContextHolder.getContext().getAuthentication().getName();
-        Problem problem = problemRepo.findById(problemId)
-                .orElseThrow(() -> new ProblemNotFoundException("Problem not found"));
-        boolean is_solved = false;
+        Problem problem = null;
+        Boolean is_solved = false;
         if(token != null && token.startsWith("Bearer ") && token.length() > 7){
-            is_solved = userRepo.isProblemSolved(problemId,mobileOrEmail);
+//            Long start=System.currentTimeMillis();
+            var  objects = problemRepo.findProblemByStatus(problemId,mobileOrEmail);
+//            Long end=System.currentTimeMillis();
+//            System.out.println("]]Query Time: "+ (end-start));
+            Object[] row=objects.getFirst();
+            problem = (Problem) row[0];
+            is_solved= (Boolean) row[1];
+        }else{
+//            System.out.println("ss-----------");
+            problem = problemRepo.findById(problemId)
+                    .orElseThrow(() -> new ProblemNotFoundException("Problem not found"));
         }
 
         TestCase sampleTestcase = getSampleInput(problem.getTestcases());
@@ -134,6 +142,7 @@ public class ProdProblemService implements ProblemService {
         problemWithSample.setSampleOutput(sampleOutputContent);
         return problemWithSample;
     }
+
 
     @Transactional
     public ProblemDTO updateProblemByID(long id) {

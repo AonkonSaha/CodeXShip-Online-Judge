@@ -2,6 +2,7 @@ package com.judge.myojudge.controller;
 
 import com.judge.myojudge.model.dto.SubmissionRequest;
 import com.judge.myojudge.model.dto.SubmissionResponse;
+import com.judge.myojudge.model.entity.Submission;
 import com.judge.myojudge.response.ApiResponse;
 import com.judge.myojudge.service.SubmissionService;
 import jakarta.validation.Valid;
@@ -14,6 +15,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.concurrent.ExecutionException;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/submission")
@@ -22,9 +25,11 @@ public class SubmissionController {
 
     @PostMapping("/v1/submit")
     @PreAuthorize("hasAnyRole('NORMAL_USER', 'ADMIN')")
-    public ResponseEntity<ApiResponse<SubmissionResponse>> submitCode(@RequestBody @Valid SubmissionRequest submissionRequest){
-        SubmissionResponse submissionResponse = submissionService.runSubmissionCode(submissionRequest);
-        ApiResponse<SubmissionResponse> apiResponse=ApiResponse.<SubmissionResponse>builder()
+    public ResponseEntity<ApiResponse<SubmissionResponse>> submitCode(@RequestBody @Valid SubmissionRequest submissionRequest) throws ExecutionException, InterruptedException {
+        System.out.println("Submission Controller Thread Name: "+Thread.currentThread().getName()+" IsVirtual: "+Thread.currentThread().isVirtual());
+        String mobileOrEmail = SecurityContextHolder.getContext().getAuthentication().getName();
+        Submission submission = submissionService.getSubmission();
+        SubmissionResponse submissionResponse=submissionService.runSubmissionCode(submissionRequest,submission,mobileOrEmail) ;        ApiResponse<SubmissionResponse> apiResponse=ApiResponse.<SubmissionResponse>builder()
                 .success(true)
                 .statusCode(HttpStatus.OK.value())
                 .message("Submission Successfully..")

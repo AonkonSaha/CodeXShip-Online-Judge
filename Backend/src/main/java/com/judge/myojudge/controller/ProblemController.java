@@ -50,8 +50,8 @@ public class ProblemController {
     @GetMapping(value="/v2/get/{id}")
     public ResponseEntity<ApiResponse<ProblemWithSample>>getProblemForPage(@PathVariable Long id
     , HttpServletRequest request) throws IOException {
-        ProblemWithSample problemWithSample= problemService.getProblemPerPageById(id,request);
-        ApiResponse<ProblemWithSample> apiResponse=ApiResponse.<ProblemWithSample>builder()
+        String mobileOrEmail = SecurityContextHolder.getContext().getAuthentication().getName();
+        ProblemWithSample problemWithSample= problemService.getProblemPerPageById(id,mobileOrEmail,request);        ApiResponse<ProblemWithSample> apiResponse=ApiResponse.<ProblemWithSample>builder()
                 .success(true)
                 .statusCode(HttpStatus.OK.value())
                 .message("Problem Searched Successfully")
