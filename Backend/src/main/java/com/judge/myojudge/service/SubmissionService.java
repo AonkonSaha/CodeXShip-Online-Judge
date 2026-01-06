@@ -11,7 +11,7 @@ import java.util.concurrent.ExecutionException;
 public interface SubmissionService {
 
     Submission getSubmission();
-    SubmissionResponse runSubmissionCode(SubmissionRequest submissionRequest, Submission submission, String mobileOrEmail) throws ExecutionException, InterruptedException;
+    void runSubmissionCode(SubmissionRequest submissionRequest, Submission submission, String mobileOrEmail) throws ExecutionException, InterruptedException;
     public SubmissionResponse runSampleTestCaseCode(SubmissionRequest submissionRequest);
     Page<SubmissionResponse> getAllSubmissionByUser(String mobileOrEmail,String search, Sort sort, int page, int size);
 }

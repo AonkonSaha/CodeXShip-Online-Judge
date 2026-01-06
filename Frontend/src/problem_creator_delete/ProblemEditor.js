@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext, useRef } from "react";
 import axios from "axios";
 import { useParams } from "react-router-dom";
 import Footer from "../NavBar_Footer/Footer";
@@ -6,14 +6,13 @@ import NavBar from "../NavBar_Footer/NavBarCus";
 import RichTextEditor from "./RichTextEditor";
 import { AuthContext } from "../auth_component/AuthContext";
 import { Toaster, toast } from "react-hot-toast";
-import { useRef } from "react";
 
 const ProblemEditor = () => {
   const { id } = useParams();
   const token = localStorage.getItem("token");
   const baseURL = process.env.REACT_APP_BACK_END_BASE_URL;
   const { darkMode } = useContext(AuthContext);
-  const didFetch=useRef(false);
+  const didFetch = useRef(false);
 
   const [problem, setProblem] = useState({
     title: "",
@@ -21,6 +20,8 @@ const ProblemEditor = () => {
     difficulty: "",
     type: "",
     coins: "",
+    time_limit: "",
+    memory_limit: "",
     problem_statement: "",
     explanation: "",
   });
@@ -28,10 +29,13 @@ const ProblemEditor = () => {
   const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(false);
 
+  const difficultyOptions = ["Easy", "Medium", "Hard"];
+  const typeOptions = ["Math", "Graph", "String", "DP", "Greedy", "Tree", "Binary Search", "Two-Pointer"];
+
   // ✅ Fetch problem if editing
   useEffect(() => {
-    if(didFetch.current)return;
-    didFetch.current=true;
+    if (didFetch.current) return;
+    didFetch.current = true;
     if (id && id !== "null") {
       const fetchProblem = async () => {
         try {
@@ -47,17 +51,28 @@ const ProblemEditor = () => {
             difficulty,
             type,
             coins,
+            time_limit,
+            memory_limit,
             problem_statement,
             explanation,
             testCaseNameWithPath,
-          
           } = data;
 
           const existingFiles = Object.entries(testCaseNameWithPath || {}).map(
             ([name, path]) => ({ name, path })
           );
 
-          setProblem({ title, handle, difficulty, type, coins, problem_statement, explanation });
+          setProblem({
+            title,
+            handle,
+            difficulty,
+            type,
+            coins,
+            time_limit,
+            memory_limit,
+            problem_statement,
+            explanation,
+          });
           setFiles(existingFiles);
           toast.success("✅ Problem loaded successfully!");
         } catch (error) {
@@ -76,7 +91,7 @@ const ProblemEditor = () => {
     setProblem({ ...problem, [e.target.name]: e.target.value });
   };
 
-  // ✅ Handle new file uploads
+  // ✅ Handle file upload
   const handleFileChange = (e) => {
     const newFiles = Array.from(e.target.files).map((file) => ({
       name: file.name,
@@ -85,17 +100,17 @@ const ProblemEditor = () => {
     setFiles((prev) => [...prev, ...newFiles]);
   };
 
-  // ✅ Remove file (only from UI)
+  // ✅ Remove file
   const handleFileRemove = (index) => {
     setFiles((prev) => prev.filter((_, i) => i !== index));
     toast("File removed from list", { icon: "🗑️" });
   };
 
-  // ✅ Submit form
+  // ✅ Submit
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    if (!problem.title || !problem.handle || !problem.problem_statement ) {
+    if (!problem.title || !problem.handle || !problem.problem_statement) {
       toast.error("⚠️ Please fill all required fields.");
       return;
     }
@@ -108,8 +123,9 @@ const ProblemEditor = () => {
     formData.append("problemStatement", problem.problem_statement);
     formData.append("explanation", problem.explanation);
     formData.append("coin", problem.coins || 0);
+    formData.append("time_limit", problem.time_limit || 0);
+    formData.append("memory_limit", problem.memory_limit || 0);
 
-    // Append only new uploaded files
     files.forEach((fileObj) => {
       if (fileObj.file instanceof File) {
         formData.append("testCaseFile", fileObj.file);
@@ -168,27 +184,147 @@ const ProblemEditor = () => {
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Problem Info Fields */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                {["title", "handle", "difficulty", "type", "coins"].map((field) => (
-                  <div key={field}>
-                    <label htmlFor={field} className="block capitalize font-medium mb-1">
-                      {field}
-                    </label>
-                    <input
-                      type={field === "coins" ? "number" : "text"}
-                      id={field}
-                      name={field}
-                      value={problem[field]}
-                      onChange={handleChange}
-                      required
-                      className={`w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                        darkMode ? "bg-gray-700 border-gray-600 text-white" : "bg-white"
-                      }`}
-                    />
-                  </div>
-                ))}
+                {/* Title */}
+                <div>
+                  <label htmlFor="title" className="block capitalize font-medium mb-1">
+                    Title
+                  </label>
+                  <input
+                    type="text"
+                    id="title"
+                    name="title"
+                    value={problem.title}
+                    onChange={handleChange}
+                    required
+                    className={`w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      darkMode ? "bg-gray-700 border-gray-600 text-white" : "bg-white"
+                    }`}
+                  />
+                </div>
+
+                {/* Handle */}
+                <div>
+                  <label htmlFor="handle" className="block capitalize font-medium mb-1">
+                    Handle
+                  </label>
+                  <input
+                    type="text"
+                    id="handle"
+                    name="handle"
+                    value={problem.handle}
+                    onChange={handleChange}
+                    required
+                    className={`w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      darkMode ? "bg-gray-700 border-gray-600 text-white" : "bg-white"
+                    }`}
+                  />
+                </div>
+
+                {/* Difficulty Dropdown */}
+                <div>
+                  <label htmlFor="difficulty" className="block capitalize font-medium mb-1">
+                    Difficulty
+                  </label>
+                  <select
+                    id="difficulty"
+                    name="difficulty"
+                    value={problem.difficulty}
+                    onChange={handleChange}
+                    required
+                    className={`w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      darkMode
+                        ? "bg-gray-700 border-gray-600 text-white"
+                        : "bg-white border-gray-300"
+                    }`}
+                  >
+                    <option value="">Select Difficulty</option>
+                    {difficultyOptions.map((diff) => (
+                      <option key={diff} value={diff}>
+                        {diff}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Type Dropdown */}
+                <div>
+                  <label htmlFor="type" className="block capitalize font-medium mb-1">
+                    Type
+                  </label>
+                  <select
+                    id="type"
+                    name="type"
+                    value={problem.type}
+                    onChange={handleChange}
+                    required
+                    className={`w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      darkMode
+                        ? "bg-gray-700 border-gray-600 text-white"
+                        : "bg-white border-gray-300"
+                    }`}
+                  >
+                    <option value="">Select Type</option>
+                    {typeOptions.map((t) => (
+                      <option key={t} value={t}>
+                        {t}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Coins */}
+                <div>
+                  <label htmlFor="coins" className="block capitalize font-medium mb-1">
+                    Coins
+                  </label>
+                  <input
+                    type="number"
+                    id="coins"
+                    name="coins"
+                    value={problem.coins}
+                    onChange={handleChange}
+                    className={`w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      darkMode ? "bg-gray-700 border-gray-600 text-white" : "bg-white"
+                    }`}
+                  />
+                </div>
+
+                {/* Time Limit */}
+                <div>
+                  <label htmlFor="time_limit" className="block capitalize font-medium mb-1">
+                    Time Limit (ms)
+                  </label>
+                  <input
+                    type="number"
+                    id="time_limit"
+                    name="time_limit"
+                    value={problem.time_limit}
+                    onChange={handleChange}
+                    className={`w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      darkMode ? "bg-gray-700 border-gray-600 text-white" : "bg-white"
+                    }`}
+                  />
+                </div>
+
+                {/* Memory Limit */}
+                <div>
+                  <label htmlFor="memory_limit" className="block capitalize font-medium mb-1">
+                    Memory Limit (MB)
+                  </label>
+                  <input
+                    type="number"
+                    id="memory_limit"
+                    name="memory_limit"
+                    value={problem.memory_limit}
+                    onChange={handleChange}
+                    className={`w-full p-3 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      darkMode ? "bg-gray-700 border-gray-600 text-white" : "bg-white"
+                    }`}
+                  />
+                </div>
               </div>
 
-              {/* ✅ Fixed Rich Text Editor */}
+              {/* Rich Text Editors */}
               <div>
                 <RichTextEditor
                   value={problem.problem_statement}
@@ -196,12 +332,10 @@ const ProblemEditor = () => {
                     setProblem({ ...problem, problem_statement: content })
                   }
                   darkMode={darkMode}
-                  heading= "Problem Statement"
-
+                  heading="Problem Statement"
                 />
               </div>
 
-              {/* ✅ Fixed Rich Text Editor */}
               <div>
                 <RichTextEditor
                   value={problem.explanation}
@@ -209,7 +343,7 @@ const ProblemEditor = () => {
                     setProblem({ ...problem, explanation: content })
                   }
                   darkMode={darkMode}
-                  heading= "Explanation"
+                  heading="Explanation"
                 />
               </div>
 

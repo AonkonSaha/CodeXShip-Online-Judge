@@ -20,13 +20,17 @@ import com.judge.myojudge.service.SubmissionQueryService;
 import com.judge.myojudge.service.SubmissionService;
 import com.judge.myojudge.service.TestCaseService;
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -38,6 +42,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
 @Service
+@RequiredArgsConstructor
 public class SubmissionServiceImp implements SubmissionService {
 
     private final Judge0Config config;
@@ -50,28 +55,10 @@ public class SubmissionServiceImp implements SubmissionService {
     private final SubmissionQueryService submissionQueryService;
     private final RestClient restClient;
     private final ExecutorService executorService;
+    private final PlatformTransactionManager platformTransactionManager;
+    private final SimpMessagingTemplate messagingTemplate;
 
-    public SubmissionServiceImp(Judge0Config config,
-                                TestCaseService testCaseService,
-                                ProblemRepo problemRepo,
-                                WebClient webClient,
-                                UserRepo userRepo,
-                                SubmissionRepo submissionRepo,
-                                SubmissionMapper submissionMapper,
-                                SubmissionQueryService submissionQueryService,
-                                RestClient restClient,
-                                ExecutorService executorService) {
-        this.config = config;
-        this.testCaseService = testCaseService;
-        this.problemRepo = problemRepo;
-        this.webClient = webClient;
-        this.userRepo = userRepo;
-        this.submissionRepo = submissionRepo;
-        this.submissionMapper = submissionMapper;
-        this.submissionQueryService = submissionQueryService;
-        this.restClient = restClient;
-        this.executorService = executorService;
-    }
+
 
     @Override
     public Submission getSubmission() {
@@ -81,38 +68,63 @@ public class SubmissionServiceImp implements SubmissionService {
         submissionRepo.save(submission);
         return submission;
     }
-    @Transactional
     @CacheEvict(cacheNames = {"problems","userDetails","CoinWithImg","users","user"}, allEntries = true)
-    public SubmissionResponse runSubmissionCode(SubmissionRequest req,
-                                                Submission submission,
-                                                String mobileOrEmail) throws ExecutionException, InterruptedException {
+    public void runSubmissionCode(SubmissionRequest req,
+                                  Submission submission,
+                                  String mobileOrEmail) throws ExecutionException, InterruptedException {
         System.out.println("Run Submission Function Thread Name: "+Thread.currentThread().getName());
-        Problem problem = problemRepo.findById(req.getProblemId()).orElseThrow(() -> new ProblemNotFoundException("Problem Not Found With ID: " + req.getProblemId()));
         List<ExecuteTestCase> testcases = testCaseService.getTestCaseWithFile(req.getProblemId());
         Integer languageId = mapLanguageToId(req.getLanguage());
-        Future<List<TestcaseResultDTO>> testCaseResults= executorService.submit(()->judgingTestCases(req,languageId,testcases));
-        return saveSubmission(req,testCaseResults.get(),problem,submission,mobileOrEmail);
+        executorService.submit(()-> {
+            TransactionTemplate tx = new TransactionTemplate(platformTransactionManager);
+
+            tx.execute( status -> {
+                try {
+                    judgingTestCases(
+                            req,
+                            submission.getId(),
+                            mobileOrEmail,
+                            languageId,
+                            testcases,
+                            testcases.size()
+                    );
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+                return null;
+            });
+        });
     }
 
-    private List<TestcaseResultDTO> judgingTestCases(SubmissionRequest req,
+    private void judgingTestCases(SubmissionRequest req,
+                                                     Long submissionId,
+                                                     String mobileOrEmail,
                                                      Integer languageId,
-                                                     List<ExecuteTestCase> testcases) throws InterruptedException {
+                                                     List<ExecuteTestCase> testcases,
+                                                     int totalTestcases) throws InterruptedException {
         System.out.println("Judging Testcases Function Thread Name: "+Thread.currentThread().getName());
-
+        int index=0;
         List<TestcaseResultDTO> results = new ArrayList<>();
         for (ExecuteTestCase testcase : testcases) {
-            results.add(executeSingleTestcase(req.getSubmissionCode(), languageId, testcase));
-        }
-        return results;
+            index++;
+            TestcaseResultDTO testcaseResultDTO = executeSingleTestcase(req.getSubmissionCode(), languageId, testcase);
+            messagingTemplate.convertAndSend(
+                    "/topic/submission/" + submissionId,
+                    testcaseResultDTO
+            );
+            results.add(testcaseResultDTO);
+            if(!testcaseResultDTO.isPassed())break;        }
+        saveSubmission(req,results,submissionId,mobileOrEmail,totalTestcases);
     }
 
-    @Transactional(value = Transactional.TxType.REQUIRED)
     public SubmissionResponse saveSubmission(SubmissionRequest req,
                                              List<TestcaseResultDTO> results,
-                                             Problem problem,
-                                             Submission submission,
-                                             String mobileOrEmail) {
+                                             Long submissionId,
+                                             String mobileOrEmail,
+                                             int totalTestcases) {
         System.out.println("Save Submission Function Thread Name: "+Thread.currentThread().getName());
+        Submission submission =submissionRepo.findById(submissionId).orElseThrow(()->new RuntimeException("Submission Not Found: "+submissionId));
+        Problem problem = problemRepo.findById(req.getProblemId()).orElseThrow(() -> new ProblemNotFoundException("Problem Not Found With ID: " + req.getProblemId()));
         User user = userRepo.findByMobileOrEmail(mobileOrEmail).orElseThrow(() -> new UserNotFoundException(mobileOrEmail));
         float maxTimeTake=0; long maxSpaceTake=0;
         String verdict=""; boolean flag=true;
@@ -194,7 +206,12 @@ public class SubmissionServiceImp implements SubmissionService {
             user.setTotalCoinsEarned((user.getTotalCoinsEarned()==null?0: user.getTotalCoinsEarned()));
             user.setTotalPresentCoins((user.getTotalPresentCoins()==null?0:user.getTotalPresentCoins()));
         }
+        response.setCompleted(true);
         submissionRepo.save(submission);
+        messagingTemplate.convertAndSend(
+                "/topic/submission/" + submission.getId(),
+                response
+        );
         System.out.println("Submission Details: "+submission);
         return response;
     }

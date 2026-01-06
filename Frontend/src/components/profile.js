@@ -114,11 +114,16 @@ const Profile = () => {
         updateUserImage(imageUrl);
         toast.success("Profile picture updated!");
       }
+      else{
+          toast.error(data.message);
+      }
 
       setFile(null);
     } catch (err) {
+
       console.error("Upload failed:", err);
-      toast.error("Image upload failed!");
+      alert(err.message);
+      toast.error(err.message);
     } finally {
       setUploading(false);
     }

@@ -18,5 +18,6 @@ public class TestcaseResultDTO {
     public String time;
     public String memory;
     private boolean passed;
+    private boolean completed=false;
 
 }

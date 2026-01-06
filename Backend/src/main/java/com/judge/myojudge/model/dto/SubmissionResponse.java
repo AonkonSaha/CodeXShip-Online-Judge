@@ -23,5 +23,7 @@ public class SubmissionResponse {
     private Long coins=0L;
     @JsonProperty("created_at")
     private LocalDateTime createdAt;
-    List<TestcaseResultDTO> results;
+    private List<TestcaseResultDTO> results;
+    private boolean completed=false;
+
 }

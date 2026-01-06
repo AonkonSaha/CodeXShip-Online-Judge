@@ -13,7 +13,7 @@ import Footer from "../NavBar_Footer/Footer";
 import { AuthContext } from "../auth_component/AuthContext";
 
 const OrderManagementPage = () => {
-  const { darkMode, isAdmin } = useContext(AuthContext);
+  const { darkMode, isAdmin,plusUserCoins,minusUserCoins } = useContext(AuthContext);
   const token = localStorage.getItem("token");
   const baseURL = process.env.REACT_APP_BACK_END_BASE_URL;
 
@@ -66,7 +66,7 @@ const OrderManagementPage = () => {
       setLoading(false);
       isFetchingRef.current = false;
     }
-  }, [baseURL, token, page, search, hasMore]);
+  }, [baseURL, token, page, search,loading, hasMore]);
 
   // reset data when search/status changes
   useEffect(() => {
@@ -94,26 +94,32 @@ const OrderManagementPage = () => {
   }, [page, fetchOrders]);
 
   // handle order action
-  const handleAction = async (id, action) => {
+  const handleAction = async (id,coins,status, action) => {
     if (!window.confirm(`Are you sure to ${action} this order?`)) return;
     try {
       const headers = token ? { Authorization: `Bearer ${token}` } : {};
       if(action==="delete"){
-        alert("D");
         await axios.delete(`${baseURL}/api/product/v1/order/delete/${id}`, { headers });
+        if(status!=="DECLINED"){
+          plusUserCoins(coins);
+        }
       }else{
       await axios.post(`${baseURL}/api/product/v1/order/${action}/${id}`, {}, { headers });
+      if(action==='decline' && status!=='DECLINED'){
+      plusUserCoins(coins);
+      }else if(action==='ship' && status==='DECLINED'){
+      minusUserCoins(coins);
+      }
       }
       
       setOrders((prev) =>
         prev.map((o) =>
           o.order_id === id
-            ? { ...o, status: action === "ship" ? "Shipped" : "Declined" }
+            ? { ...o, status: action === "ship" ? "SHIPPED" : "DECLINED" }
             : o
         )
       );
     } catch (err) {
-      alert(`Failed to ${action} order`);
       console.error(err);
     }
   };
@@ -214,11 +220,13 @@ const OrderManagementPage = () => {
                   <td className="px-4 py-3">
                     <span
                       className={`px-3 py-1 rounded-full text-xs font-bold ${
-                        order.status === "Pending"
+                        order.status === "PENDING"
                           ? "bg-yellow-400 text-gray-900"
-                          : order.status === "Shipped"
+                          : order.status === "DECLINED"
+                          ? "bg-red-500 text-white-500"
+                          : order.status === "SHIPPED"
                           ? "bg-green-500 text-white"
-                          : "bg-red-500 text-white"
+                          : order.status === "CONFIRMED"? "bg-green-500 text-white" :"bg-green-500 text-white"
                       }`}
                     >
                       {order.status}
@@ -239,7 +247,7 @@ const OrderManagementPage = () => {
                       {isAdmin && (
                         <>
                           <button
-                            onClick={() => handleAction(order.order_id, "ship")}
+                            onClick={() => handleAction(order.order_id,order.coins,order.status, "ship")}
                             className="p-2 bg-green-600 hover:bg-green-500 rounded-full text-white"
                             title="Mark as Shipped"
                           >
@@ -247,7 +255,7 @@ const OrderManagementPage = () => {
                           </button>
                           <button
                             onClick={() =>
-                              handleAction(order.order_id, "decline")
+                              handleAction(order.order_id,order.coins,order.status, "decline")
                             }
                             className="p-2 bg-yellow-600 hover:bg-red-500 rounded-full text-white"
                             title="Decline"
@@ -257,7 +265,7 @@ const OrderManagementPage = () => {
                           </button>
                           <button
                             onClick={() =>
-                              handleAction(order.order_id, "delete")
+                              handleAction(order.order_id,order.coins,order.status, "delete")
                             }
                             className="p-2 bg-red-600 hover:bg-red-500 rounded-full text-white"
                             title="Delete"

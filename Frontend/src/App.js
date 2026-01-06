@@ -17,7 +17,7 @@ import ProblemCategoryPage from './problemlist/ProblemCategoryPage';
 import SubmissionHistory from './problem_page_code_editor/SubmissionHistory';
 import Profile from './components/profile';
 import SubmissionResult from './problem_page_code_editor/SubmissionResult';
-import SubmissionsPage from './problem_page_code_editor/SubmissionPage';
+import SubmissionsPage from './problem_page_code_editor/SubmissionHistory';
 import ContestPage from './contest/ContestListPage';
 import ContestListPage from './contest/ContestListPage';
 import CoinRewardPage from './CoinReward/CoinRewardPage';
@@ -62,13 +62,11 @@ function App() {
           {/* ================= Protected Routes ================= */}
           {/* Shared access for all authenticated users */}
           <Route element={<ProtectedRoute roles={["NORMAL_USER", "CONTEST_USER", "ADMIN"]} />}>
-            <Route path="/submission" element={<SubmissionsPage />} />
+            <Route path="/submission" element={<SubmissionHistory/>} />
             <Route path="/submission-result" element={<SubmissionResult />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/gift-dock" element={<CoinRewardPage/>} />
             <Route path="/history/my-order" element={<MyOrderPage/>} />
-
-            <Route path="/submissions/history" element={<SubmissionHistory />} />
             <Route path="/logout" element={<Logout/>} />
           </Route>
 

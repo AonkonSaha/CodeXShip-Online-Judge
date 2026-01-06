@@ -6,8 +6,8 @@ import { AuthContext } from "../auth_component/AuthContext";
 const AUTO_CLOSE_TIME = 300000; // 5 minutes in ms
 
 const DailyRewardModal = ({ isOpen, coins, onClose, streak }) => {
-  const { setIsAddDailyCoin } = useContext(AuthContext);
-  const [progress, setProgress] = useState(100); // countdown progress
+  const { setIsAddDailyCoin, darkMode } = useContext(AuthContext);
+  const [progress, setProgress] = useState(100);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -17,17 +17,13 @@ const DailyRewardModal = ({ isOpen, coins, onClose, streak }) => {
 
     const startTime = Date.now();
 
-    // update progress every second
     const interval = setInterval(() => {
       const elapsed = Date.now() - startTime;
       const percentage = Math.max(0, 100 - (elapsed / AUTO_CLOSE_TIME) * 100);
       setProgress(percentage);
     }, 1000);
 
-    // auto-close after 5 minutes
-    const timer = setTimeout(() => {
-      handleClose();
-    }, AUTO_CLOSE_TIME);
+    const timer = setTimeout(() => handleClose(), AUTO_CLOSE_TIME);
 
     return () => {
       clearTimeout(timer);
@@ -46,22 +42,32 @@ const DailyRewardModal = ({ isOpen, coins, onClose, streak }) => {
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+          className={`fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm transition-colors duration-300 ${
+            darkMode ? "bg-black/50" : "bg-gray-800/40"
+          }`}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
         >
           <motion.div
-            className="relative bg-white dark:bg-gray-900 rounded-3xl p-8 w-11/12 max-w-md text-center shadow-2xl border border-blue-200 dark:border-gray-800"
+            className={`relative rounded-3xl p-8 w-11/12 max-w-md text-center shadow-2xl border transition-colors duration-300 ${
+              darkMode
+                ? "bg-gray-900 border-gray-700 text-white"
+                : "bg-white border-blue-200 text-gray-900"
+            }`}
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.9, opacity: 0 }}
-            transition={{ type: 'spring', stiffness: 250, damping: 20 }}
+            transition={{ type: "spring", stiffness: 250, damping: 20 }}
           >
-            {/* ❌ Close Icon */}
+            {/* Close Button */}
             <motion.button
               onClick={handleClose}
-              className="absolute top-4 right-4 text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors duration-200"
+              className={`absolute top-4 right-4 transition-colors duration-200 ${
+                darkMode
+                  ? "text-gray-400 hover:text-red-400"
+                  : "text-gray-500 hover:text-red-500"
+              }`}
               whileHover={{ rotate: 90, scale: 1.2 }}
               whileTap={{ scale: 0.9 }}
               aria-label="Close"
@@ -70,12 +76,16 @@ const DailyRewardModal = ({ isOpen, coins, onClose, streak }) => {
             </motion.button>
 
             {/* Header */}
-            <h2 className="text-3xl font-extrabold mb-4 text-blue-600 dark:text-blue-400">
+            <h2
+              className={`text-3xl font-extrabold mb-4 ${
+                darkMode ? "text-blue-400" : "text-blue-600"
+              }`}
+            >
               🎉 Daily Reward!
             </h2>
 
             {/* Reward info */}
-            <p className="text-lg mb-3 dark:text-gray-300">
+            <p className={`text-lg mb-3 ${darkMode ? "text-gray-300" : "text-gray-700"}`}>
               You earned{" "}
               <span className="font-bold text-yellow-500 inline-flex items-center gap-1">
                 {coins} <FaCoins className="inline text-yellow-500" />
@@ -90,7 +100,11 @@ const DailyRewardModal = ({ isOpen, coins, onClose, streak }) => {
             )}
 
             {/* Progress Bar */}
-            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5 mb-4 overflow-hidden">
+            <div
+              className={`w-full rounded-full h-2.5 mb-4 overflow-hidden ${
+                darkMode ? "bg-gray-700" : "bg-gray-200"
+              }`}
+            >
               <motion.div
                 className="h-2.5 bg-gradient-to-r from-yellow-400 to-orange-500"
                 style={{ width: `${progress}%` }}
@@ -102,7 +116,11 @@ const DailyRewardModal = ({ isOpen, coins, onClose, streak }) => {
             <div className="flex justify-center gap-4 mt-4">
               <motion.button
                 onClick={handleClose}
-                className="px-6 py-2 bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-400 text-white font-semibold rounded-full shadow-lg"
+                className={`px-6 py-2 text-white font-semibold rounded-full shadow-lg transition-colors duration-200 ${
+                  darkMode
+                    ? "bg-blue-500 hover:bg-blue-400"
+                    : "bg-blue-600 hover:bg-blue-700"
+                }`}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
@@ -111,7 +129,11 @@ const DailyRewardModal = ({ isOpen, coins, onClose, streak }) => {
 
               <motion.button
                 onClick={handleClose}
-                className="px-6 py-2 bg-gray-300 dark:bg-gray-700 hover:bg-gray-400 dark:hover:bg-gray-600 text-gray-800 dark:text-white font-semibold rounded-full shadow-lg"
+                className={`px-6 py-2 font-semibold rounded-full shadow-lg transition-colors duration-200 ${
+                  darkMode
+                    ? "bg-gray-700 text-white hover:bg-gray-600"
+                    : "bg-gray-300 text-gray-800 hover:bg-gray-400"
+                }`}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >

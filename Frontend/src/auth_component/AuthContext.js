@@ -25,7 +25,6 @@ export const AuthProvider = ({ children }) => {
   const isContestUser = hasRole("CONTEST_USER");
   const isNormalUser = hasRole("NORMAL_USER");
   const isProblemEditor = hasRole("PROBLEM_EDITOR");
-
   // ================== Coins API ==================
   const fetchUserCoins = useCallback(
     async (token) => {
@@ -39,10 +38,11 @@ export const AuthProvider = ({ children }) => {
         image_url: res.data.data.image_url }));
       } catch (err) {
         console.error("Failed to fetch coins:", err);
-        setCoins(null);
+        // setCoins(null);
+        logout();
       }
     },
-    [baseURL]
+    []
   );
 
   // ================== Normalize Roles ==================
@@ -115,8 +115,11 @@ export const AuthProvider = ({ children }) => {
             setUser(null);
           } else {
             const roles = normalizeRoles(decoded);
-            const userData = { username: decoded.sub, roles, userId:decoded.userId};
+            const userData = { username: decoded.sub, roles,userId:decoded.user_id,
+              image_url: decoded.image_url};
             setUser(userData);
+            // setCoins(decoded.present_coins);      
+
             await fetchUserCoins(token);
             scheduleAutoLogout(decoded.exp);
           }
@@ -134,7 +137,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     initAuth();
-  }, [fetchUserCoins, logout]);
+  }, [setCoins,logout]);
 
   // ================== Login ==================
   const login = (token) => {
@@ -153,7 +156,7 @@ export const AuthProvider = ({ children }) => {
       setDailyCoins(decoded.daily_reward_coin || 0);
       setStreak(decoded.num_of_days_login || 0 );
       setUser(userData);
-      console.log(decoded.is_add_daily_coin)
+      // setCoins(decoded.present_coins);      
       fetchUserCoins(token);
       scheduleAutoLogout(decoded.exp);
     } catch (err) {
@@ -168,8 +171,11 @@ export const AuthProvider = ({ children }) => {
       image_url: newImageUrl,
     }));
   };
-  const updateUserCoins = (uCoins) =>{
+  const plusUserCoins = (uCoins) =>{
       setCoins(coins+uCoins);
+  }
+  const updateUserCoins = (uCoins) =>{
+      setCoins(uCoins);
   }
   const minusUserCoins = (uCoins) =>{
       setCoins(coins-uCoins);
@@ -194,6 +200,7 @@ export const AuthProvider = ({ children }) => {
         updateUserImage,
         updateUserCoins,
         minusUserCoins,
+        plusUserCoins,
         coins,
         darkMode,
         toggleDarkMode,

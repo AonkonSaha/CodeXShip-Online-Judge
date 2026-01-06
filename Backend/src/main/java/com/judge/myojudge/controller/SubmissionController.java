@@ -25,15 +25,16 @@ public class SubmissionController {
 
     @PostMapping("/v1/submit")
     @PreAuthorize("hasAnyRole('NORMAL_USER', 'ADMIN')")
-    public ResponseEntity<ApiResponse<SubmissionResponse>> submitCode(@RequestBody @Valid SubmissionRequest submissionRequest) throws ExecutionException, InterruptedException {
+    public ResponseEntity<ApiResponse<Long>> submitCode(@RequestBody @Valid SubmissionRequest submissionRequest) throws ExecutionException, InterruptedException {
         System.out.println("Submission Controller Thread Name: "+Thread.currentThread().getName()+" IsVirtual: "+Thread.currentThread().isVirtual());
         String mobileOrEmail = SecurityContextHolder.getContext().getAuthentication().getName();
         Submission submission = submissionService.getSubmission();
-        SubmissionResponse submissionResponse=submissionService.runSubmissionCode(submissionRequest,submission,mobileOrEmail) ;        ApiResponse<SubmissionResponse> apiResponse=ApiResponse.<SubmissionResponse>builder()
+        submissionService.runSubmissionCode(submissionRequest,submission,mobileOrEmail) ;
+        ApiResponse<Long> apiResponse=ApiResponse.<Long>builder()
                 .success(true)
                 .statusCode(HttpStatus.OK.value())
                 .message("Submission Successfully..")
-                .data(submissionResponse)
+                .data(submission.getId())
                 .build();
         return ResponseEntity.status(HttpStatus.OK).body(apiResponse);
     }

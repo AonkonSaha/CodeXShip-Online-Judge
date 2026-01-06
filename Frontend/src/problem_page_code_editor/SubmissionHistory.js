@@ -1,102 +1,183 @@
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
-import { jwtDecode } from 'jwt-decode';
-import { FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
-import { useNavigate } from 'react-router-dom';
-import NavBar from '../NavBar_Footer/NavBarCus';
-import Footer from '../NavBar_Footer/Footer';
+import React, { useEffect, useState, useContext } from "react";
+import { motion } from "framer-motion";
+import NavBar from "../NavBar_Footer/NavBarCus";
+import Footer from "../NavBar_Footer/Footer";
+import { AuthContext } from "../auth_component/AuthContext";
+import { FaSortUp, FaSortDown, FaSearch } from "react-icons/fa";
 
-const SubmissionHistory = () => {
-    const [submissions, setSubmissions] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const [statusFilter, setStatusFilter] = useState("");
-    const [languageFilter, setLanguageFilter] = useState("");
-    const [role,setRole]=useState("");
-    const navigate = useNavigate();
-    const token = localStorage.getItem("token");
-    const baseURL = process.env.REACT_APP_BACK_END_BASE_URL;
-    
+export default function SubmissionHistory() {
+  const [submissions, setSubmissions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(0);
+  const [size] = useState(10);
+  const [totalPages, setTotalPages] = useState(0);
+  const [sortOrder, setSortOrder] = useState("desc");
+  const [searchQuery, setSearchQuery] = useState("");
 
-    useEffect(() => {
-        if (token) {
-            const decoded = jwtDecode(token);
-            setRole(decoded.role);
-        }
-        const fetchSubmissions = async () => {
-            try {
-                
-                const headers = token ? { Authorization: `Bearer ${token}` } : {};
-                const response = await axios.get(`${baseURL}/code/submission/history/${role}`, { headers });
-                setSubmissions(response.data.execution);
-            } catch (err) {
-                setError(err.message);
-            } finally {
-                setLoading(false);
-            }
-        };
-        if (role) fetchSubmissions();
-    }, [token]);
+  const { darkMode } = useContext(AuthContext);
+  const token = localStorage.getItem("token");
+  const baseURL = process.env.REACT_APP_BACK_END_BASE_URL;
 
-    const filteredSubmissions = submissions.filter(submission =>
-        (statusFilter ? submission.status === statusFilter : true) &&
-        (languageFilter ? submission.language === languageFilter : true)
-    );
-
-    if (loading) return <p className="text-center mt-10">Loading submissions...</p>;
-    if (error) return <p className="text-center text-red-600">Error: {error}</p>;
-
-    return (
-        <div className="min-h-screen bg-gray-50 flex flex-col">
-            <NavBar />
-            <div className="container mx-auto px-6 py-10 flex-grow">
-                <h1 className="text-4xl font-bold text-gray-800 mb-6">Submission History</h1>
-                <div className="flex space-x-4 mb-6">
-                    <select
-                        className="p-2 border border-gray-300 rounded-lg"
-                        value={statusFilter}
-                        onChange={(e) => setStatusFilter(e.target.value)}
-                    >
-                        <option value="">All Statuses</option>
-                        <option value="Accepted">Accepted</option>
-                        <option value="Rejected">Rejected</option>
-                    </select>
-                    <select
-                        className="p-2 border border-gray-300 rounded-lg"
-                        value={languageFilter}
-                        onChange={(e) => setLanguageFilter(e.target.value)}
-                    >
-                        <option value="">All Languages</option>
-                        <option value="Python">Python</option>
-                        <option value="Java">Java</option>
-                        <option value="C++">C++</option>
-                    </select>
-                </div>
-                <div className="bg-white p-6 border-2 border-gray-300 rounded-lg shadow-md space-y-3">
-                    {filteredSubmissions.length === 0 ? (
-                        <p className="text-center text-gray-500">No submissions found.</p>
-                    ) : (
-                        filteredSubmissions.map((submission) => (
-                            <div key={submission.id} className="p-4 border-t-4 rounded-xl shadow-md hover:shadow-lg transition-transform transform hover:scale-[1.02]">
-                                <div className="flex justify-between items-center">
-                                    <h3 className="text-xl font-semibold text-gray-800">{submission.problemTitle}</h3>
-                                    <p className="text-gray-600">{submission.language}</p>
-                                </div>
-                                <div className="flex justify-between items-center mt-2">
-                                    {/* <p className="text-gray-600">Execution Time: {submission.executionTime} ms</p> */}
-                                    <p className="text-gray-600">Execution Time: 1ms</p>
-                                    <span className={`px-3 py-1 text-white rounded-full ${submission.status === 'Accepted' ? 'bg-green-600' : 'bg-red-600'}`}>
-                                        {submission.status}
-                                    </span>
-                                </div>
-                            </div>
-                        ))
-                    )}
-                </div>
-            </div>
-            <Footer />
-        </div>
-    );
+  const fetchSubmissions = (pageNumber = 0, sort = sortOrder, search = searchQuery) => {
+    setLoading(true);
+    fetch(
+      `${baseURL}/api/submission/v1/get/user/all?page=${pageNumber}&size=${size}&sort_field=createdAt&sortBy=${sort}&search=${search}`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    )
+      .then((res) => res.json())
+      .then((data) => {
+        const pageData = data.data;
+        setSubmissions(pageData?.content || []);
+        setTotalPages(pageData?.totalPages || 0);
+        setPage(pageData?.number || 0);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  };
+const pointLanguage = (language) =>{
+    return language.includes("cpp-clang-9.0.1-14")
+      ? "C++14"
+      : language.includes("cpp-clang-10.0.1-17")
+      ? "C++17"
+      : language.includes("csharp-sdk-3.1.406")
+      ? "C# (.NET Core SDK 3.1.406)"
+      : language.includes("csharp-sdk-8.0.302")
+      ? "C# (.NET Core SDK 8.0.302)"
+      : language.includes("python-pypy-7.3.12-3.10")
+      ? "Python 3.10"
+      : language.includes("python-pypy-7.3.12-3.9")
+      ? "Python 3.9"
+      : language.includes("java-jdk-14.0.1")
+      ? "Java (OpenJDK 14.0.1)"
+      : "C";
 };
+  useEffect(() => {
+    fetchSubmissions();
+    // eslint-disable-next-line
+  }, [sortOrder]);
 
-export default SubmissionHistory;
+  const formatDate = (dateString) => {
+    if (!dateString) return "N/A";
+    return new Date(dateString).toLocaleString("en-US", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
+  };
+
+  const toggleSort = () => setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
+  const handleSearch = (e) => {
+    e.preventDefault();
+    fetchSubmissions(0, sortOrder, searchQuery);
+  };
+
+  if (loading) {
+    return (
+      <div className={`flex items-center justify-center h-screen ${darkMode ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-800"}`}>
+        <motion.div
+          className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"
+          initial={{ rotate: 0 }}
+          animate={{ rotate: 360 }}
+          transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className={`flex flex-col min-h-screen ${darkMode ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-800"}`}>
+      <NavBar />
+      
+      {/* Main content grows to fill remaining space */}
+      <main className="flex-grow p-4 sm:p-6">
+        {/* Title + Search */}
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 sm:mb-6 gap-4">
+          <h1 className="text-2xl sm:text-3xl font-bold">My Submissions</h1>
+          <form onSubmit={handleSearch} className="flex w-full sm:w-80 bg-white dark:bg-gray-800 rounded-full shadow-md overflow-hidden border focus-within:ring-2 focus-within:ring-blue-400 transition">
+            <input
+              type="text"
+              placeholder="Search submissions..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="px-4 py-2 w-full text-gray-700 dark:text-gray-200 bg-transparent focus:outline-none"
+            />
+            <button type="submit" className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white flex items-center justify-center transition">
+              <FaSearch className="text-lg" />
+            </button>
+          </form>
+        </div>
+
+        {submissions.length === 0 ? (
+          <p className="text-gray-500 text-center mt-6">No submissions found.</p>
+        ) : (
+          <div>
+            <div className={`overflow-x-auto shadow rounded-2xl mb-6 ${darkMode ? "bg-gray-800" : "bg-white"}`}>
+              <table className="w-full min-w-[600px] text-left border-collapse">
+                <thead>
+                  <tr className={darkMode ? "bg-gray-700 text-gray-200" : "bg-gray-200 text-gray-700"}>
+                    <th className="p-3 cursor-pointer flex items-center" onClick={toggleSort} title="Sort by Date">
+                      Date {sortOrder === "asc" ? <FaSortUp className="ml-1 text-gray-600" /> : <FaSortDown className="ml-1 text-gray-600" />}
+                    </th>
+                    <th className="p-3">Problem</th>
+                    <th className="p-3">Language</th>
+                    <th className="p-3">Verdict</th>
+                    <th className="p-3">Passed</th>
+                    <th className="p-3">Time (s)</th>
+                    <th className="p-3">Memory (KB)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {submissions.map((s) => (
+                    <tr key={s.id} className={`border-b transition ${darkMode ? "border-gray-700 hover:bg-gray-700" : "border-gray-200 hover:bg-gray-50"}`}>
+                      <td className="p-3 font-medium">{formatDate(s.created_at)}</td>
+                      <td className="p-3 font-medium">{s.problemName}</td>
+                      <td className="p-3 font-medium">{pointLanguage(s.language?s.language:"cpp-clang-9.0.1-14")}</td>
+                      <td className="p-3">
+                        <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                          s?.verdict === "Accepted"
+                            ? "bg-green-100 text-green-700 dark:bg-green-800 dark:text-green-200"
+                            : s?.verdict === "Wrong Answer"
+                            ? "bg-red-100 text-red-700 dark:bg-red-800 dark:text-red-200"
+                            : "bg-yellow-100 text-yellow-700 dark:bg-yellow-800 dark:text-yellow-200"
+                        }`}>
+                          {s?.verdict}
+                        </span>
+                      </td>
+                      <td className="p-3">{s?.passed}/{s?.total}</td>
+                      <td className="p-3">{s.time?.toFixed(4)}</td>
+                      <td className="p-3">{s?.memory}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Pagination */}
+            <div className="flex flex-col sm:flex-row justify-center items-center gap-3 sm:gap-4">
+              <button
+                onClick={() => fetchSubmissions(page - 1)}
+                disabled={page === 0}
+                className="px-4 py-2 rounded-lg bg-blue-500 text-white disabled:bg-gray-400"
+              >
+                Previous
+              </button>
+              <span>Page {page + 1} of {totalPages}</span>
+              <button
+                onClick={() => fetchSubmissions(page + 1)}
+                disabled={page + 1 >= totalPages}
+                className="px-4 py-2 rounded-lg bg-blue-500 text-white disabled:bg-gray-400"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
+      </main>
+
+      <Footer />
+    </div>
+  );
+}

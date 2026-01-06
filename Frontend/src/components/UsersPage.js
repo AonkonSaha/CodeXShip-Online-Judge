@@ -17,7 +17,7 @@ import {
 import { MdArrowBack, MdArrowForward } from "react-icons/md";
 
 const UsersPage = () => {
-  const { darkMode } = useContext(AuthContext);
+  const { darkMode,updateUserCoins } = useContext(AuthContext);
   const [users, setUsers] = useState([]);
   const [page, setPage] = useState(0);
   const [size] = useState(5);
@@ -170,6 +170,7 @@ const UsersPage = () => {
         { ...editForm, mobile: selectedUser.mobile },
         { headers: { Authorization: `Bearer ${token}` } }
       );
+      updateUserCoins(editForm.total_present_coins);
       toast.success("User updated successfully");
       fetchUsers();
       closeEditModal();

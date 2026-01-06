@@ -24,7 +24,7 @@ Designed for **competitive programming, coding contests, and practice platforms*
 ### 💻 Code Submission & Evaluation
 - Submit code in **multiple programming languages**  
 - **Secure Docker-based sandbox** for safe execution  
-- Instant feedback with verdicts: **AC, WA, TLE, RE, CE**  
+- **Live Testcase Judging Feedback**  See each testcase result update in real-time as code runs, powered by WebSocket streaming. 
 
 ### 🎯 Gamification & Rewards
 - **Daily Coin Reward System**: Users earn coins once per day for logging in  

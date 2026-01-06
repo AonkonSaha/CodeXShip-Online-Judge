@@ -38,7 +38,7 @@ const ProblemList = () => {
         };
 
         fetchProblems();
-    }, [token]);
+    }, [token,baseURL]);
 
     const handleDelete = async (handle) => {
         if (!window.confirm("Are you sure you want to delete this problem?")) return;
