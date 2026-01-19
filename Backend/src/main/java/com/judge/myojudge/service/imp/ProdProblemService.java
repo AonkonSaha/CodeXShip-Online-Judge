@@ -4,8 +4,8 @@ import com.cloudinary.Cloudinary;
 import com.judge.myojudge.exception.ProblemNotFoundException;
 import com.judge.myojudge.exception.TestCaseNotFoundException;
 import com.judge.myojudge.exception.UserNotFoundException;
-import com.judge.myojudge.model.dto.ProblemDTO;
-import com.judge.myojudge.model.dto.ProblemWithSample;
+import com.judge.myojudge.model.dto.ProblemResponse;
+import com.judge.myojudge.model.dto.ProblemSampleTestCaseResponse;
 import com.judge.myojudge.model.entity.Problem;
 import com.judge.myojudge.model.entity.TestCase;
 import com.judge.myojudge.model.entity.User;
@@ -44,6 +44,7 @@ public class ProdProblemService implements ProblemService {
     private final UserRepo userRepo;
     private final SubmissionRepo submissionRepo;
     private final ProblemMapper problemMapper;
+
 
     @Override
     @Transactional(value = Transactional.TxType.REQUIRES_NEW)
@@ -111,7 +112,7 @@ public class ProdProblemService implements ProblemService {
     @Override
     @Transactional
     @Cacheable(cacheNames = "singleProblemPerPage",key = "T(java.util.Objects).hash(#problemId,#mobileOrEmail)")
-    public ProblemWithSample getProblemPerPageById(Long problemId,String mobileOrEmail, HttpServletRequest httpServletRequest) {
+    public ProblemSampleTestCaseResponse getProblemPerPageById(Long problemId, String mobileOrEmail, HttpServletRequest httpServletRequest) {
         String token = httpServletRequest.getHeader("Authorization");
         Problem problem = null;
         Boolean is_solved = false;
@@ -136,27 +137,19 @@ public class ProdProblemService implements ProblemService {
         }
         List<String> sampleTestcaseContent = cloudinaryService.readCloudinaryFile(sampleTestcase.getFilePath());
         List<String> sampleOutputContent = cloudinaryService.readCloudinaryFile(sampleOutput.getFilePath());
-        ProblemWithSample problemWithSample = problemMapper.toProblemWithSample(problem);
-        problemWithSample.setSolved(is_solved);
-        problemWithSample.setSampleTestcase(sampleTestcaseContent);
-        problemWithSample.setSampleOutput(sampleOutputContent);
-        return problemWithSample;
+        ProblemSampleTestCaseResponse problemSampleTestCaseResponse = problemMapper.toProblemSampleTestCaseResponse(problem);
+        problemSampleTestCaseResponse.setSolved(is_solved);
+        problemSampleTestCaseResponse.setSampleTestcase(sampleTestcaseContent);
+        problemSampleTestCaseResponse.setSampleOutput(sampleOutputContent);
+        return problemSampleTestCaseResponse;
     }
 
-
-    @Transactional
-    public ProblemDTO updateProblemByID(long id) {
+    public Problem getProblemByID(long id) {
         Optional<Problem> problem = problemRepo.findById(id);
         if (problem.isEmpty()) {
             throw new ProblemNotFoundException("Problem not found with ID: " + id);
         }
-        Map<String,String> testCaseNameWithPath=new HashMap<>();
-        ProblemDTO problemDTO = problemMapper.toProblemDTO(problem.get());
-        for(TestCase testCase:problem.get().getTestcases()){
-            testCaseNameWithPath.put(testCase.getFileName(),testCase.getFilePath());
-        }
-        problemDTO.setTestCaseNameWithPath(testCaseNameWithPath);
-        return problemDTO;
+        return problem.get();
     }
 
     @Override
@@ -232,13 +225,16 @@ public class ProdProblemService implements ProblemService {
     @Override
     @Transactional
     @Cacheable(cacheNames = "problems",key ="T(java.util.Objects).hash(#mobileOrEmail,#category,#search,#difficulty,#solvedFilter,#pageable.pageSize,#pageable.pageNumber)")
-    public Page<ProblemWithSample> findProblemAllByCategory(String mobileOrEmail,String category, String search, String difficulty,String solvedFilter, Pageable pageable) {
-        List<ProblemWithSample> problemWithSamples = new ArrayList<>();
+    public Page<ProblemResponse> findProblemsByCategory(
+            HttpServletRequest request,String mobileOrEmail,
+            String category, String search, String difficulty,
+            String solvedFilter, Pageable pageable
+    ){
+        String token = request.getHeader("Authorization");
         Page<?> dbResult = null;
         List<Problem> problems= null;
         List<String> userSolved= null;
-        if(userRepo.existsUserByMobileOrEmail(mobileOrEmail)){
-            Long startTime = System.currentTimeMillis();
+        if(token!=null && !token.substring(7).isEmpty()){
             dbResult = problemRepo.findByCategoryWithSolvedOrNotFilter(
                     mobileOrEmail.trim(),
                     category.trim().toLowerCase(),
@@ -247,8 +243,6 @@ public class ProdProblemService implements ProblemService {
                     solvedFilter.trim().toLowerCase(),
                     pageable
             );
-            Long endTime = System.currentTimeMillis();
-            System.out.println("Query Time----: "+(endTime-startTime));
             problems = (List<Problem>) dbResult.getContent()
                     .stream()
                     .map(row -> {
@@ -274,13 +268,13 @@ public class ProdProblemService implements ProblemService {
             );
             problems = (List<Problem>) dbResult.getContent();
         }
-
+        List<ProblemResponse> problemResponses = new ArrayList<>();
         for (int i=0;i<problems.size();i++) {
-            ProblemWithSample problemWithSample = problemMapper.toProblemWithSample(problems.get(i));
-            if(userSolved!=null && !userSolved.isEmpty())problemWithSample.setSolved(userSolved.get(i).equals("solved"));
-            problemWithSamples.add(problemWithSample);
+            ProblemResponse tempProblemResponse = problemMapper.toProblemResponse(problems.get(i));
+            if(userSolved!=null && !userSolved.isEmpty()) tempProblemResponse.setSolved(userSolved.get(i).equals("solved"));
+            problemResponses.add(tempProblemResponse);
         }
-        return new PageImpl<>(problemWithSamples, pageable, dbResult.getTotalElements());
+        return new PageImpl<>(problemResponses, pageable, dbResult.getTotalElements());
     }
 
     private TestCase getSampleOutput(List<TestCase> testcases) {
@@ -303,8 +297,8 @@ public class ProdProblemService implements ProblemService {
 
 
     @Override
-    public List<ProblemWithSample> findProblemAll() {
-        List<ProblemWithSample> problemList = new ArrayList<>();
+    public List<ProblemSampleTestCaseResponse> findProblemAll() {
+        List<ProblemSampleTestCaseResponse> problemList = new ArrayList<>();
         List<Problem> problems = problemRepo.findAll();
         for (Problem problem : problems) {
             TestCase sampleTestcase = getSampleInput(problem.getTestcases());
@@ -314,10 +308,10 @@ public class ProdProblemService implements ProblemService {
             }
             List<String> sampleTestcaseContent = cloudinaryService.readCloudinaryFile(sampleTestcase.getFilePath());
             List<String> sampleOutputContent = cloudinaryService.readCloudinaryFile(sampleOutput.getFilePath());
-            ProblemWithSample problemWithSample = problemMapper.toProblemWithSample(problem);
-            problemWithSample.setSampleTestcase(sampleTestcaseContent);
-            problemWithSample.setSampleOutput(sampleOutputContent);
-            problemList.add(problemWithSample);
+            ProblemSampleTestCaseResponse problemSampleTestCaseResponse = problemMapper.toProblemSampleTestCaseResponse(problem);
+            problemSampleTestCaseResponse.setSampleTestcase(sampleTestcaseContent);
+            problemSampleTestCaseResponse.setSampleOutput(sampleOutputContent);
+            problemList.add(problemSampleTestCaseResponse);
         }
         return problemList;
     }

@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class ProductDTO {
+public class ProductRequest {
     private Long id;
     @NotBlank(message = "Product can't empty")
     private String title;

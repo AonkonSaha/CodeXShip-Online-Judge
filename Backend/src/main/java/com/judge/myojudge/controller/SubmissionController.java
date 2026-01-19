@@ -26,9 +26,10 @@ public class SubmissionController {
     @PostMapping("/v1/submit")
     @PreAuthorize("hasAnyRole('NORMAL_USER', 'ADMIN')")
     public ResponseEntity<ApiResponse<Long>> submitCode(@RequestBody @Valid SubmissionRequest submissionRequest) throws ExecutionException, InterruptedException {
+        System.out.println(submissionRequest);
         System.out.println("Submission Controller Thread Name: "+Thread.currentThread().getName()+" IsVirtual: "+Thread.currentThread().isVirtual());
         String mobileOrEmail = SecurityContextHolder.getContext().getAuthentication().getName();
-        Submission submission = submissionService.getSubmission();
+        Submission submission = submissionService.getSubmission(submissionRequest,mobileOrEmail);
         submissionService.runSubmissionCode(submissionRequest,submission,mobileOrEmail) ;
         ApiResponse<Long> apiResponse=ApiResponse.<Long>builder()
                 .success(true)
@@ -75,6 +76,15 @@ public class SubmissionController {
                 .data(submissionResponse)
                 .build();
         return ResponseEntity.status(HttpStatus.OK).body(apiResponse);
+    }
+
+    @DeleteMapping("/v1/delete/all/{mobileOrEmail}")
+    @PreAuthorize("hasAnyRole('ADMIN')")
+    public ResponseEntity<Void> deleteAllSubmission(
+            @PathVariable String mobileOrEmail
+    ){
+        submissionService.deleteAllSubmissionByUser(mobileOrEmail);
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 
 

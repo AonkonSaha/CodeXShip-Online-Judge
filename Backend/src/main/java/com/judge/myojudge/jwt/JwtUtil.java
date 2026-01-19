@@ -47,6 +47,7 @@ public class JwtUtil {
         claims.put("role",roles);
         claims.put("image_url",user.getImageUrl());
         claims.put("user_id",user.getId());
+        claims.put("present_coins",user.getTotalPresentCoins());
         claims.put("is_add_daily_coin", user.getIsAdditionDailyCoin());
         claims.put("daily_reward_coin",5);
         claims.put("num_of_days_login", user.getNumOfDaysLogin());

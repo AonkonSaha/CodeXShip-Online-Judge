@@ -33,7 +33,7 @@ public interface ProblemRepo extends JpaRepository<Problem,Long> {
 
     boolean existsByTitle(String title);
 
-    @Query("SELECT p FROM Problem p where lower(p.type)=lower(:category) ")
+@Query("SELECT p FROM Problem p where lower(p.type)=lower(:category) ")
     List<Problem> findByType(@Param("category") String category);
 
 
@@ -56,12 +56,12 @@ public interface ProblemRepo extends JpaRepository<Problem,Long> {
             "AND (:difficulty IS NULL OR lower(trim(p.difficulty)) Like concat('%',:difficulty,'%')) "+
             "order by p.id ASC")
     Page<Object[]> findByCategoryWithSolvedOrNotFilter(
-            @Param("mobileOrEmail") String mobileOrEmail,
-            @Param("category") String category,
-            @Param("search") String search,
-            @Param("difficulty") String difficulty,
-            @Param("solvedFilter") String solvedFilter,
-            Pageable pageable);
+                                         @Param("mobileOrEmail") String mobileOrEmail,
+                                          @Param("category") String category,
+                                          @Param("search") String search,
+                                          @Param("difficulty") String difficulty,
+                                          @Param("solvedFilter") String solvedFilter,
+                                          Pageable pageable);
 
 
     @Query("SELECT p,(" +
@@ -71,5 +71,5 @@ public interface ProblemRepo extends JpaRepository<Problem,Long> {
             "AND s.problem.id=:problemId " +
             "WHERE lower(s.status)='accepted') FROM Problem p WHERE p.id=:problemId")
     List<Object[]> findProblemByStatus(@Param("problemId") Long problemId,
-                                       @Param("mobileOrEmail") String mobileOrEmail);
+                                 @Param("mobileOrEmail") String mobileOrEmail);
 }

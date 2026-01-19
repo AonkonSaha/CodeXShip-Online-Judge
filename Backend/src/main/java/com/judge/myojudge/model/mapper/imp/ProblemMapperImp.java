@@ -1,9 +1,11 @@
 package com.judge.myojudge.model.mapper.imp;
 
-import com.judge.myojudge.model.dto.ProblemDTO;
-import com.judge.myojudge.model.dto.ProblemWithSample;
+import com.judge.myojudge.model.dto.ProblemResponse;
+import com.judge.myojudge.model.dto.ProblemSampleTestCaseResponse;
 import com.judge.myojudge.model.entity.Problem;
+import com.judge.myojudge.model.entity.TestCase;
 import com.judge.myojudge.model.mapper.ProblemMapper;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -11,8 +13,8 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class ProblemMapperImp implements ProblemMapper {
     @Override
-    public ProblemWithSample toProblemWithSample(Problem problem) {
-        return ProblemWithSample.builder()
+    public ProblemSampleTestCaseResponse toProblemSampleTestCaseResponse(Problem problem) {
+        return ProblemSampleTestCaseResponse.builder()
                 .id(problem.getId())
                 .title(problem.getTitle())
                 .problemStatement(problem.getProblemStatement())
@@ -27,18 +29,23 @@ public class ProblemMapperImp implements ProblemMapper {
     }
 
     @Override
-    public ProblemDTO toProblemDTO(Problem problem) {
-        ProblemDTO problemDTO = new ProblemDTO();
-        problemDTO.setTitle(problem.getTitle());
-        problemDTO.setDifficulty(problem.getDifficulty());
-        problemDTO.setType(problem.getType());
-        problemDTO.setHandle(problem.getHandleName());
-        problemDTO.setCoins(problem.getCoins());
-        problemDTO.setProblemStatement(problem.getProblemStatement());
-        problemDTO.setExplanation(problem.getExplanation());
-        problemDTO.setMemoryLimit(problem.getMemoryLimit() == null ? 0 : problem.getMemoryLimit());
-        problemDTO.setTimeLimit(problem.getTimeLimit() == null ? 0 : problem.getTimeLimit());
-        return problemDTO;
+    @Transactional(value = Transactional.TxType.REQUIRED)
+    public ProblemResponse toProblemResponse(Problem problem) {
+        ProblemResponse problemResponse = new ProblemResponse();
+        problemResponse.setId(problem.getId());
+        problemResponse.setTitle(problem.getTitle());
+        problemResponse.setDifficulty(problem.getDifficulty());
+        problemResponse.setType(problem.getType());
+        problemResponse.setHandle(problem.getHandleName());
+        problemResponse.setCoins(problem.getCoins());
+        problemResponse.setProblemStatement(problem.getProblemStatement());
+        problemResponse.setExplanation(problem.getExplanation());
+        problemResponse.setMemoryLimit(problem.getMemoryLimit() == null ? 0 : problem.getMemoryLimit());
+        problemResponse.setTimeLimit(problem.getTimeLimit() == null ? 0 : problem.getTimeLimit());
+        for(TestCase testCase:problem.getTestcases()){
+            problemResponse.getTestCaseNameWithPath().put(testCase.getFileName(),testCase.getFilePath());
+        }
+        return problemResponse;
     }
 
     @Override

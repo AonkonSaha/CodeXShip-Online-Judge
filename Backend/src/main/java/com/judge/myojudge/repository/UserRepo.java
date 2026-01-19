@@ -54,5 +54,7 @@ public interface UserRepo extends JpaRepository<User, Long> {
 
     @Query("SELECT u FROM User u where u.mobileNumber=:mobileOrEmail OR u.email=:mobileOrEmail")
     Optional<User> findByMobileOrEmail(@Param("mobileOrEmail") String mobileOrEmail);
+
+
 }
 

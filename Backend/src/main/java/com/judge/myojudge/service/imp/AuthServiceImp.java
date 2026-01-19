@@ -5,10 +5,10 @@ import com.judge.myojudge.exception.InvalidPasswordArgumentException;
 import com.judge.myojudge.exception.InvalidUserArgumentException;
 import com.judge.myojudge.exception.UserNotFoundException;
 import com.judge.myojudge.jwt.JwtUtil;
-import com.judge.myojudge.model.dto.LoginDTO;
-import com.judge.myojudge.model.dto.PasswordDTO;
-import com.judge.myojudge.model.dto.UpdateUserDTO;
-import com.judge.myojudge.model.dto.UserDTO;
+import com.judge.myojudge.model.dto.LoginRequest;
+import com.judge.myojudge.model.dto.PasswordRequest;
+import com.judge.myojudge.model.dto.UserResponse;
+import com.judge.myojudge.model.dto.UserUpdateRequest;
 import com.judge.myojudge.model.entity.BlockedToken;
 import com.judge.myojudge.model.entity.User;
 import com.judge.myojudge.model.entity.UserRole;
@@ -51,10 +51,10 @@ public class AuthServiceImp implements AuthService {
 
     @Override
     @Transactional
-    public String login(LoginDTO loginDTO) {
-        User user = userRepository.findByMobileOrEmail(loginDTO.getMobileOrEmail())
-                .orElseThrow(() -> new BadCredentialsException("User not found"));
-        if(!passwordEncoder.matches(loginDTO.getPassword(), user.getPassword())) {
+    public String login(LoginRequest loginRequest) {
+        User user = userRepository.findByMobileOrEmail(loginRequest.getMobileOrEmail())
+                .orElseThrow(() -> new BadCredentialsException("User xxx not found"));
+        if(!passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
            throw new BadCredentialsException("Incorrect Password");
         }
         user.setActivityStatus(true);
@@ -91,52 +91,52 @@ public class AuthServiceImp implements AuthService {
     }
 
     @Override
-    @CacheEvict(cacheNames = {"users","user"}, allEntries = true)
     @Transactional
-    public User updateUserDetails(String mobileOrEmail,UpdateUserDTO updateUserDTO) {
+    @CacheEvict(cacheNames = {"users","user"}, allEntries = true)
+    public User updateUserDetails(String mobileOrEmail, UserUpdateRequest userUpdateRequest) {
         User user = userRepository.findByMobileOrEmail(mobileOrEmail).orElseThrow(() -> new UserNotFoundException("User not found"));
         if(user.getMobileNumber()!=null &&
                 !user.getMobileNumber().isEmpty() &&
-                !user.getMobileNumber().equals(updateUserDTO.getMobile())
+                !user.getMobileNumber().equals(userUpdateRequest.getMobile())
         ){
-            Optional<User> userByMobileNumber=userRepository.findByMobileNumber(updateUserDTO.getMobile());
+            Optional<User> userByMobileNumber=userRepository.findByMobileNumber(userUpdateRequest.getMobile());
             if(userByMobileNumber.isPresent()){
                 throw new InvalidUserArgumentException("Mobile number already exists");
             }
         }
         if(user.getEmail()!=null &&
                 !user.getEmail().isEmpty() &&
-                !user.getEmail().equals(updateUserDTO.getEmail())){
+                !user.getEmail().equals(userUpdateRequest.getEmail())){
             if(userRepository.existsByEmail(mobileOrEmail)){
                 throw new InvalidUserArgumentException("Mobile number already exists");
             }
         }
-        resetUserInfo(user,updateUserDTO);
+        resetUserInfo(user, userUpdateRequest);
         return userRepository.save(user);
 
     }
 
     @Override
     @CacheEvict(cacheNames = {"users","user"}, allEntries = true)
-    public void updateUserPassword(String mobileOrEmail,PasswordDTO passwordDTO) {
+    public void updateUserPassword(String mobileOrEmail, PasswordRequest passwordRequest) {
         User user = userRepository.findByMobileOrEmail(mobileOrEmail).orElseThrow(() -> new UserNotFoundException("User not found"));
-        if(!passwordDTO.getNewPassword().equals(passwordDTO.getConfirmPassword())){
+        if(!passwordRequest.getNewPassword().equals(passwordRequest.getConfirmPassword())){
             throw new InvalidPasswordArgumentException("Passwords do not match");
         }
         if((user.getIsGoogleUser() && user.getIsGoogleUserSetPassword())
                 && user.getPassword()!=null && !user.getPassword().isEmpty()
-                && !passwordEncoder.matches(passwordDTO.getOldPassword(), user.getPassword()
+                && !passwordEncoder.matches(passwordRequest.getOldPassword(), user.getPassword()
         )){
             throw new BadCredentialsException("Password incorrect");
         }
         user.setIsGoogleUserSetPassword(true);
-        user.setPassword(passwordEncoder.encode(passwordDTO.getNewPassword()));
+        user.setPassword(passwordEncoder.encode(passwordRequest.getNewPassword()));
         userRepository.save(user);
     }
 
     @Override
     @Cacheable(value = "user",key = "#mobileOrEmail")
-    public User fetchUserDetails(String mobileOrEmail) {
+    public User getUserByMobileOrEmail(String mobileOrEmail) {
       return userRepository.findByMobileOrEmail(mobileOrEmail).orElseThrow(()->new UserNotFoundException("User Not Found"));
     }
 
@@ -152,8 +152,8 @@ public class AuthServiceImp implements AuthService {
     }
 
     @Override
-    @Cacheable(value = "user",key = "T(java.util.Objects).hash(#username,#userId)")
-    public User fetchUserDetailsByUsername(String username,Long userId) {
+    @Cacheable(value = "user",key = "T(java.util.Objects).hash(#userId)")
+    public User getUserById(Long userId) {
      return userRepository.findById(userId).orElseThrow(()->new UserNotFoundException("User not found"));
     }
 
@@ -179,8 +179,8 @@ public class AuthServiceImp implements AuthService {
     }
 
     @Override
-    @CacheEvict(cacheNames = {"users","user"}, allEntries = true)
     @Transactional
+    @CacheEvict(cacheNames = {"users","user"}, allEntries = true)
     public void deleteUser(String email) {
         User user=userRepository.findByEmail(email).orElseThrow(()->new UserNotFoundException("User not found"));
         user.getProblems().forEach((problem)-> problem.setUser(null));
@@ -189,16 +189,16 @@ public class AuthServiceImp implements AuthService {
     }
 
     @Override
-    @CacheEvict(cacheNames = {"users","user"}, allEntries = true)
     @Transactional
-    public void updateUserDetailsByAdmin(UpdateUserDTO updateUserDTO) {
+    @CacheEvict(cacheNames = {"users","user"}, allEntries = true)
+    public void updateUserDetailsByAdmin(UserUpdateRequest userUpdateRequest) {
         User user = null;
-        if(updateUserDTO.getEmail()!=null && !updateUserDTO.getEmail().isEmpty()){
-            user = userRepository.findByEmail(updateUserDTO.getEmail()).orElseThrow(()->new UserNotFoundException("User Not Found"));
+        if(userUpdateRequest.getEmail()!=null && !userUpdateRequest.getEmail().isEmpty()){
+            user = userRepository.findByEmail(userUpdateRequest.getEmail()).orElseThrow(()->new UserNotFoundException("User Not Found"));
         }else{
-            user = userRepository.findByMobileNumber(updateUserDTO.getMobile()).orElseThrow(() -> new UserNotFoundException("User Not Found"));
+            user = userRepository.findByMobileNumber(userUpdateRequest.getMobile()).orElseThrow(() -> new UserNotFoundException("User Not Found"));
         }
-        resetUserInfo(user,updateUserDTO);
+        resetUserInfo(user, userUpdateRequest);
         userRepository.save(user);
     }
 
@@ -216,7 +216,7 @@ public class AuthServiceImp implements AuthService {
             user.setIsGoogleUserSetPassword(false);
             user.setPassword(UUID.randomUUID().toString());
             role = new UserRole();
-            role.setRoleName(Role.ADMIN.name());
+            role.setRoleName(Role.NORMAL_USER.name());
             role.setUsers(Set.of(user));
             user.setUserRoles(Set.of(role));
         }
@@ -240,31 +240,31 @@ public class AuthServiceImp implements AuthService {
     }
 
     @Override
-    public UserDTO fetchUserByProblemSolvedHistory(String mobileOrEmail) {
+    public UserResponse fetchUserByProblemSolvedHistory(String mobileOrEmail) {
         return null;
     }
 
     @Transactional(value = Transactional.TxType.REQUIRED)
-    protected void resetUserInfo(User user, UpdateUserDTO updateUserDTO) {
-        user.setUsername(updateUserDTO.getUsername()==null?user.getUsername():updateUserDTO.getUsername());
-        user.setMobileNumber(updateUserDTO.getMobile()==null?user.getMobileNumber():updateUserDTO.getMobile());
-        user.setEmail(updateUserDTO.getEmail()==null?user.getEmail():updateUserDTO.getEmail() );
-        user.setCountry(updateUserDTO.getCountry()==null?user.getCountry():updateUserDTO.getCountry() );
-        user.setState(updateUserDTO.getState()==null?user.getState():updateUserDTO.getState());
-        user.setGithubUrl(updateUserDTO.getGithubUrl()==null?user.getGithubUrl():updateUserDTO.getGithubUrl());
-        user.setLinkedinUrl(updateUserDTO.getLinkedinUrl()==null?user.getLinkedinUrl():updateUserDTO.getLinkedinUrl());
-        user.setFacebookUrl(updateUserDTO.getFacebookUrl()==null?user.getFacebookUrl():updateUserDTO.getFacebookUrl());
-        user.setTotalPresentCoins(updateUserDTO.getTotalPresentCoins()==null?user.getTotalPresentCoins():updateUserDTO.getTotalPresentCoins());
-        user.setDateOfBirth(updateUserDTO.getBirthday()==null?user.getDateOfBirth():updateUserDTO.getBirthday());
-        user.setTotalProblemsSolved(updateUserDTO.getTotalProblemsSolved()==null?user.getTotalProblemsSolved():updateUserDTO.getTotalProblemsSolved());
-        user.setTotalProblemsWA(updateUserDTO.getTotalProblemsAttempted()==null?user.getTotalProblemsWA():updateUserDTO.getTotalProblemsAttempted());
-        user.setTotalProblemsAttempted(updateUserDTO.getTotalProblemsAttempted()==null?user.getTotalProblemsAttempted():updateUserDTO.getTotalProblemsAttempted());
-        user.setActivityStatus(updateUserDTO.isActivityStatus());
-        user.setTotalProblemsCE(updateUserDTO.getTotalProblemsCE()==null?user.getTotalProblemsCE():updateUserDTO.getTotalProblemsCE());
-        user.setTotalProblemsRE(updateUserDTO.getTotalProblemsRE()==null?user.getTotalProblemsRE():updateUserDTO.getTotalProblemsRE());
-        user.setTotalProblemsTLE(updateUserDTO.getTotalProblemsTLE()==null?user.getTotalProblemsTLE():updateUserDTO.getTotalProblemsTLE());
-        user.setCity(updateUserDTO.getCity()==null?user.getCity():updateUserDTO.getCity());
-        user.setPostalCode(updateUserDTO.getPostalCode()==null?user.getPostalCode():updateUserDTO.getPostalCode());
-        user.setGender(updateUserDTO.getGender()==null?user.getGender():updateUserDTO.getGender());
+    protected void resetUserInfo(User user, UserUpdateRequest userUpdateRequest) {
+        user.setUsername(userUpdateRequest.getUsername()==null?user.getUsername(): userUpdateRequest.getUsername());
+        user.setMobileNumber(userUpdateRequest.getMobile()==null?user.getMobileNumber(): userUpdateRequest.getMobile());
+        user.setEmail(userUpdateRequest.getEmail()==null?user.getEmail(): userUpdateRequest.getEmail() );
+        user.setCountry(userUpdateRequest.getCountry()==null?user.getCountry(): userUpdateRequest.getCountry() );
+        user.setState(userUpdateRequest.getState()==null?user.getState(): userUpdateRequest.getState());
+        user.setGithubUrl(userUpdateRequest.getGithubUrl()==null?user.getGithubUrl(): userUpdateRequest.getGithubUrl());
+        user.setLinkedinUrl(userUpdateRequest.getLinkedinUrl()==null?user.getLinkedinUrl(): userUpdateRequest.getLinkedinUrl());
+        user.setFacebookUrl(userUpdateRequest.getFacebookUrl()==null?user.getFacebookUrl(): userUpdateRequest.getFacebookUrl());
+        user.setTotalPresentCoins(userUpdateRequest.getTotalPresentCoins()==null?user.getTotalPresentCoins(): userUpdateRequest.getTotalPresentCoins());
+        user.setDateOfBirth(userUpdateRequest.getBirthday()==null?user.getDateOfBirth(): userUpdateRequest.getBirthday());
+        user.setTotalProblemsSolved(userUpdateRequest.getTotalProblemsSolved()==null?user.getTotalProblemsSolved(): userUpdateRequest.getTotalProblemsSolved());
+        user.setTotalProblemsWA(userUpdateRequest.getTotalProblemsAttempted()==null?user.getTotalProblemsWA(): userUpdateRequest.getTotalProblemsAttempted());
+        user.setTotalProblemsAttempted(userUpdateRequest.getTotalProblemsAttempted()==null?user.getTotalProblemsAttempted(): userUpdateRequest.getTotalProblemsAttempted());
+        user.setActivityStatus(userUpdateRequest.isActivityStatus());
+        user.setTotalProblemsCE(userUpdateRequest.getTotalProblemsCE()==null?user.getTotalProblemsCE(): userUpdateRequest.getTotalProblemsCE());
+        user.setTotalProblemsRE(userUpdateRequest.getTotalProblemsRE()==null?user.getTotalProblemsRE(): userUpdateRequest.getTotalProblemsRE());
+        user.setTotalProblemsTLE(userUpdateRequest.getTotalProblemsTLE()==null?user.getTotalProblemsTLE(): userUpdateRequest.getTotalProblemsTLE());
+        user.setCity(userUpdateRequest.getCity()==null?user.getCity(): userUpdateRequest.getCity());
+        user.setPostalCode(userUpdateRequest.getPostalCode()==null?user.getPostalCode(): userUpdateRequest.getPostalCode());
+        user.setGender(userUpdateRequest.getGender()==null?user.getGender(): userUpdateRequest.getGender());
     }
 }

@@ -1,7 +1,7 @@
 package com.judge.myojudge.service;
 
-import com.judge.myojudge.model.dto.ProblemDTO;
-import com.judge.myojudge.model.dto.ProblemWithSample;
+import com.judge.myojudge.model.dto.ProblemResponse;
+import com.judge.myojudge.model.dto.ProblemSampleTestCaseResponse;
 import com.judge.myojudge.model.entity.Problem;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.data.domain.Page;
@@ -14,33 +14,33 @@ import java.util.Optional;
 
 public interface ProblemService {
 
-    public List<ProblemWithSample> findProblemAll();
+     List<ProblemSampleTestCaseResponse> findProblemAll();
 
-    public void saveProblem(
+     void saveProblem(
             String title, String handle, String difficulty,String type,
             Long coin,double timeLimit,double memoryLimit, String problemStatement, String explanation
     );
 
-    public boolean findProblemByHandleExit(String handle) ;
+     boolean findProblemByHandleExit(String handle) ;
 
-    public Optional<Problem> findProblemByHandle(String handle);
+     Optional<Problem> findProblemByHandle(String handle);
 
-    public void deleteEachProblem() throws IOException;
+     void deleteEachProblem() throws IOException;
 
-    public void deleteProblemByHandle(String handle) throws IOException;
+     void deleteProblemByHandle(String handle) throws IOException;
 
-    public ProblemWithSample getProblemPerPageById(Long id,String mobileOrEmail, HttpServletRequest request);
+     ProblemSampleTestCaseResponse getProblemPerPageById(Long id, String mobileOrEmail, HttpServletRequest request);
 
-    public ProblemDTO updateProblemByID(long id);
+     Problem getProblemByID(long id);
 
-    public void saveProblemWithId(
+     void saveProblemWithId(
             long id, String title, String handle, String difficulty, String type,
             String problemStatement,String explanation , Long coins,
             double timeLimit,double memoryLimit, List<MultipartFile> multipartFiles
     ) throws IOException;
 
-    public Page<ProblemWithSample> findProblemAllByCategory(
-            String mobileOrEmail,String category,String search, String difficulty,
+     Page<ProblemResponse> findProblemsByCategory(
+            HttpServletRequest request,String mobileOrEmail,String category,String search, String difficulty,
             String solvedFilter, Pageable pageable
     );
 

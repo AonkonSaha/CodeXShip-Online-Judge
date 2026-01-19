@@ -1,7 +1,9 @@
 package com.judge.myojudge.controller;
 
-import com.judge.myojudge.model.dto.ProblemDTO;
-import com.judge.myojudge.model.dto.ProblemWithSample;
+import com.judge.myojudge.model.dto.ProblemRequest;
+import com.judge.myojudge.model.dto.ProblemResponse;
+import com.judge.myojudge.model.dto.ProblemSampleTestCaseResponse;
+import com.judge.myojudge.model.mapper.ProblemMapper;
 import com.judge.myojudge.response.ApiResponse;
 import com.judge.myojudge.service.AuthService;
 import com.judge.myojudge.service.ProblemService;
@@ -32,67 +34,7 @@ public class ProblemController {
     private final TestCaseService testCaseService;
     private final AuthService authService;
     private final ValidationService validationService;
-
-    @GetMapping(value="/v1/get/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<ProblemDTO>>getProblemForUpdate(@PathVariable Long id
-    ) throws IOException {
-        ProblemDTO problemDTO= problemService.updateProblemByID(id);
-        ApiResponse<ProblemDTO> apiResponse= ApiResponse.<ProblemDTO>builder()
-                .success(true)
-                .statusCode(HttpStatus.OK.value())
-                .message("Fetching One Problem Success..!")
-                .data(problemDTO)
-                .build();
-        return  ResponseEntity.status(HttpStatus.OK).body(apiResponse);
-    }
-
-    @GetMapping(value="/v2/get/{id}")
-    public ResponseEntity<ApiResponse<ProblemWithSample>>getProblemForPage(@PathVariable Long id
-    , HttpServletRequest request) throws IOException {
-        String mobileOrEmail = SecurityContextHolder.getContext().getAuthentication().getName();
-        ProblemWithSample problemWithSample= problemService.getProblemPerPageById(id,mobileOrEmail,request);        ApiResponse<ProblemWithSample> apiResponse=ApiResponse.<ProblemWithSample>builder()
-                .success(true)
-                .statusCode(HttpStatus.OK.value())
-                .message("Problem Searched Successfully")
-                .data(problemWithSample)
-                .build();
-        return ResponseEntity.status(HttpStatus.OK).body(apiResponse);
-    }
-
-    @GetMapping(value="/v1/all")
-    public ResponseEntity<ApiResponse<List<ProblemWithSample>>>findAllProblem(
-    )  {
-        List<ProblemWithSample> problemWithSamples = problemService.findProblemAll();
-        ApiResponse<List<ProblemWithSample>> problemWithSample=ApiResponse.<List<ProblemWithSample>>builder()
-                .success(true)
-                .statusCode(HttpStatus.OK.value())
-                .message("Fetching All Problems Successfully..!")
-                .data(problemWithSamples)
-                .build();
-        return ResponseEntity.status(HttpStatus.OK).body(problemWithSample);
-    }
-    @GetMapping(value="/v1/category/{category}")
-    public ResponseEntity<ApiResponse<Page<ProblemWithSample>>>getProblemsWithCategory(
-            @PathVariable String category,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "5") int size,
-            @RequestParam(required = false, defaultValue = "") String search,
-            @RequestParam(required = false, defaultValue = "") String difficulty,
-            @RequestParam(name = "solved_filter",required = false, defaultValue = "") String solvedFilter
-    )  {
-        String mobileOrEmail = SecurityContextHolder.getContext().getAuthentication().getName();
-        Pageable pageable= PageRequest.of(page,size);
-        Page<ProblemWithSample> problemWithSamples = problemService.findProblemAllByCategory(mobileOrEmail,category,search,difficulty,solvedFilter,pageable);
-        ApiResponse<Page<ProblemWithSample>> problemWithSample=ApiResponse.<Page<ProblemWithSample>>builder()
-                .success(true)
-                .statusCode(HttpStatus.OK.value())
-                .message("Fetching Problems With Category Successfully..!")
-                .data(problemWithSamples)
-                .build();
-        return ResponseEntity.status(HttpStatus.OK).body(problemWithSample);
-    }
-
+    private final ProblemMapper problemMapper;
 
     @PostMapping(value="/v1/save" )
     @PreAuthorize("hasAnyRole('ADMIN','PROBLEM_EDITOR')")
@@ -110,19 +52,76 @@ public class ProblemController {
             @RequestParam("testCaseFile") List<MultipartFile> multipartFiles
 
     ) throws IOException {
-            validationService.validateProblemDetails(new ProblemDTO(title, handle, difficulty, type,
-                                                                  problemStatement,explanation, multipartFiles));
-            problemService.saveProblem(title,handle,difficulty,type,coin,timeLimit,memoryLimit,problemStatement,explanation);
-            testCaseService.saveTestCases(handle,title, multipartFiles);
-            ApiResponse<String> apiResponse=ApiResponse.<String>builder()
-                    .success(true)
-                    .statusCode(HttpStatus.CREATED.value())
-                    .message("Problem Created Successfully..!")
-                    .data("Problem Created Successfully..!")
-                    .build();
-            return ResponseEntity.status(HttpStatus.CREATED).body(apiResponse);
+        validationService.validateProblemDetails(new ProblemRequest(title, handle, difficulty, type,
+                problemStatement,explanation, multipartFiles));
+        problemService.saveProblem(title,handle,difficulty,type,coin,timeLimit,memoryLimit,problemStatement,explanation);
+        testCaseService.saveTestCases(handle,title, multipartFiles);
+        ApiResponse<String> apiResponse=ApiResponse.<String>builder()
+                .success(true)
+                .statusCode(HttpStatus.CREATED.value())
+                .message("Problem Created Successfully..!")
+                .data("Problem Created Successfully..!")
+                .build();
+        return ResponseEntity.status(HttpStatus.CREATED).body(apiResponse);
 
     }
+
+    @GetMapping(value="/v1/get/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Transactional
+    public ResponseEntity<ApiResponse<ProblemResponse>>getProblemForEdit(@PathVariable Long id
+    ) throws IOException {
+        ProblemResponse problemResponse = problemMapper.toProblemResponse(
+                problemService.getProblemByID(id)
+        );
+        ApiResponse<ProblemResponse> apiResponse= ApiResponse.<ProblemResponse>builder()
+                .success(true)
+                .statusCode(HttpStatus.OK.value())
+                .message("Problem is fetched for edit.")
+                .data(problemResponse)
+                .build();
+
+        return  ResponseEntity.status(HttpStatus.OK).body(apiResponse);
+    }
+
+    @GetMapping(value="/v2/get/{id}")
+    public ResponseEntity<ApiResponse<ProblemSampleTestCaseResponse>>getProblemForPage(@PathVariable Long id
+    , HttpServletRequest request) throws IOException {
+        String mobileOrEmail = SecurityContextHolder.getContext().getAuthentication().getName();
+        ProblemSampleTestCaseResponse problemSampleTestCaseResponse = problemService.getProblemPerPageById(id,mobileOrEmail,request);
+        ApiResponse<ProblemSampleTestCaseResponse> apiResponse=ApiResponse.<ProblemSampleTestCaseResponse>builder()
+                .success(true)
+                .statusCode(HttpStatus.OK.value())
+                .message("Problem is fetched successfully.")
+                .data(problemSampleTestCaseResponse)
+                .build();
+
+        return ResponseEntity.status(HttpStatus.OK).body(apiResponse);
+    }
+
+
+    @GetMapping(value="/v1/category/{category}")
+    public ResponseEntity<ApiResponse<Page<ProblemResponse>>>getProblemsByCategory(
+            @PathVariable String category,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int size,
+            @RequestParam(required = false, defaultValue = "") String search,
+            @RequestParam(required = false, defaultValue = "") String difficulty,
+            @RequestParam(name = "solved_filter",required = false, defaultValue = "") String solvedFilter,
+            HttpServletRequest request
+    )  {
+        String mobileOrEmail = SecurityContextHolder.getContext().getAuthentication().getName();
+        Pageable pageable= PageRequest.of(page,size);
+        Page<ProblemResponse> problemResponses = problemService.findProblemsByCategory(request,mobileOrEmail,category,search,difficulty,solvedFilter,pageable);
+        ApiResponse<Page<ProblemResponse>> apiResponse=ApiResponse.<Page<ProblemResponse>>builder()
+                .success(true)
+                .statusCode(HttpStatus.OK.value())
+                .message("Problem is fetched by category("+category+")")
+                .data(problemResponses)
+                .build();
+        return ResponseEntity.status(HttpStatus.OK).body(apiResponse);
+    }
+
     @PutMapping(value="/v1/update/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> updateProblemDetails(
@@ -159,6 +158,20 @@ public class ProblemController {
     ) throws IOException {
         problemService.deleteProblemByHandle( handle);
         return ResponseEntity.noContent().build() ;
+    }
+
+
+    @GetMapping(value="/v1/all")
+    public ResponseEntity<ApiResponse<List<ProblemSampleTestCaseResponse>>>findAllProblem(
+    )  {
+        List<ProblemSampleTestCaseResponse> problemSampleTestCaseRespons = problemService.findProblemAll();
+        ApiResponse<List<ProblemSampleTestCaseResponse>> problemWithSample=ApiResponse.<List<ProblemSampleTestCaseResponse>>builder()
+                .success(true)
+                .statusCode(HttpStatus.OK.value())
+                .message("Fetching All Problems Successfully..!")
+                .data(problemSampleTestCaseRespons)
+                .build();
+        return ResponseEntity.status(HttpStatus.OK).body(problemWithSample);
     }
 
 }

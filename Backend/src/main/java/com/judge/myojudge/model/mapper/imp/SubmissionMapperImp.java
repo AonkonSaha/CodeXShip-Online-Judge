@@ -14,6 +14,7 @@ public class SubmissionMapperImp implements SubmissionMapper {
         return SubmissionResponse.builder()
                 .id(submission.getId())
                 .problemName(submission.getProblem().getTitle())
+                .language(submission.getLanguage())
                 .verdict(submission.getStatus())
                 .passed(submission.getPassedTestcases())
                 .total(submission.getTotalTestcases())

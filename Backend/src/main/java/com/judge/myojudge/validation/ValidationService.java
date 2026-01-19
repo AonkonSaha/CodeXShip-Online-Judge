@@ -1,7 +1,7 @@
 package com.judge.myojudge.validation;
 
-import com.judge.myojudge.model.dto.ProblemDTO;
+import com.judge.myojudge.model.dto.ProblemRequest;
 
 public interface ValidationService {
-    void validateProblemDetails(ProblemDTO problemDTO);
+    void validateProblemDetails(ProblemRequest problemRequest);
 }

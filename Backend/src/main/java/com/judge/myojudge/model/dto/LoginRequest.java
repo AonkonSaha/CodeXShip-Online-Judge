@@ -9,11 +9,12 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class LoginDTO {
+public class LoginRequest {
     String username;
-    @NotBlank(message = "Mobile number cannot be empty")
+    @NotBlank(message = "Mobile or Email cannot be empty")
     @JsonProperty("mobile")
     String mobileOrEmail;
     @NotBlank(message = "Password cannot be empty")
     String password;
+
 }

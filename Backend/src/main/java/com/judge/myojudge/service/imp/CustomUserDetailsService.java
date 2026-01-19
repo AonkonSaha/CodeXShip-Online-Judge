@@ -23,14 +23,13 @@ public class CustomUserDetailsService implements UserDetailsService {
     @Transactional
     @Cacheable(value = "userDetails",key = "#mobileOrEmail")
     public UserDetails loadUserByUsername(String mobileOrEmail) {
-        User user = authService.fetchUserDetails(mobileOrEmail);
+        User user = authService.getUserByMobileOrEmail(mobileOrEmail);
         Set<SimpleGrantedAuthority> authorities = new HashSet<>();
-        for (UserRole userRole : user.getUserRoles()) {
+        for (UserRole userRole : user.getUserRoles()){
             authorities.add(new SimpleGrantedAuthority("ROLE_" + userRole.getRoleName()));
         }
-
         return new org.springframework.security.core.userdetails.User(
-                user.getMobileNumber(),
+                mobileOrEmail,
                 user.getPassword(),
                 authorities
 

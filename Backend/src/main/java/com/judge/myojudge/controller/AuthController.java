@@ -41,24 +41,24 @@ public class AuthController {
     private final GoogleTokenVerifierService googleTokenVerifierService;
 
     @PostMapping("/v1/register")
-    public ResponseEntity<ApiResponse<RegisterUserDTO>> register(@RequestBody @Valid RegisterUserDTO registerUserDTO) {
-        ApiResponse<RegisterUserDTO> apiResponse= ApiResponse.<RegisterUserDTO>builder()
+    public ResponseEntity<ApiResponse<UserRegisterResponse>> register(@RequestBody @Valid UserRegisterRequest userRegisterRequest) {
+        ApiResponse<UserRegisterResponse> apiResponse= ApiResponse.<UserRegisterResponse>builder()
                 .success(true)
                 .statusCode(HttpStatus.CREATED.value())
                 .message("Registration Success..!")
-                .data(userMapper.toUserRegisterDTO
-                        (authService.saveUser(userMapper.toUser(registerUserDTO))))
+                .data(userMapper.toUserRegisterResponse
+                        (authService.saveUser(userMapper.toUser(userRegisterRequest))))
                 .build();
         return ResponseEntity.status(HttpStatus.CREATED).body(apiResponse);
 
     }
     @PostMapping("/v1/login")
-    public  ResponseEntity<ApiResponse<Map<String,String>>> login(@RequestBody @Valid LoginDTO loginDTO) {
+    public  ResponseEntity<ApiResponse<Map<String,String>>> login(@RequestBody @Valid LoginRequest loginRequest) {
         ApiResponse<Map<String,String>> apiResponse=ApiResponse.<Map<String,String>>builder()
                 .success(true)
                 .statusCode(HttpStatus.OK.value())
                 .message("Login Success..!")
-                .data(Map.of("token", authService.login(loginDTO)))
+                .data(Map.of("token", authService.login(loginRequest)))
                 .build();
         return ResponseEntity.ok(apiResponse);
     }
@@ -88,9 +88,8 @@ public class AuthController {
                     .data(Map.of("token", appJwt))
                     .build();
             return ResponseEntity.ok(response);
-
         } catch (Exception e) {
-            throw new BadCredentialsException("Login Failed..!");
+            throw new BadCredentialsException("Login Failed..!", e);
         }
     }
 
@@ -104,24 +103,24 @@ public class AuthController {
 
     @PutMapping("/v1/update")
     @PreAuthorize("hasAnyRole('ADMIN','NORMAL_USER')")
-    public ResponseEntity<Void> updateUser(@RequestBody @Valid UpdateUserDTO updateUserDTO) {
+    public ResponseEntity<Void> updateUser(@RequestBody @Valid UserUpdateRequest userUpdateRequest) {
         String mobileOrEmail= SecurityContextHolder.getContext().getAuthentication().getName();
-        authService.updateUserDetails(mobileOrEmail,updateUserDTO);
+        authService.updateUserDetails(mobileOrEmail, userUpdateRequest);
         return ResponseEntity.noContent().build();
     }
 
     @PutMapping("/v2/update")
     @PreAuthorize("hasAnyRole('ADMIN')")
-    public ResponseEntity<Void> updateUserByAdmin(@RequestBody @Valid UpdateUserDTO updateUserDTO) {
-        authService.updateUserDetailsByAdmin(updateUserDTO);
+    public ResponseEntity<Void> updateUserByAdmin(@RequestBody @Valid UserUpdateRequest userUpdateRequest) {
+        authService.updateUserDetailsByAdmin(userUpdateRequest);
         return ResponseEntity.noContent().build();
     }
 
     @PutMapping("/v1/update/password")
     @PreAuthorize("hasAnyRole('ADMIN','NORMAL_USER')")
-    public ResponseEntity<Void> updatePassword(@RequestBody @Valid PasswordDTO passwordDTO) throws BadRequestException {
+    public ResponseEntity<Void> updatePassword(@RequestBody @Valid PasswordRequest passwordRequest) throws BadRequestException {
         String mobileOrEmail= SecurityContextHolder.getContext().getAuthentication().getName();
-        authService.updateUserPassword(mobileOrEmail,passwordDTO);
+        authService.updateUserPassword(mobileOrEmail, passwordRequest);
         return ResponseEntity.noContent().build();
     }
 
@@ -145,29 +144,32 @@ public class AuthController {
 
     @GetMapping("/v1/profile")
     @PreAuthorize("hasAnyRole('ADMIN','NORMAL_USER')")
-    public ResponseEntity<ApiResponse<UserDTO>> getUserDetails(){
+    public ResponseEntity<ApiResponse<UserResponse>> getUserDetails(){
      String mobileOrEmail = SecurityContextHolder.getContext().getAuthentication().getName();
-     ApiResponse<UserDTO> apiResponse=ApiResponse.<UserDTO>builder()
+     ApiResponse<UserResponse> apiResponse=ApiResponse.<UserResponse>builder()
              .success(true)
              .statusCode(HttpStatus.OK.value())
              .message("User Data Fetched Successfully..!")
-             .data(userMapper.toUpdateUserDTO(authService.fetchUserDetails(mobileOrEmail)))
+             .data(userMapper.toUserResponse(authService.getUserByMobileOrEmail(mobileOrEmail)))
              .build();
-     return ResponseEntity.ok(apiResponse);
+        return ResponseEntity.ok(apiResponse);
     }
+
     @GetMapping("/v1/profile/{username}/{userId}")
-    public ResponseEntity<ApiResponse<UserDTO>> getUserDetailsByUsername(@PathVariable String username,@PathVariable Long userId){
-        ApiResponse<UserDTO> apiResponse=ApiResponse.<UserDTO>builder()
+    public ResponseEntity<ApiResponse<UserResponse>> getUserDetailsByUsername(
+            @PathVariable String username,
+            @PathVariable Long userId){
+        ApiResponse<UserResponse> apiResponse=ApiResponse.<UserResponse>builder()
                 .success(true)
                 .statusCode(HttpStatus.OK.value())
                 .message("User Data Fetched Successfully..!")
-                .data(userMapper.toUpdateUserDTO(authService.fetchUserDetailsByUsername(username,userId)))
+                .data(userMapper.toUserResponse(authService.getUserById(userId)))
                 .build();
         return ResponseEntity.ok(apiResponse);
     }
 
     @GetMapping("/v1/get/users")
-    public ResponseEntity<ApiResponse<Page<UserDTO>>> getUsers(
+    public ResponseEntity<ApiResponse<Page<UserResponse>>> getUsers(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "5") int size,
             @RequestParam(defaultValue = "") String search
@@ -175,12 +177,12 @@ public class AuthController {
         Pageable pageable = PageRequest.of(page,size);
         Page<User> users = authService.getUsers(search,pageable);
 
-        List<UserDTO> userDTOS= userMapper.toUserDTO(users.getContent());
-        return ResponseEntity.ok(ApiResponse.<Page<UserDTO>>builder()
+        List<UserResponse> usersResponse = userMapper.toUsersResponse(users.getContent());
+        return ResponseEntity.ok(ApiResponse.<Page<UserResponse>>builder()
                 .success(true)
                 .statusCode(200)
-                .message("Ranking Fetched Successfully")
-                .data(new PageImpl<>(userDTOS, pageable,users.getTotalElements()))
+                .message("User List Retrieved Successfully")
+                .data(new PageImpl<>(usersResponse, pageable,users.getTotalElements()))
                 .build());
     }
 

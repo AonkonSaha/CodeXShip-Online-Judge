@@ -27,13 +27,11 @@ public class CloudinaryServiceImp implements CloudinaryService {
         String original = file.getOriginalFilename();
         String safeName;
         if(original != null && original.endsWith(".in")){
-            safeName = original
-                    .replace(".in", ".txt");
+            safeName = original.replace(".in", ".txt");
         }
         else{
             safeName = original != null ? original.replace(".out", ".txt") : null;
         }
-
         String uniqueFileName = UUID.randomUUID() + "_" + safeName;
         return cloudinary.uploader().upload(
                 file.getBytes(),
@@ -96,8 +94,7 @@ public class CloudinaryServiceImp implements CloudinaryService {
                 ObjectUtils.asMap(
                         "public_id", "images/" + uniqueFileName,
                         "resource_type", "image"
-                )
-        );
+                ));
     }
 
     @Override

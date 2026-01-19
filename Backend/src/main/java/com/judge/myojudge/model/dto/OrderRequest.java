@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class OrderDTO {
+public class OrderRequest {
     @JsonProperty("order_id")
     private Long orderId;
     @JsonProperty("user_id")

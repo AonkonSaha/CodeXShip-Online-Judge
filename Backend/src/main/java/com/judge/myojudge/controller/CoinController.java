@@ -1,6 +1,6 @@
 package com.judge.myojudge.controller;
 
-import com.judge.myojudge.model.dto.UserDTO;
+import com.judge.myojudge.model.dto.UserResponse;
 import com.judge.myojudge.model.mapper.UserMapper;
 import com.judge.myojudge.response.ApiResponse;
 import com.judge.myojudge.service.AuthService;
@@ -22,9 +22,9 @@ public class CoinController {
 
     @PreAuthorize( "hasAnyRole('ADMIN','NORMAL_USER')")
     @GetMapping("/get")
-    public ResponseEntity<ApiResponse<UserDTO>> getCoinWithImageUrl(){
+    public ResponseEntity<ApiResponse<UserResponse>> getCoinWithImageUrl(){
         String mobileOrEmail= SecurityContextHolder.getContext().getAuthentication().getName();
-        ApiResponse<UserDTO> apiResponse=ApiResponse.<UserDTO>builder()
+        ApiResponse<UserResponse> apiResponse=ApiResponse.<UserResponse>builder()
                 .success(true)
                 .statusCode(HttpStatus.OK.value())
                 .message("Fetch User Coins")

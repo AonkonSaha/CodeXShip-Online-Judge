@@ -82,6 +82,7 @@ public class GlobalExceptionHandler {
         log.error("User Not Found Exception: {}", exception.getMessage());
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(buildError(HttpStatus.NOT_FOUND, exception.getMessage(), request.getRequestURI()));
     }
+
     @ExceptionHandler(ImageSizeLimitExceededException.class)
     public ResponseEntity<ErrorResponse> handleFileExitException(ImageSizeLimitExceededException exception,HttpServletRequest request) {
         log.error("Image Size Limit Exceeded Exception: {}", exception.getMessage());
@@ -90,7 +91,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     public ResponseEntity<ErrorResponse> handleFileExitException(MaxUploadSizeExceededException exception,HttpServletRequest request) {
         log.error("Max File Size Limit Exceeded Exception: {}", exception.getMessage());
-        return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body(buildError(HttpStatus.NOT_ACCEPTABLE, "This file size is too large", request.getRequestURI()));
+        return ResponseEntity.status(HttpStatus.OK).body(buildError(HttpStatus.OK, "This file size is too large", request.getRequestURI()));
     }
     @ExceptionHandler(FileNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleFileExitException(FileNotFoundException exception,HttpServletRequest request) {
@@ -133,7 +134,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleAnyException(Exception exception,
                                                              HttpServletRequest request) {
-        log.error("Server Exception: {}", exception.getMessage());
+//        log.error(exception);
+        System.out.println(exception);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(buildError(HttpStatus.INTERNAL_SERVER_ERROR,"Internal Server Error", request.getRequestURI()));
     }
 

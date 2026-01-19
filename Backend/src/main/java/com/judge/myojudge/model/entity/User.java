@@ -28,16 +28,16 @@ public class User {
     private String email;
     @Column(unique = true, name="mobile_number")
     private String mobileNumber;
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String password;
     @Column(name= "date_of_birth")
     private LocalDate dateOfBirth;
 
     @Column(name = "image_url")
     private String imageUrl;
+    private String imageFileKey;
     private Boolean isGoogleUser;
     private Boolean isGoogleUserSetPassword;
-    private String imageFileKey;
     private String gender;
     private String country;
     private String state;
@@ -58,10 +58,9 @@ public class User {
     @Column(name = "last_login")
     private LocalDateTime lastLogin;
     @Column(name = "num_of_days_login")
-    private Long numOfDaysLogin;
+    private Long numOfDaysLogin=0L;
     @Column(name = "is_addition_daily_coin")
     private Boolean isAdditionDailyCoin;
-
     @Column(name = "total_coins_earned")
     private Long totalCoinsEarned = 0L;
     @Column(name= "total_coins_expend")
@@ -69,23 +68,21 @@ public class User {
     @Column(name= "total_present_coins")
     private Long totalPresentCoins = 0L;
     @Column(name= "total_problems_solved")
-    private Long totalProblemsSolved;
+    private Long totalProblemsSolved = 0L;
     @Column(name= "total_problems_attempted")
-    private Long totalProblemsAttempted;
+    private Long totalProblemsAttempted = 0L;
     @Column(name= "total_problems_failed")
-    private Long totalProblemsFailed;
+    private Long totalProblemsFailed = 0L;
     @Column(name= "total_problems_pending")
-    private Long totalProblemsPending;
+    private Long totalProblemsPending = 0L;
     @Column(name= "total_problems_tle")
-    private Long totalProblemsTLE;
+    private Long totalProblemsTLE = 0L;
     @Column(name= "total_problems_re")
-    private Long totalProblemsRE;
+    private Long totalProblemsRE = 0L;
     @Column(name= "total_problems_wa")
-    private Long totalProblemsWA;
+    private Long totalProblemsWA = 0L;
     @Column(name= "total_problems_ce")
-    private Long totalProblemsCE;
-
-
+    private Long totalProblemsCE = 0L;
 
     @CreationTimestamp
     @Column(updatable = false,name ="creation_at", nullable = false)
@@ -93,8 +90,6 @@ public class User {
     @UpdateTimestamp
     @Column(nullable = false)
     private LocalDateTime updatedAt;
-
-
 
     @ManyToMany(mappedBy = "users", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private Set<UserRole> userRoles =new HashSet<>();
@@ -107,7 +102,6 @@ public class User {
 
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST,CascadeType.MERGE})
     private Set<Order> order = new HashSet<>();
-
 
 
 }

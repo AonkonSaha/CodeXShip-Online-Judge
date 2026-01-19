@@ -13,6 +13,7 @@ import java.util.List;
 public class SubmissionQueryServiceImp implements SubmissionQueryService {
     private final SubmissionRepo submissionRepo;
 
+
     @Override
     @Transactional(value = Transactional.TxType.REQUIRES_NEW)
     public List<Submission> getSubmissionsByUserWithAccepted(String mobileOrEmail, String handle, String accept) {

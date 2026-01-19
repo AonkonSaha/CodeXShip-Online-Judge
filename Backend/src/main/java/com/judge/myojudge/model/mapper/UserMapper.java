@@ -1,20 +1,23 @@
 package com.judge.myojudge.model.mapper;
 
-import com.judge.myojudge.model.dto.RegisterUserDTO;
-import com.judge.myojudge.model.dto.UserDTO;
+import com.judge.myojudge.model.dto.UserRegisterRequest;
+import com.judge.myojudge.model.dto.UserRegisterResponse;
+import com.judge.myojudge.model.dto.UserResponse;
 import com.judge.myojudge.model.entity.User;
 
 import java.util.List;
 
 public interface UserMapper {
 
-    public User toUser(RegisterUserDTO registerUserDTO);
+    public User toUser(UserRegisterRequest userRegisterRequest);
 
-    public RegisterUserDTO toUserRegisterDTO(User user);
+    public UserRegisterResponse toUserRegisterResponse(User user);
 
-    public UserDTO toUpdateUserDTO(User user);
+    public UserResponse toUpdateUserDTO(User user);
 
-    List<UserDTO> toUserDTO(List<User> ranking);
+    List<UserResponse> toUsersResponse(List<User> ranking);
 
-    UserDTO toUserUrlCoin(User userCoins);
+    UserResponse toUserUrlCoin(User userCoins);
+
+    UserResponse toUserResponse(User user);
 }

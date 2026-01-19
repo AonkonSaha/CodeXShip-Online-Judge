@@ -1,9 +1,9 @@
 package com.judge.myojudge.service;
 
-import com.judge.myojudge.model.dto.LoginDTO;
-import com.judge.myojudge.model.dto.PasswordDTO;
-import com.judge.myojudge.model.dto.UpdateUserDTO;
-import com.judge.myojudge.model.dto.UserDTO;
+import com.judge.myojudge.model.dto.LoginRequest;
+import com.judge.myojudge.model.dto.PasswordRequest;
+import com.judge.myojudge.model.dto.UserResponse;
+import com.judge.myojudge.model.dto.UserUpdateRequest;
 import com.judge.myojudge.model.entity.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -13,37 +13,36 @@ import java.util.Optional;
 
 public interface AuthService {
 
-    public User register(User user);
+     User register(User user);
 
-    public String login(LoginDTO loginDTO);
+     String login(LoginRequest loginRequest);
 
-    public void logout(String mobileOrEmail,String token);
+     void logout(String mobileOrEmail,String token);
 
-    public User saveUser(User user);
+     User saveUser(User user);
 
-    public User updateUserDetails(String mobileOrEmail, UpdateUserDTO updateUserDTO);
+     User updateUserDetails(String mobileOrEmail, UserUpdateRequest userUpdateRequest);
 
-    public void updateUserPassword(String mobileOrEmail, PasswordDTO passwordDTO);
+     void updateUserPassword(String mobileOrEmail, PasswordRequest passwordRequest);
+     User getUserByMobileOrEmail(String mobileOrEmail);
 
-    public User fetchUserDetails(String mobileOrEmail);
+     Optional<User> fetchUserByMobileNumber(String mobile);
 
-    public Optional<User> fetchUserByMobileNumber(String mobile);
+     User getUserCoinWithImgUrl(String mobileOrEmail);
 
-    public User getUserCoinWithImgUrl(String mobileOrEmail);
+     User getUserById(Long userId);
 
-    User fetchUserDetailsByUsername(String username,Long userId);
+     String updateProfileImage(MultipartFile file) throws Exception;
 
-    String updateProfileImage(MultipartFile file) throws Exception;
-
-    Page<User> getUsers(String search, Pageable pageable);
+     Page<User> getUsers(String search, Pageable pageable);
 
     void deleteUser(String email);
 
-    void updateUserDetailsByAdmin(UpdateUserDTO updateUserDTO);
+    void updateUserDetailsByAdmin(UserUpdateRequest userUpdateRequest);
 
     String loginByGoogle(String email, String name, String picture);
 
     User fetchUserByEmail(String email);
-    UserDTO fetchUserByProblemSolvedHistory(String mobileOrEmail);
 
+    UserResponse fetchUserByProblemSolvedHistory(String mobileOrEmail);
 }

@@ -1,8 +1,9 @@
 package com.judge.myojudge.model.mapper.imp;
 
 import com.judge.myojudge.enums.Role;
-import com.judge.myojudge.model.dto.RegisterUserDTO;
-import com.judge.myojudge.model.dto.UserDTO;
+import com.judge.myojudge.model.dto.UserRegisterRequest;
+import com.judge.myojudge.model.dto.UserRegisterResponse;
+import com.judge.myojudge.model.dto.UserResponse;
 import com.judge.myojudge.model.entity.Submission;
 import com.judge.myojudge.model.entity.User;
 import com.judge.myojudge.model.entity.UserRole;
@@ -24,24 +25,24 @@ public class UserMapperImp implements UserMapper {
     private final SubmissionRepo submissionRepo;
 
     @Override
-    public User toUser(RegisterUserDTO registerUserDTO) {
+    public User toUser(UserRegisterRequest userRegisterRequest) {
         UserRole userRole = new UserRole();
         userRole.setRoleName(Role.NORMAL_USER.name());
         User user= User.builder()
-               .username(registerUserDTO.getUsername())
-               .email(registerUserDTO.getEmail())
-                .gender(registerUserDTO.getGender())
-               .mobileNumber(registerUserDTO.getMobile())
+               .username(userRegisterRequest.getUsername())
+               .email(userRegisterRequest.getEmail())
+                .gender(userRegisterRequest.getGender())
+               .mobileNumber(userRegisterRequest.getMobile())
                .userRoles(Set.of(userRole))
-               .password(passwordEncoder.encode(registerUserDTO.getPassword()))
+               .password(passwordEncoder.encode(userRegisterRequest.getPassword()))
                .build();
         userRole.setUsers(Set.of(user));
         return user;
     }
 
     @Override
-    public RegisterUserDTO toUserRegisterDTO(User user) {
-        return RegisterUserDTO.builder()
+    public UserRegisterResponse toUserRegisterResponse(User user) {
+        return UserRegisterResponse.builder()
                 .username(user.getUsername())
                 .mobile(user.getUsername())
                 .email(user.getEmail())
@@ -49,14 +50,14 @@ public class UserMapperImp implements UserMapper {
     }
 
     @Override
-    public UserDTO toUpdateUserDTO(User user) {
+    public UserResponse toUpdateUserDTO(User user) {
         List<Submission> submissions=submissionRepo.findAllSubmissionByEmailAndStatus(user.getEmail(),"ACCEPTED");
         Set<Long> problemsSolved=new HashSet<>();
         for(Submission submission:submissions){
             problemsSolved.add(submission.getProblem().getId());
         }
         problemsSolved.stream().toList();
-        return UserDTO.builder()
+        return UserResponse.builder()
                 .userId(user.getId())
                 .username(user.getUsername())
                 .email(user.getEmail())
@@ -88,10 +89,10 @@ public class UserMapperImp implements UserMapper {
     }
 
     @Override
-    public List<UserDTO> toUserDTO(List<User> ranking) {
-        List<UserDTO> userDTOS=new ArrayList<>();
+    public List<UserResponse> toUsersResponse(List<User> ranking) {
+        List<UserResponse> userResponses =new ArrayList<>();
         for(User user:ranking){
-            UserDTO userDTO=UserDTO.builder()
+            UserResponse userResponse = UserResponse.builder()
                     .userId(user.getId())
                     .username(user.getUsername())
                     .country(user.getCountry())
@@ -118,18 +119,49 @@ public class UserMapperImp implements UserMapper {
                     .totalCoinsExpend(user.getTotalCoinsExpend() == null ? 0 : user.getTotalCoinsExpend())
                     .totalPresentCoins(user.getTotalPresentCoins())
                     .totalProblemsSolved(user.getTotalProblemsSolved())
-                    .roles(new HashSet<>(user.getUserRoles().stream().map(UserRole::getRoleName).toList()))
                     .build();
-            userDTOS.add(userDTO);
+            userResponses.add(userResponse);
         }
-        return userDTOS;
+        return userResponses;
     }
 
     @Override
-    public UserDTO toUserUrlCoin(User user) {
-        return UserDTO.builder()
+    public UserResponse toUserUrlCoin(User user) {
+        return UserResponse.builder()
                 .imageUrl(user.getImageUrl())
                 .totalPresentCoins(user.getTotalPresentCoins())
+                .build();
+    }
+
+    @Override
+    public UserResponse toUserResponse(User user) {
+        return  UserResponse.builder()
+                .userId(user.getId())
+                .username(user.getUsername())
+                .country(user.getCountry())
+                .mobile(user.getMobileNumber())
+                .imageUrl(user.getImageUrl()==null?"":user.getImageUrl())
+                .activityStatus(user.getActivityStatus()==null?false:user.getActivityStatus())
+                .email(user.getEmail())
+                .city(user.getCity())
+                .postalCode(user.getPostalCode())
+                .state(user.getState())
+                .createdTime(user.getCreatedAt())
+                .updateTime(user.getUpdatedAt() == null ? user.getCreatedAt() : user.getUpdatedAt())
+                .gender(user.getGender())
+                .dateOfBirth(user.getDateOfBirth())
+                .facebookUrl(user.getFacebookUrl())
+                .githubUrl(user.getGithubUrl())
+                .linkedinUrl(user.getLinkedinUrl())
+                .totalProblemsAttempted(user.getTotalProblemsAttempted())
+                .totalProblemsCE(user.getTotalProblemsCE())
+                .totalProblemsRE(user.getTotalProblemsRE())
+                .totalProblemsTLE(user.getTotalProblemsTLE())
+                .totalProblemsWA(user.getTotalProblemsWA())
+                .totalCoinsEarned(user.getTotalCoinsEarned() == null ? 0 : user.getTotalCoinsEarned())
+                .totalCoinsExpend(user.getTotalCoinsExpend() == null ? 0 : user.getTotalCoinsExpend())
+                .totalPresentCoins(user.getTotalPresentCoins())
+                .totalProblemsSolved(user.getTotalProblemsSolved())
                 .build();
     }
 

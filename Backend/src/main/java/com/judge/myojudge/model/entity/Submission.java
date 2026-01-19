@@ -2,7 +2,6 @@ package com.judge.myojudge.model.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 import java.util.Set;
@@ -31,7 +30,6 @@ public class Submission {
     private int passedTestcases;
     private Long coinsEarned;
 
-    @CreationTimestamp
     @Column(updatable = false,name ="creation_at", nullable = false)
     private LocalDateTime createdAt;
 

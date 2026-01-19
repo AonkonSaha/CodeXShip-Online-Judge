@@ -27,6 +27,7 @@ public class Problem {
 //    @Lob
     @Column(name = "problem_statement",columnDefinition = "TEXT")
     private String problemStatement;
+    @Column(name = "explanation",columnDefinition = "TEXT")
     private String explanation;
     private String difficulty;
     private String type;

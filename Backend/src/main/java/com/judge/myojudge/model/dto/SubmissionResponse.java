@@ -17,13 +17,14 @@ public class SubmissionResponse {
     private String problemName;
     private int total;
     private int passed;
+    private String language;
     private String verdict;
     private float time;
     private Long memory;
     private Long coins=0L;
     @JsonProperty("created_at")
     private LocalDateTime createdAt;
-    private List<TestcaseResultDTO> results;
-    private boolean completed=false;
+    List<TestCaseResponse> results;
+    private Boolean completed;
 
 }

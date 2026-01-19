@@ -1,6 +1,7 @@
 package com.judge.myojudge.service.imp;
 
 import com.judge.myojudge.enums.OrderStatus;
+import com.judge.myojudge.exception.UserNotFoundException;
 import com.judge.myojudge.model.entity.Order;
 import com.judge.myojudge.model.entity.Product;
 import com.judge.myojudge.model.entity.User;
@@ -41,14 +42,19 @@ public class ProductServiceImp implements ProductService {
     @Override
     @Transactional
     public void buyProduct(Long id) {
-    String contact = SecurityContextHolder.getContext().getAuthentication().getName();
+    String mobileOrEmail = SecurityContextHolder.getContext().getAuthentication().getName();
+    User user = null;
+    if(mobileOrEmail.contains("@")){
+        user = userRepo.findByEmail(mobileOrEmail).orElseThrow(()-> new UserNotFoundException("User not found"));
+    }else{
+        user = userRepo.findByMobileNumber(mobileOrEmail).orElseThrow(()-> new UserNotFoundException("User not found"));
+    }
     Product product = productRepo.findById(id).orElseThrow(()->new IllegalArgumentException("Product not found"));
-    User user = userRepo.findByMobileNumber(contact).orElseThrow(()->new IllegalArgumentException("User not found"));
     if(user.getTotalPresentCoins()<product.getCoins()){
         throw new IllegalArgumentException("Insufficient coins");
     }
     Order order = Order.builder()
-            .status("Confirm")
+            .status(OrderStatus.CONFIRMED.name())
             .user(user)
             .product(product)
             .build();
@@ -57,6 +63,8 @@ public class ProductServiceImp implements ProductService {
         } else {
             user.getOrder().add(order);
         }
+        user.setTotalCoinsExpend(user.getTotalCoinsExpend()==null?product.getCoins():user.getTotalCoinsExpend()+product.getCoins());
+        user.setTotalPresentCoins(user.getTotalPresentCoins()-product.getCoins());
         orderRepo.save(order);
     }
 
@@ -67,20 +75,22 @@ public class ProductServiceImp implements ProductService {
 
     @Override
     public Page<Order> getOderDetails(String search, Pageable pageable) {
-        Page<Order> orders = orderRepo.getAllWithFilter(search,pageable);
-        return orders;
+        return orderRepo.getAllWithFilter(search,pageable);
     }
 
     @Override
     @Transactional
     public void declineOrder(Long id) {
         Order order = orderRepo.findById(id).orElseThrow(()->new IllegalArgumentException("Order not found"));
+        if(!order.getStatus().equals(OrderStatus.DECLINED.name())){
+            order.getUser().setTotalPresentCoins(order.getUser().getTotalPresentCoins()==null?
+                    order.getProduct().getCoins():
+                    order.getUser().getTotalPresentCoins()+order.getProduct().getCoins());
+            order.getUser().setTotalCoinsExpend(order.getUser().getTotalCoinsExpend()==null?
+                    order.getProduct().getCoins():order.getUser().getTotalCoinsExpend()-order.getProduct().getCoins());
+        }
+
         order.setStatus(OrderStatus.DECLINED.name());
-        order.getUser().setTotalPresentCoins(order.getUser().getTotalPresentCoins()==null?
-                order.getProduct().getCoins():
-                order.getUser().getTotalPresentCoins()+order.getProduct().getCoins());
-        order.getUser().setTotalCoinsExpend(order.getUser().getTotalCoinsExpend()==null?
-                order.getProduct().getCoins():order.getUser().getTotalCoinsExpend()-order.getProduct().getCoins());
         orderRepo.save(order);
     }
 
@@ -88,6 +98,7 @@ public class ProductServiceImp implements ProductService {
     @Transactional
     public void markedShipped(Long id) {
         Order order = orderRepo.findById(id).orElseThrow(()->new IllegalArgumentException("Order not found"));
+
         if(order.getStatus().equals(OrderStatus.DECLINED.name())){
             if(order.getUser().getTotalPresentCoins()==null || order.getUser().getTotalPresentCoins()<order.getProduct().getCoins()){
                 throw new IllegalArgumentException("Insufficient coins");
@@ -109,6 +120,12 @@ public class ProductServiceImp implements ProductService {
 
     @Override
     public void deleteOrder(Long id) {
+        Order order = orderRepo.findById(id).orElseThrow(()->new IllegalArgumentException("Order not found"));
+        if(!order.getStatus().equals(OrderStatus.DECLINED.name())){
+            order.getUser().setTotalPresentCoins(order.getUser().getTotalPresentCoins()+order.getProduct().getCoins());
+            order.getUser().setTotalCoinsExpend(order.getUser().getTotalCoinsExpend()+order.getProduct().getCoins());
+        }
         orderRepo.deleteById(id);
     }
+
 }

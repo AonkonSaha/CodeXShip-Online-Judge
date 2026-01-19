@@ -12,7 +12,7 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class ProblemWithSample {
+public class ProblemSampleTestCaseResponse {
 
     private Long id;
     private String handle;

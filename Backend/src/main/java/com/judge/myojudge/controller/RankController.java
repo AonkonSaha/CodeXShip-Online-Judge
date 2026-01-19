@@ -1,6 +1,6 @@
 package com.judge.myojudge.controller;
 
-import com.judge.myojudge.model.dto.UserDTO;
+import com.judge.myojudge.model.dto.UserResponse;
 import com.judge.myojudge.model.entity.User;
 import com.judge.myojudge.model.mapper.UserMapper;
 import com.judge.myojudge.response.ApiResponse;
@@ -24,20 +24,21 @@ import java.util.List;
 public class RankController {
     private final RankService rankService;
     private final UserMapper userMapper;
+
     @GetMapping("/v1/get")
-    public ResponseEntity<ApiResponse<Page<UserDTO>>> getRanking(
+    public ResponseEntity<ApiResponse<Page<UserResponse>>> getRanking(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "5") int size,
             @RequestParam(defaultValue = "") String search
     ){
         Pageable pageable = PageRequest.of(page,size);
         Page<User> users = rankService.getRanking(search,pageable);
-        List<UserDTO> userDTOS= userMapper.toUserDTO(users.getContent());
-        return ResponseEntity.ok(ApiResponse.<Page<UserDTO>>builder()
+        List<UserResponse> userResponses = userMapper.toUsersResponse(users.getContent());
+        return ResponseEntity.ok(ApiResponse.<Page<UserResponse>>builder()
                 .success(true)
                 .statusCode(200)
-                .message("Ranking Fetched Successfully")
-                .data(new PageImpl<>(userDTOS, pageable,users.getTotalElements()))
+                .message("User Ranking List Retrieved Successfully")
+                .data(new PageImpl<>(userResponses, pageable,users.getTotalElements()))
                 .build());
     }
 

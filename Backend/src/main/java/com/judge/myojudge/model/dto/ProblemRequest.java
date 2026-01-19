@@ -7,20 +7,18 @@ import lombok.NoArgsConstructor;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
-import java.util.Map;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class ProblemDTO {
+public class ProblemRequest {
     private String title;
     private String handle;
     private String difficulty;
     private String type;
     @JsonProperty("problem_statement")
     private String problemStatement;
-    private Map<String,String> testCaseNameWithPath;
     private List<MultipartFile> files;
     private Long coins;
     private String explanation;
@@ -28,8 +26,7 @@ public class ProblemDTO {
     private double timeLimit;
     @JsonProperty("memory_limit")
     private double memoryLimit;
-
-    public ProblemDTO(String title, String handle, String difficulty, String type, String problemStatement, String explanation, List<MultipartFile> files) {
+    public ProblemRequest(String title, String handle, String difficulty, String type, String problemStatement, String explanation, List<MultipartFile> files) {
         this.title = title;
         this.handle = handle;
         this.difficulty = difficulty;
@@ -39,7 +36,7 @@ public class ProblemDTO {
         this.files = files ;
     }
 
-    public ProblemDTO(String title, String handle, String difficulty, String type, String problemStatement) {
+    public ProblemRequest(String title, String handle, String difficulty, String type, String problemStatement) {
         this.title = title;
         this.handle = handle;
         this.difficulty = difficulty;

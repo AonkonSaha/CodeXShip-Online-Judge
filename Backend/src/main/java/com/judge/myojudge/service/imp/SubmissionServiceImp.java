@@ -8,7 +8,7 @@ import com.judge.myojudge.exception.UserNotFoundException;
 import com.judge.myojudge.model.dto.ExecuteTestCase;
 import com.judge.myojudge.model.dto.SubmissionRequest;
 import com.judge.myojudge.model.dto.SubmissionResponse;
-import com.judge.myojudge.model.dto.TestcaseResultDTO;
+import com.judge.myojudge.model.dto.TestCaseResponse;
 import com.judge.myojudge.model.entity.Problem;
 import com.judge.myojudge.model.entity.Submission;
 import com.judge.myojudge.model.entity.User;
@@ -20,7 +20,6 @@ import com.judge.myojudge.service.SubmissionQueryService;
 import com.judge.myojudge.service.SubmissionService;
 import com.judge.myojudge.service.TestCaseService;
 import jakarta.transaction.Transactional;
-import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -39,10 +38,8 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
 
 @Service
-@RequiredArgsConstructor
 public class SubmissionServiceImp implements SubmissionService {
 
     private final Judge0Config config;
@@ -55,20 +52,44 @@ public class SubmissionServiceImp implements SubmissionService {
     private final SubmissionQueryService submissionQueryService;
     private final RestClient restClient;
     private final ExecutorService executorService;
-    private final PlatformTransactionManager platformTransactionManager;
     private final SimpMessagingTemplate messagingTemplate;
+    private final PlatformTransactionManager platformTransactionManager;
 
-
+    public SubmissionServiceImp(Judge0Config config,
+                                TestCaseService testCaseService,
+                                ProblemRepo problemRepo,
+                                WebClient webClient,
+                                UserRepo userRepo,
+                                SubmissionRepo submissionRepo,
+                                SubmissionMapper submissionMapper,
+                                SubmissionQueryService submissionQueryService,
+                                RestClient restClient,
+                                ExecutorService executorService,
+                                SimpMessagingTemplate messagingTemplate,
+                                PlatformTransactionManager platformTransactionManager) {
+        this.config = config;
+        this.testCaseService = testCaseService;
+        this.problemRepo = problemRepo;
+        this.webClient = webClient;
+        this.userRepo = userRepo;
+        this.submissionRepo = submissionRepo;
+        this.submissionMapper = submissionMapper;
+        this.submissionQueryService = submissionQueryService;
+        this.restClient = restClient;
+        this.executorService = executorService;
+        this.messagingTemplate = messagingTemplate;
+        this.platformTransactionManager = platformTransactionManager;
+    }
 
     @Override
-    public Submission getSubmission() {
+    public Submission getSubmission(SubmissionRequest req,String mobileOrEmail) {
         System.out.println("Get Submission Function Thread Name: "+Thread.currentThread().getName());
         Submission submission = new Submission();
         submission.setCreatedAt(LocalDateTime.now());
         submissionRepo.save(submission);
         return submission;
     }
-    @CacheEvict(cacheNames = {"problems","userDetails","CoinWithImg","users","user"}, allEntries = true)
+    @CacheEvict(cacheNames = {"problems","userDetails","singleProblemPerPage","CoinWithImg","users","user"}, allEntries = true)
     public void runSubmissionCode(SubmissionRequest req,
                                   Submission submission,
                                   String mobileOrEmail) throws ExecutionException, InterruptedException {
@@ -76,60 +97,73 @@ public class SubmissionServiceImp implements SubmissionService {
         List<ExecuteTestCase> testcases = testCaseService.getTestCaseWithFile(req.getProblemId());
         Integer languageId = mapLanguageToId(req.getLanguage());
         executorService.submit(()-> {
-            TransactionTemplate tx = new TransactionTemplate(platformTransactionManager);
 
-            tx.execute( status -> {
-                try {
-                    judgingTestCases(
-                            req,
-                            submission.getId(),
-                            mobileOrEmail,
-                            languageId,
-                            testcases,
-                            testcases.size()
-                    );
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
-                return null;
-            });
+            try {
+                judgingTestCases(
+                        req,
+                        submission.getId(),
+                        mobileOrEmail,
+                        languageId,
+                        testcases,
+                        testcases.size()
+                );
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+
         });
     }
 
     private void judgingTestCases(SubmissionRequest req,
-                                                     Long submissionId,
-                                                     String mobileOrEmail,
-                                                     Integer languageId,
-                                                     List<ExecuteTestCase> testcases,
-                                                     int totalTestcases) throws InterruptedException {
+                                  Long submissionId,
+                                  String mobileOrEmail,
+                                  Integer languageId,
+                                  List<ExecuteTestCase> testcases,
+                                  int totalTestcases
+    ) throws InterruptedException{
         System.out.println("Judging Testcases Function Thread Name: "+Thread.currentThread().getName());
         int index=0;
-        List<TestcaseResultDTO> results = new ArrayList<>();
+        List<TestCaseResponse> results = new ArrayList<>();
         for (ExecuteTestCase testcase : testcases) {
             index++;
-            TestcaseResultDTO testcaseResultDTO = executeSingleTestcase(req.getSubmissionCode(), languageId, testcase);
+//            TestcaseResultDTO testcaseResultDTO = executeSingleTestcase(req.getSubmissionCode(), languageId, testcase);
+            TestCaseResponse testCaseResponse = createDummyTestcaseResult(index);
             messagingTemplate.convertAndSend(
                     "/topic/submission/" + submissionId,
-                    testcaseResultDTO
+                    testCaseResponse
             );
-            results.add(testcaseResultDTO);
-            if(!testcaseResultDTO.isPassed())break;        }
-        saveSubmission(req,results,submissionId,mobileOrEmail,totalTestcases);
+            results.add(testCaseResponse);
+            if(!testCaseResponse.isPassed())break;
+        }
+        TransactionTemplate tx = new TransactionTemplate(platformTransactionManager);
+
+        tx.execute( status -> {
+            try {
+                saveSubmission(req,results,submissionId,mobileOrEmail,totalTestcases);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+            return null;
+        });
     }
 
-    public SubmissionResponse saveSubmission(SubmissionRequest req,
-                                             List<TestcaseResultDTO> results,
-                                             Long submissionId,
-                                             String mobileOrEmail,
-                                             int totalTestcases) {
-        System.out.println("Save Submission Function Thread Name: "+Thread.currentThread().getName());
+
+    @Transactional(value = Transactional.TxType.REQUIRED)
+    public void saveSubmission(SubmissionRequest req,
+                               List<TestCaseResponse> results,
+                               Long submissionId,
+                               String mobileOrEmail,
+                               int totalTestcases) {
+        System.out.println("Judging Testcases-4 Function Thread Name: "+Thread.currentThread().getName());
+
         Submission submission =submissionRepo.findById(submissionId).orElseThrow(()->new RuntimeException("Submission Not Found: "+submissionId));
         Problem problem = problemRepo.findById(req.getProblemId()).orElseThrow(() -> new ProblemNotFoundException("Problem Not Found With ID: " + req.getProblemId()));
         User user = userRepo.findByMobileOrEmail(mobileOrEmail).orElseThrow(() -> new UserNotFoundException(mobileOrEmail));
         float maxTimeTake=0; long maxSpaceTake=0;
         String verdict=""; boolean flag=true;
-        List<TestcaseResultDTO> passedTestcases=new ArrayList<>();
-        for(TestcaseResultDTO result:results){
+
+        List<TestCaseResponse> passedTestcases=new ArrayList<>();
+        for(TestCaseResponse result:results){
             maxTimeTake=Math.max(maxTimeTake, Float.parseFloat(result.getTime()==null?"0":result.getTime()));
             maxSpaceTake=Math.max(maxSpaceTake, Integer.parseInt(result.getMemory()==null?"0":result.getMemory()));
             if(flag && result.getStatus().equalsIgnoreCase("Accepted")){
@@ -167,6 +201,7 @@ public class SubmissionServiceImp implements SubmissionService {
                 break;
             }
         }
+
         SubmissionResponse response = setSubmissionResponseData(
                 passedTestcases,
                 results,
@@ -175,8 +210,10 @@ public class SubmissionServiceImp implements SubmissionService {
                 verdict,
                 maxSpaceTake,
                 maxTimeTake,
-                flag
+                flag,
+                totalTestcases
         );
+
         setSubmissionData(
                 user,
                 req,
@@ -185,11 +222,15 @@ public class SubmissionServiceImp implements SubmissionService {
                 response,
                 verdict,
                 maxSpaceTake,
-                maxTimeTake
+                maxTimeTake,
+                totalTestcases
         );
+
         problem.getSubmissions().add(submission);
         user.getSubmissions().add(submission);
+
         List<Submission> coinFlag= submissionQueryService.getSubmissionsByUserWithAccepted(mobileOrEmail,problem.getHandleName(),"Accepted");
+
         if(coinFlag.isEmpty() && flag){
             if(verdict.equalsIgnoreCase("Accepted")){
                 user.setTotalProblemsSolved(user.getTotalProblemsSolved()==null?1:user.getTotalProblemsSolved()+1);
@@ -206,28 +247,31 @@ public class SubmissionServiceImp implements SubmissionService {
             user.setTotalCoinsEarned((user.getTotalCoinsEarned()==null?0: user.getTotalCoinsEarned()));
             user.setTotalPresentCoins((user.getTotalPresentCoins()==null?0:user.getTotalPresentCoins()));
         }
+
         response.setCompleted(true);
         submissionRepo.save(submission);
+
         messagingTemplate.convertAndSend(
                 "/topic/submission/" + submission.getId(),
                 response
         );
+
         System.out.println("Submission Details: "+submission);
-        return response;
     }
 
-    private SubmissionResponse setSubmissionResponseData(List<TestcaseResultDTO> passedTestcases,
-                                                         List<TestcaseResultDTO> results,
+    private SubmissionResponse setSubmissionResponseData(List<TestCaseResponse> passedTestcases,
+                                                         List<TestCaseResponse> results,
                                                          Problem problem,
                                                          Submission submission,
                                                          String verdict,
                                                          Long maxSpaceTake,
                                                          Float maxTimeTake,
-                                                         Boolean flag
+                                                         Boolean flag,
+                                                         int totalTestcases
     ) {
         SubmissionResponse response = SubmissionResponse.builder()
                 .results(passedTestcases)
-                .total(results.size())
+                .total(totalTestcases)
                 .verdict(verdict)
                 .time(maxTimeTake)
                 .memory(maxSpaceTake)
@@ -249,7 +293,8 @@ public class SubmissionServiceImp implements SubmissionService {
                                   SubmissionResponse response,
                                   String verdict,
                                   long maxSpaceTake,
-                                  float maxTimeTake) {
+                                  float maxTimeTake,
+                                  int totalTestcases) {
         submission.setLanguage(req.getLanguage());
         submission.setUserCode(req.getSubmissionCode().trim());
         submission.setStatus(verdict);
@@ -257,7 +302,7 @@ public class SubmissionServiceImp implements SubmissionService {
         submission.setHandle(problem.getHandleName());
         submission.setTime(maxTimeTake);
         submission.setCreatedAt(LocalDateTime.now());
-        submission.setTotalTestcases(response.getTotal());
+        submission.setTotalTestcases(totalTestcases);
         submission.setPassedTestcases(response.getPassed());
         submission.setCoinsEarned(problem.getCoins());
         submission.setProblem(problem);
@@ -276,7 +321,7 @@ public class SubmissionServiceImp implements SubmissionService {
         Problem problem = problemRepo.findById(req.getProblemId()).orElseThrow(() -> new ProblemNotFoundException("Problem Not Found With ID: " + req.getProblemId()));
         ExecuteTestCase testcase = testCaseService.getSampleTestCaseWithFile(req.getProblemId());
         Integer languageId = mapLanguageToId(req.getLanguage());
-        TestcaseResultDTO result = executeSingleTestcase(req.getSubmissionCode(), languageId, testcase);
+        TestCaseResponse result = executeSingleTestcase(req.getSubmissionCode(), languageId, testcase);
         SubmissionResponse response = new SubmissionResponse();
         response.setResults(List.of(result));
         response.setTotal(1);
@@ -295,8 +340,18 @@ public class SubmissionServiceImp implements SubmissionService {
         return submissionResponses;
     }
 
+    @Override
+    @Transactional
+    public void deleteAllSubmissionByUser(String mobileOrEmail) {
+        User user = userRepo.findByMobileOrEmail(mobileOrEmail).orElseThrow(()-> new RuntimeException("User Not Found"));
+        List<Submission> submissions=user.getSubmissions().stream().toList();
+        submissionRepo.deleteAll(submissions);
+        user.setSubmissions(null);
+        userRepo.save(user);
+    }
 
-    public TestcaseResultDTO executeSingleTestcase(String code, Integer languageId, ExecuteTestCase testcase) {
+
+    public TestCaseResponse executeSingleTestcase(String code, Integer languageId, ExecuteTestCase testcase) {
         String encodedCode = Base64.getEncoder().encodeToString(code.trim().getBytes());
         String encodedInput = Base64.getEncoder().encodeToString(testcase.getInput().getBytes());
         String encodedOutput = Base64.getEncoder().encodeToString(testcase.getOutput().getBytes());
@@ -325,7 +380,7 @@ public class SubmissionServiceImp implements SubmissionService {
         if (jr == null) throw new RuntimeException("Judge0 returned empty response");
 
         Map<String, Object> status = (Map<String, Object>) jr.get("status");
-        TestcaseResultDTO tr = new TestcaseResultDTO();
+        TestCaseResponse tr=new TestCaseResponse();
         tr.setStatus(status != null ? status.get("description").toString() : "Unknown");
         tr.setStdout(decodeBase64((String) jr.get("stdout")));
         tr.setExpectedOutput(testcase.getOutput());
@@ -361,6 +416,28 @@ public class SubmissionServiceImp implements SubmissionService {
             languages.put(name, id);
         }
         return languages;
+    }
+
+    private TestCaseResponse createDummyTestcaseResult(int index) {
+        TestCaseResponse testCaseResponse =new TestCaseResponse();
+        testCaseResponse.setStatus("Accepted");
+//            testcaseResultDTO.setStdout(decodeBase64((String) jr.get("stdout")));
+//            testcaseResultDTO.setExpectedOutput("It's Just Testing");
+//            testcaseResultDTO.setStderr(decodeBase64((String) jr.get("stderr")));
+//            testcaseResultDTO.setCompileOutput("It's Just Testing");
+        testCaseResponse.setMessage("It's Just Testing");
+        testCaseResponse.setTime("0.00");
+        testCaseResponse.setMemory("256");
+        testCaseResponse.setPassed(true);
+        testCaseResponse.setTestcaseIndex(index);
+        testCaseResponse.setCompleted(false);
+
+        try {
+            Thread.sleep(1000);
+        }catch (Exception ex){
+            throw new RuntimeException("Thread Exception From createDummyTestcaseResult Function");
+        }
+        return testCaseResponse;
     }
 
     private String decodeBase64(String base64) {

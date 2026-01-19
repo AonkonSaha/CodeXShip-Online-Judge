@@ -15,7 +15,7 @@ import java.util.Set;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class UserDTO {
+public class UserResponse {
     private Long userId; //use only send it as a response
     private String username;
     private String email;

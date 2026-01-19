@@ -1,7 +1,7 @@
 package com.judge.myojudge.model.mapper.imp;
 
-import com.judge.myojudge.model.dto.RegisterUserDTO;
-import com.judge.myojudge.model.dto.UpdateUserDTO;
+import com.judge.myojudge.model.dto.UserRegisterRequest;
+import com.judge.myojudge.model.dto.UserUpdateRequest;
 import com.judge.myojudge.model.mapper.DtoMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -10,12 +10,12 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class DtoMapperImp implements DtoMapper {
     @Override
-    public RegisterUserDTO toRegisterDTO(UpdateUserDTO updateUserDTO) {
-        return RegisterUserDTO.builder()
-                .mobile(updateUserDTO.getMobile())
-                .email(updateUserDTO.getEmail())
-                .gender(updateUserDTO.getGender())
-                .username(updateUserDTO.getUsername())
+    public UserRegisterRequest toRegisterDTO(UserUpdateRequest userUpdateRequest) {
+        return UserRegisterRequest.builder()
+                .mobile(userUpdateRequest.getMobile())
+                .email(userUpdateRequest.getEmail())
+                .gender(userUpdateRequest.getGender())
+                .username(userUpdateRequest.getUsername())
                 .build();
     }
 }

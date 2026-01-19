@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class PasswordDTO {
+public class PasswordRequest {
     @NotBlank(message = "Old password cannot be empty")
     private String oldPassword;
 

@@ -1,7 +1,7 @@
 package com.judge.myojudge.model.mapper.imp;
 
-import com.judge.myojudge.model.dto.OrderDTO;
-import com.judge.myojudge.model.dto.ProductDTO;
+import com.judge.myojudge.model.dto.OrderRequest;
+import com.judge.myojudge.model.dto.ProductRequest;
 import com.judge.myojudge.model.entity.Order;
 import com.judge.myojudge.model.entity.Product;
 import com.judge.myojudge.model.mapper.ProductMapper;
@@ -29,11 +29,11 @@ public class ProductMapperImp implements ProductMapper {
     }
 
     @Override
-    public List<ProductDTO> toProductDTOS(List<Product> productList) {
-        List<ProductDTO> productDTOS=new ArrayList<>();
+    public List<ProductRequest> toProductDTOS(List<Product> productList) {
+        List<ProductRequest> productRequests =new ArrayList<>();
         for (Product product:productList) {
-            productDTOS.add(
-                    ProductDTO.builder()
+            productRequests.add(
+                    ProductRequest.builder()
                             .id(product.getId())
                             .title(product.getTitle())
                             .type(product.getType())
@@ -43,16 +43,16 @@ public class ProductMapperImp implements ProductMapper {
                             .description(product.getDescription())
                             .build());
         }
-        return productDTOS;
+        return productRequests;
     }
 
     @Override
-    public List<OrderDTO> toOrderDTOs(List<Order> oderDetails) {
-        System.out.println("Hello World I am here");
-        List<OrderDTO> orderDTOS=new ArrayList<>();
+    public List<OrderRequest> toOrderDTOs(List<Order> oderDetails) {
+
+        List<OrderRequest> orderRequests =new ArrayList<>();
         for (Order order:oderDetails) {
-            orderDTOS.add(
-                    OrderDTO.builder()
+            orderRequests.add(
+                    OrderRequest.builder()
                             .orderId(order.getId())
                             .userId(order.getId())
                             .username(order.getUser().getUsername())
@@ -67,9 +67,10 @@ public class ProductMapperImp implements ProductMapper {
                             .orderAt(order.getCreatedAt())
                             .deliveryAt(order.getDeliveryDate())
                             .status(order.getStatus())
+                            .numOfProducts(1L)
                             .build()
             );}
 
-        return orderDTOS;
+        return orderRequests;
     }
 }

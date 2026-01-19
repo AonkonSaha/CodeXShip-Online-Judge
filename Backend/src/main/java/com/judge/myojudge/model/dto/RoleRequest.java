@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class RoleDTO {
+public class RoleRequest {
     @JsonProperty("role_name")
     private String roleName;
     private String description;
