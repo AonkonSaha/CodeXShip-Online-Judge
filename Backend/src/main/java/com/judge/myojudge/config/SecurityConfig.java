@@ -2,8 +2,6 @@ package com.judge.myojudge.config;
 
 import com.judge.myojudge.exception.handler.CustomAccessDeniedHandler;
 import com.judge.myojudge.jwt.JwtAuthFilter;
-import com.judge.myojudge.routes.AuthApiRoute;
-import com.judge.myojudge.routes.ProblemApiRoute;
 import com.judge.myojudge.service.imp.CustomUserDetailsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.EnableCaching;
@@ -33,36 +31,15 @@ public class SecurityConfig  {
     @Autowired
     private CustomAccessDeniedHandler customAccessDeniedHandler;
 
-
-    String[] adminApi={
-            ProblemApiRoute.PROBLEM_SAVE,
-            ProblemApiRoute.PROBLEM_FETCH_BY_ID_V1,
-            ProblemApiRoute.PROBLEM_DELETE_ALL,
-            ProblemApiRoute.PROBLEM_DELETE_BY_HANDLE,
-            ProblemApiRoute.PROBLEM_UPDATE_BY_ID,
-            "/api/role/**",
-            "/api/auth/v1/get/users"
-    };
-    String[] normalUserApi={
-            AuthApiRoute.USER_LOGOUT,
-            AuthApiRoute.USER_UPDATE,
-            AuthApiRoute.USER_PROFILE,
-            AuthApiRoute.USER_UPDATE_PASSWORD,
-            "/api/auth/v1/update/profile-pic",
-
-    };
-    String[] contestUserApi={
-
-    };
     String[] publicUserApi={
-            AuthApiRoute.USER_REGISTER,
-            AuthApiRoute.USER_LOGIN,
-            ProblemApiRoute.PROBLEM_FETCH_ALL,
-            ProblemApiRoute.PROBLEM_FETCH_BY_ID_V2,
-            ProblemApiRoute.PROBLEM_FETCH_BY_CATEGORY,
-            "/api/ranking/**",
-            "/api/auth/v1/profile/{username}/{userId}",
-            "/api/auth/v2/login/google"
+            "/api/v1/auth/register",
+            "/api/v1/auth/login",
+            "/api/v1/auth/login/google",
+            "/api/v1/products/**",
+            "/api/v1/problems/**",
+            "/api/v1/ranking/**",
+            "/ws/**",
+            "/topic/**"
 
     };
 
@@ -94,8 +71,6 @@ public class SecurityConfig  {
                         .accessDeniedHandler(customAccessDeniedHandler)
                 )
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(adminApi).hasRole("ADMIN")
-                        .requestMatchers(normalUserApi).hasAnyRole("NORMAL_USER","ADMIN")
                         .requestMatchers("/api/submission/**").hasAnyRole("NORMAL_USER","ADMIN")
                         .requestMatchers(publicUserApi).permitAll()
                         .anyRequest().authenticated() // All other endpoints require authentication

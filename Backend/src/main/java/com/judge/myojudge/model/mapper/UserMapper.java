@@ -1,5 +1,6 @@
 package com.judge.myojudge.model.mapper;
 
+import com.judge.myojudge.model.dto.UserCoinImageResponse;
 import com.judge.myojudge.model.dto.UserRegisterRequest;
 import com.judge.myojudge.model.dto.UserRegisterResponse;
 import com.judge.myojudge.model.dto.UserResponse;
@@ -13,11 +14,10 @@ public interface UserMapper {
 
     public UserRegisterResponse toUserRegisterResponse(User user);
 
-    public UserResponse toUpdateUserDTO(User user);
 
     List<UserResponse> toUsersResponse(List<User> ranking);
 
-    UserResponse toUserUrlCoin(User userCoins);
+    UserCoinImageResponse toUserCoinImage(User userCoins);
 
     UserResponse toUserResponse(User user);
 }

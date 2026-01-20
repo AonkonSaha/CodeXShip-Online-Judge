@@ -19,12 +19,12 @@ import java.util.concurrent.ExecutionException;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/submission")
-public class SubmissionController {
+@RequestMapping("/api/v1/submissions")
+public class UserSubmissionController {
     private final SubmissionService submissionService;
 
-    @PostMapping("/v1/submit")
-    @PreAuthorize("hasAnyRole('NORMAL_USER', 'ADMIN')")
+    @PostMapping
+    @PreAuthorize("hasAnyRole('NORMAL_USER','ADMIN','PROBLEM_EDITOR')")
     public ResponseEntity<ApiResponse<Long>> submitCode(@RequestBody @Valid SubmissionRequest submissionRequest) throws ExecutionException, InterruptedException {
         System.out.println(submissionRequest);
         System.out.println("Submission Controller Thread Name: "+Thread.currentThread().getName()+" IsVirtual: "+Thread.currentThread().isVirtual());
@@ -39,8 +39,8 @@ public class SubmissionController {
                 .build();
         return ResponseEntity.status(HttpStatus.OK).body(apiResponse);
     }
-    @PostMapping("/v1/run/sample")
-    @PreAuthorize("hasAnyRole('NORMAL_USER', 'ADMIN')")
+    @PostMapping("/sample")
+    @PreAuthorize("hasAnyRole('NORMAL_USER','ADMIN','PROBLEM_EDITOR')")
     public ResponseEntity<ApiResponse<SubmissionResponse>> submitSampleTestCaseCode(@RequestBody @Valid SubmissionRequest submissionRequest){
         SubmissionResponse submissionResponse = submissionService.runSampleTestCaseCode(submissionRequest);
         ApiResponse<SubmissionResponse> apiResponse=ApiResponse.<SubmissionResponse>builder()
@@ -52,11 +52,9 @@ public class SubmissionController {
         return ResponseEntity.status(HttpStatus.OK).body(apiResponse);
     }
 
-
-
-    @GetMapping("/v1/get/user/all")
-    @PreAuthorize("hasAnyRole('NORMAL_USER', 'ADMIN')")
-    public ResponseEntity<ApiResponse<Page<SubmissionResponse>>> getSubmission(
+    @GetMapping
+    @PreAuthorize("hasAnyRole('NORMAL_USER','ADMIN','PROBLEM_EDITOR')")
+    public ResponseEntity<ApiResponse<Page<SubmissionResponse>>> getSubmissions(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "5") int size,
             @RequestParam(name = "sort_field", defaultValue = "createdAt") String sortField,
@@ -72,20 +70,10 @@ public class SubmissionController {
         ApiResponse<Page<SubmissionResponse>> apiResponse=ApiResponse.<Page<SubmissionResponse>>builder()
                 .success(true)
                 .statusCode(HttpStatus.OK.value())
-                .message("Submission Successfully..")
+                .message("Successfully fetched submissions history")
                 .data(submissionResponse)
                 .build();
         return ResponseEntity.status(HttpStatus.OK).body(apiResponse);
     }
-
-    @DeleteMapping("/v1/delete/all/{mobileOrEmail}")
-    @PreAuthorize("hasAnyRole('ADMIN')")
-    public ResponseEntity<Void> deleteAllSubmission(
-            @PathVariable String mobileOrEmail
-    ){
-        submissionService.deleteAllSubmissionByUser(mobileOrEmail);
-        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
-    }
-
 
 }

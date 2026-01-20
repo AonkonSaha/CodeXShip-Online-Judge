@@ -19,13 +19,13 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/ranking")
+@RequestMapping("/api/v1/ranking")
 @RequiredArgsConstructor
 public class RankController {
     private final RankService rankService;
     private final UserMapper userMapper;
 
-    @GetMapping("/v1/get")
+    @GetMapping
     public ResponseEntity<ApiResponse<Page<UserResponse>>> getRanking(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "5") int size,

@@ -1,6 +1,6 @@
 package com.judge.myojudge.controller;
 
-import com.judge.myojudge.model.dto.UserResponse;
+import com.judge.myojudge.model.dto.UserCoinImageResponse;
 import com.judge.myojudge.model.mapper.UserMapper;
 import com.judge.myojudge.response.ApiResponse;
 import com.judge.myojudge.service.AuthService;
@@ -14,21 +14,21 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/coin")
+@RequestMapping("/api/v1/coins")
 @RequiredArgsConstructor
 public class CoinController {
     private final AuthService authService;
     private final UserMapper userMapper;
 
-    @PreAuthorize( "hasAnyRole('ADMIN','NORMAL_USER')")
-    @GetMapping("/get")
-    public ResponseEntity<ApiResponse<UserResponse>> getCoinWithImageUrl(){
+    @PreAuthorize( "hasAnyRole('ADMIN','PROBLEM_EDITOR','NORMAL_USER')")
+    @GetMapping
+    public ResponseEntity<ApiResponse<UserCoinImageResponse>> getCoinsWithImageUrl(){
         String mobileOrEmail= SecurityContextHolder.getContext().getAuthentication().getName();
-        ApiResponse<UserResponse> apiResponse=ApiResponse.<UserResponse>builder()
+        ApiResponse<UserCoinImageResponse> apiResponse=ApiResponse.<UserCoinImageResponse>builder()
                 .success(true)
                 .statusCode(HttpStatus.OK.value())
-                .message("Fetch User Coins")
-                .data(userMapper.toUserUrlCoin(authService.getUserCoinWithImgUrl(mobileOrEmail)))
+                .message("Successfully fetched user coins and image url")
+                .data(userMapper.toUserCoinImage(authService.getUserByMobileOrEmail(mobileOrEmail)))
                 .build();
         return ResponseEntity.status(HttpStatus.OK).body(apiResponse);
     }
