@@ -1,6 +1,7 @@
 package com.judge.myojudge.controller;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
+import com.judge.myojudge.exception.InvalidLoginArgumentException;
 import com.judge.myojudge.model.dto.LoginRequest;
 import com.judge.myojudge.model.dto.UserRegisterRequest;
 import com.judge.myojudge.model.dto.UserRegisterResponse;
@@ -72,6 +73,11 @@ public class AuthController {
             email = payload.getEmail();
             name = (String) payload.get("name");
             picture = (String) payload.get("picture");
+
+            if(body.containsKey("is_need_register") && body.get("is_need_register").equals("yes") && authService.isExitsUserByEmail(email)){
+                throw new InvalidLoginArgumentException("This email is already registered");
+            }
+
             String appJwt = authService.loginByGoogle(email, name, picture);
             ApiResponse<Map<String, String>> response = ApiResponse.<Map<String, String>>builder()
                     .success(true)
@@ -80,8 +86,10 @@ public class AuthController {
                     .data(Map.of("token", appJwt))
                     .build();
             return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            throw new BadCredentialsException("Login Failed..!", e);
+        } catch (InvalidLoginArgumentException e) {
+            throw new InvalidLoginArgumentException(e.getMessage());
+        }catch (Exception exception) {
+            throw new BadCredentialsException(exception.getMessage());
         }
     }
 

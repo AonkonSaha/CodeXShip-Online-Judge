@@ -244,6 +244,11 @@ public class AuthServiceImp implements AuthService {
         return null;
     }
 
+    @Override
+    public boolean isExitsUserByEmail(String email) {
+        return userRepository.existsByEmail(email);
+    }
+
     @Transactional(value = Transactional.TxType.REQUIRED)
     protected void resetUserInfo(User user, UserUpdateRequest userUpdateRequest) {
         user.setUsername(userUpdateRequest.getUsername()==null?user.getUsername(): userUpdateRequest.getUsername());

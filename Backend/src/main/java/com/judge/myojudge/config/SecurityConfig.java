@@ -1,6 +1,7 @@
 package com.judge.myojudge.config;
 
 import com.judge.myojudge.exception.handler.CustomAccessDeniedHandler;
+import com.judge.myojudge.exception.handler.CustomAuthenticationEntryPoint;
 import com.judge.myojudge.jwt.JwtAuthFilter;
 import com.judge.myojudge.service.imp.CustomUserDetailsService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,17 +28,18 @@ import java.util.List;
 @Configuration
 @EnableWebSecurity
 @EnableCaching
-public class SecurityConfig  {
+public class SecurityConfig {
     @Autowired
     private CustomAccessDeniedHandler customAccessDeniedHandler;
-
+    @Autowired
+    private CustomAuthenticationEntryPoint authenticationEntryPoint;
     String[] publicUserApi={
             "/api/v1/auth/register",
             "/api/v1/auth/login",
             "/api/v1/auth/login/google",
-            "/api/v1/products/**",
             "/api/v1/problems/**",
             "/api/v1/ranking/**",
+            "/api/v1/users/me/*/*",
             "/ws/**",
             "/topic/**"
 
@@ -69,9 +71,9 @@ public class SecurityConfig  {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource())) // Enable CORS globally
                 .exceptionHandling(ex -> ex
                         .accessDeniedHandler(customAccessDeniedHandler)
+                        .authenticationEntryPoint(authenticationEntryPoint)
                 )
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/submission/**").hasAnyRole("NORMAL_USER","ADMIN")
                         .requestMatchers(publicUserApi).permitAll()
                         .anyRequest().authenticated() // All other endpoints require authentication
                 )
@@ -87,7 +89,6 @@ public class SecurityConfig  {
         configuration.setAllowedOriginPatterns(List.of(
                 "*"
                 )); // Allow frontend origin
-
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
         configuration.setAllowCredentials(true);

@@ -1,22 +1,27 @@
 package com.judge.myojudge.exception.handler;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.judge.myojudge.exception.*;
 import com.judge.myojudge.response.ErrorResponse;
-import io.jsonwebtoken.JwtException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.FieldError;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.servlet.NoHandlerFoundException;
 
 import java.io.FileNotFoundException;
+import java.lang.reflect.Field;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -34,7 +39,9 @@ public class GlobalExceptionHandler {
             String field="";
             if(error instanceof FieldError fieldError){
                 message= error.getDefaultMessage();
-                field=fieldError.getField();
+                Object target = exception.getBindingResult().getTarget();
+                Class<?> targetClass = (target != null) ? target.getClass() : null;
+                field = resolveJsonFieldName(targetClass,fieldError.getField());
             }
             else {
                 message= error.getObjectName()+" : "+error.getDefaultMessage();
@@ -118,24 +125,76 @@ public class GlobalExceptionHandler {
         log.error("User Credential Exception: {}", exception.getMessage());
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(buildError(HttpStatus.UNAUTHORIZED, exception.getMessage(), request.getRequestURI()));
     }
+
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ErrorResponse> handleUnAuthorizedUserException(AccessDeniedException exception,
-                                                                       HttpServletRequest request) {
+                                                                         HttpServletRequest request) {
         log.error("Access Denied Exception: {}", exception.getMessage());
-        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(buildError(HttpStatus.FORBIDDEN, "You do not have permission to perform this action!", request.getRequestURI()));
+        return ResponseEntity
+                .status(HttpStatus.FORBIDDEN)
+                .body(buildError(
+                        HttpStatus.FORBIDDEN,
+                        "You do not have permission to perform this action!",
+                        request.getRequestURI()
+                ));
     }
 
-    @ExceptionHandler(JwtException.class)
-    public ResponseEntity<ErrorResponse> handleFileException(JwtException exception, HttpServletRequest request) {
-        log.error("Jwt Exception: {}", exception.getMessage());
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(buildError(HttpStatus.UNAUTHORIZED,"You must be logged in to access this resource!", request.getRequestURI()));
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<ErrorResponse> handleUnAuthenticatedUserException(AuthenticationException exception,
+                                                                            HttpServletRequest request) {
+        log.error("Unauthenticated Exception: {}", exception.getMessage());
+        return ResponseEntity
+                .status(HttpStatus.UNAUTHORIZED)
+                .body(buildError(
+                        HttpStatus.UNAUTHORIZED,
+                        "Unauthorized access. Please login first",
+                        request.getRequestURI()
+                ));
     }
+
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<ErrorResponse> handleWrongHttpMethodHitException(HttpRequestMethodNotSupportedException exception,
+                                                                           HttpServletRequest request) {
+        log.error("Wrong Http Method Exception: {}", exception.getMessage());
+        return ResponseEntity
+                .status(HttpStatus.METHOD_NOT_ALLOWED)
+                .body(buildError(
+                        HttpStatus.METHOD_NOT_ALLOWED,
+                        "HTTP method not supported for this endpoint",
+                        request.getRequestURI()
+                ));
+    }
+
+    @ExceptionHandler(NoHandlerFoundException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidUrlException(NoHandlerFoundException exception,
+                                                                   HttpServletRequest request) {
+        log.error("Endpoint Not Found Exception: {}", exception.getMessage());
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(buildError(
+                        HttpStatus.NOT_FOUND,
+                        "This endpoint isn't found",
+                        request.getRequestURI()
+                ));
+    }
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponse> handleEmptyRequestBodyException(HttpMessageNotReadableException exception,
+                                                                   HttpServletRequest request) {
+        log.error("Request Body Not Found Exception: {}", exception.getMessage());
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(buildError(
+                        HttpStatus.BAD_REQUEST,
+                        "Request body is required and must be valid JSON",
+                        request.getRequestURI()
+                ));
+    }
+
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleAnyException(Exception exception,
                                                              HttpServletRequest request) {
-//        log.error(exception);
-        System.out.println(exception);
+        log.error("From Exception class: {}", exception.getMessage());
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(buildError(HttpStatus.INTERNAL_SERVER_ERROR,"Internal Server Error", request.getRequestURI()));
     }
 
@@ -148,6 +207,24 @@ public class GlobalExceptionHandler {
                 path,
                 LocalDateTime.now()
         );
+    }
+
+    /**
+     * Resolves @JsonProperty value if present,
+     * otherwise falls back to Java field name
+     */
+    private String resolveJsonFieldName(Class<?> clazz, String fieldName) {
+        try {
+            Field field = clazz.getDeclaredField(fieldName);
+
+            JsonProperty jsonProperty = field.getAnnotation(JsonProperty.class);
+
+            if (jsonProperty != null && !jsonProperty.value().isEmpty()) {
+                return jsonProperty.value();
+            }
+        } catch (Exception ignored) {}
+
+        return fieldName;
     }
 
 }

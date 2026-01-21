@@ -82,7 +82,6 @@ public class UserController {
 
 
     @GetMapping("/me/{username}/{userId}")
-    @PreAuthorize("hasAnyRole('ADMIN','PROBLEM_EDITOR',NORMAL_USER')")
     public ResponseEntity<ApiResponse<UserResponse>> getUserDetailsByUsername(
             @PathVariable String username,
             @PathVariable Long userId){

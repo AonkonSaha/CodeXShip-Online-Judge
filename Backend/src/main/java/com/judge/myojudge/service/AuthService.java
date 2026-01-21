@@ -45,4 +45,6 @@ public interface AuthService {
     User fetchUserByEmail(String email);
 
     UserResponse fetchUserByProblemSolvedHistory(String mobileOrEmail);
+
+    boolean isExitsUserByEmail(String email);
 }
