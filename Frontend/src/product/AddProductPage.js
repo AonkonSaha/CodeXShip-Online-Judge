@@ -52,7 +52,7 @@ const AddProduct = () => {
       Object.entries(product).forEach(([key, value]) => formData.append(key, value));
       formData.append("image_file", image);
 
-      await axiosInstance.post("/api/product/v1/add", formData, {
+      await axiosInstance.post("/api/v1/admin/products", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 

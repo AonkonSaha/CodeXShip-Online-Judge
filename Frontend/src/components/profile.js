@@ -68,8 +68,8 @@ const Profile = () => {
     const fetchProfile = async () => {
       try {
         const endpoint = isOwnProfile
-          ? `/api/auth/v1/profile`
-          : `/api/auth/v1/profile/${username}/${userId}`;
+          ? `/api/v1/users/me`
+          : `/api/v1/users/me/${username}/${userId}`;
         const { data } = await axiosInstance.get(endpoint);
         const profileData = data.data || data;
 
@@ -106,7 +106,7 @@ const Profile = () => {
       const formDataPic = new FormData();
       formDataPic.append("file", file);
 
-      const { data } = await axiosInstance.put(`/api/auth/v1/update/profile-pic`, formDataPic);
+      const { data } = await axiosInstance.put(`/api/v1/users/me/profile-image`, formDataPic);
       const imageUrl = data.data;
       if (imageUrl) {
         setPreviewPic(imageUrl);
@@ -134,7 +134,7 @@ const Profile = () => {
       setSaving(true);
       const updatedData = { ...formData };
 
-      const { data } = await axiosInstance.put(`/api/auth/v1/update`, updatedData);
+      const { data } = await axiosInstance.put(`/api/v1/users/me`, updatedData);
       const updatedProfile = data.data || data;
       setProfileUser(updatedProfile);
       setFormData(updatedProfile);
@@ -154,7 +154,7 @@ const Profile = () => {
   const handleSavePassword = async () => {
     if (newPassword !== confirmPassword) return toast.error("Passwords do not match!");
     try {
-      await axiosInstance.put(`/api/auth/v1/update/password`, { newPassword, oldPassword,confirmPassword});
+      await axiosInstance.put(`/api/v1/users/me/password`, { newPassword, oldPassword,confirmPassword});
       toast.success("Password updated successfully!");
       setIsChangingPassword(false);
       setNewPassword("");
@@ -416,9 +416,12 @@ const Profile = () => {
               <Button onClick={() => setIsEditing(true)} className="bg-blue-600 text-white">
                 <FaEdit className="inline mr-2" /> Edit Profile
               </Button>
+              {!profileUser.is_google_user && (
               <Button onClick={() => setIsChangingPassword(true)} className="bg-purple-600 text-white">
                 <FaLock className="inline mr-2" /> Change Password
               </Button>
+              )}
+
               {file && (
                 <Button
                   onClick={handleUploadProfilePic}

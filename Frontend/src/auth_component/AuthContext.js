@@ -29,7 +29,7 @@ export const AuthProvider = ({ children }) => {
   const fetchUserCoins = useCallback(
     async (token) => {
       try {
-        const res = await axios.get(`${baseURL}/api/coin/get`, {
+        const res = await axios.get(`${baseURL}/api/v1/coins`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setCoins(res.data.data.total_present_coins);
@@ -67,7 +67,7 @@ export const AuthProvider = ({ children }) => {
       if (token) {
         toast.error("You are logout by System")
         await axios.post(
-          `${baseURL}/api/auth/v1/logout`,
+          `${baseURL}/api/v1/auth/logout`,
           {},
           { headers: { Authorization: `Bearer ${token}`}}
           

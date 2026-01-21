@@ -74,16 +74,15 @@ const ProblemDetail = () => {
     didFetch.current=true;
     const fetchProblem = async () => {
       try {
-        const res = await fetch(`${baseURL}/api/problem/v2/get/${id}`, {
+        const res = await fetch(`${baseURL}/api/v1/problems/${id}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token?token:""}`, // ✅ Attach token
+          Authorization: `Bearer ${token?token:""}`, 
         },
       });        const data = await res.json();
         setFileContent(data.data);
 
-        // Set default code template if sample code exists for language
         if (data.data.sampleCode?.[language]) {
           setCode(data.data.sampleCode[language]);
         }
@@ -200,7 +199,7 @@ const ProblemDetail = () => {
     setLoading(true);
     setSampleResult(null);
     try {
-      const res = await fetch(`${baseURL}/api/submission/v1/run/sample`, {
+      const res = await fetch(`${baseURL}/api/v1/submissions/sample`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

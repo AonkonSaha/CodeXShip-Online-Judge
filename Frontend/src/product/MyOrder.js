@@ -30,7 +30,7 @@ const MyOrderPage = () => {
     setLoading(true);
 
     try {
-      const res = await axios.get(`${baseURL}/api/product/v1/history/order`, {
+      const res = await axios.get(`${baseURL}/api/v1/orders`, {
         headers,
         params: { page, size: 8 },
       });

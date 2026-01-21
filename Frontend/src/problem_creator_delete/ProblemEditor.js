@@ -40,7 +40,7 @@ const ProblemEditor = () => {
       const fetchProblem = async () => {
         try {
           setLoading(true);
-          const response = await axios.get(`${baseURL}/api/problem/v1/get/${id}`, {
+          const response = await axios.get(`${baseURL}/api/v1/author/problems/${id}`, {
             headers: { Authorization: `Bearer ${token}` },
           });
 
@@ -136,8 +136,8 @@ const ProblemEditor = () => {
       setLoading(true);
       const url =
         id && id !== "null"
-          ? `${baseURL}/api/problem/v1/update/${id}`
-          : `${baseURL}/api/problem/v1/save`;
+          ? `${baseURL}/api/v1/author/problems/${id}`
+          : `${baseURL}/api/v1/author/problems`;
       const method = id && id !== "null" ? "put" : "post";
 
       const toastId = toast.loading("Saving problem...");

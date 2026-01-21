@@ -56,7 +56,7 @@ const Login = () => {
     toast.dismiss();
     const toastId = toast.loading("Signing in with Google...", toastStyle);
     try {
-      const res = await fetch(`${baseURL}/api/auth/v2/login/google`, {
+      const res = await fetch(`${baseURL}/api/v1/auth/login/google`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ credential: response.credential, }),
@@ -85,7 +85,7 @@ const Login = () => {
     const toastId = toast.loading("Verifying credentials...", toastStyle);
 
     try {
-      const response = await fetch(`${baseURL}/api/auth/v1/login`, {
+      const response = await fetch(`${baseURL}/api/v1/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(credentials),

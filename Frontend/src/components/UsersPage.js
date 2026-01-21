@@ -38,7 +38,7 @@ const UsersPage = () => {
     try {
       setLoading(true);
       const response = await axios.get(
-        `${baseURL}/api/auth/v1/get/users?page=${pageNumber}&size=${size}&search=${searchTerm}`,
+        `${baseURL}/api/v1/admin/users?page=${pageNumber}&size=${size}&search=${searchTerm}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       const data = response.data.data;
@@ -78,7 +78,7 @@ const UsersPage = () => {
     if (!roleName) return toast.error("Please select a role");
     try {
       await axios.post(
-        `${baseURL}/api/role/v1/register`,
+        `${baseURL}/api/v1/roles`,
         { email: selectedUser.email, role_name: roleName },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -93,7 +93,7 @@ const UsersPage = () => {
 
   const handleRemoveRole = async (user, role) => {
     try {
-      await axios.delete(`${baseURL}/api/role/v1/remove`, {
+      await axios.delete(`${baseURL}/api/v1/roles`, {
         headers: { Authorization: `Bearer ${token}` },
         data: { email: user.email, role_name: role },
       });
@@ -109,7 +109,7 @@ const UsersPage = () => {
     if (!window.confirm(`Are you sure you want to delete ${user.username}?`))
       return;
     try {
-      await axios.delete(`${baseURL}/api/auth/v1/delete/${user.email}`, {
+      await axios.delete(`${baseURL}/api/v1/admin/users/${user.email}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       toast.success(`User '${user.username}' deleted successfully`);
@@ -166,7 +166,7 @@ const UsersPage = () => {
   const handleSaveEdit = async () => {
     try {
       await axios.put(
-        `${baseURL}/api/auth/v2/update`,
+        `${baseURL}/api/v1/admin/users`,
         { ...editForm, mobile: selectedUser.mobile },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -261,6 +261,7 @@ const UsersPage = () => {
                   <th className="py-3 px-4 text-center">Status</th>
                   <th className="py-3 px-4 text-center">Created</th>
                   <th className="py-3 px-4 text-center">Updated</th>
+                  <th className="py-3 px-4 text-center">IsGoogleUser</th>
                   <th className="py-3 px-4 text-center">Roles</th>
                   <th className="py-3 px-4 text-center">Actions</th>
                 </tr>
@@ -328,6 +329,8 @@ const UsersPage = () => {
 
                       <td className="py-3 px-4 text-center">{formatDate(user.created_time)}</td>
                       <td className="py-3 px-4 text-center">{formatDate(user.updated_time)}</td>
+                      <td className="py-3 px-4 text-center">{user.is_google_user?"Yes":"No"}</td>
+
 
                       <td className="py-3 px-4 text-center space-y-1">
                         {user.roles && user.roles.length > 0 ? (

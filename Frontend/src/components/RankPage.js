@@ -27,7 +27,7 @@ const RankPage = () => {
     setLoading(true);
 
     try {
-      const response = await axios.get(`${baseURL}/api/ranking/v1/get`, {
+      const response = await axios.get(`${baseURL}/api/v1/ranking`, {
         params: { page, size: 10, search: searchTerm || "" },
       });
 

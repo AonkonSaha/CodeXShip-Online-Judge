@@ -21,7 +21,7 @@ export default function SubmissionHistory() {
   const fetchSubmissions = (pageNumber = 0, sort = sortOrder, search = searchQuery) => {
     setLoading(true);
     fetch(
-      `${baseURL}/api/submission/v1/get/user/all?page=${pageNumber}&size=${size}&sort_field=createdAt&sortBy=${sort}&search=${search}`,
+      `${baseURL}/api/v1/submissions?page=${pageNumber}&size=${size}&sort_field=createdAt&sortBy=${sort}&search=${search}`,
       { headers: { Authorization: `Bearer ${token}` } }
     )
       .then((res) => res.json())

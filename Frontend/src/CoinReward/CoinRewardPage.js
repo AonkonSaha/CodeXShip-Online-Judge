@@ -46,7 +46,7 @@ export default function CoinRewardPage() {
   // 🔹 Fetch products (supports pagination)
   const fetchProducts = useCallback(async (reset = false) => {
     try {
-      const res = await axios.get(`${baseURL}/api/product/v1/get`, {
+      const res = await axios.get(`${baseURL}/api/v1/products`, {
         params: { page, size, search },
         headers,
       });
@@ -107,7 +107,13 @@ export default function CoinRewardPage() {
     if (balance < price) return showToast("Not enough coins to redeem this product.", "error");
     try {
       setRedeemLoading(id);
-      await axios.post(`${baseURL}/api/product/v1/buy/${id}`, {}, { headers });
+      await axios.post(`${baseURL}/api/v1/orders`, {}, {
+         headers,
+         params: {
+          product_id:id
+         }
+
+        });
 
       // ✅ Trigger animations
       animateCoins();

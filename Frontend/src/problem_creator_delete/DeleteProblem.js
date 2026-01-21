@@ -13,7 +13,7 @@ const DeleteProblem = () => {
 
   const deleteProblem = async () => {
     try {
-      const response = await axios.delete(`${baseURL}/api/problem/v1/remove/${handle}`, {
+      const response = await axios.delete(`${baseURL}/api/v1/admin/problems/${handle}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -29,7 +29,7 @@ const DeleteProblem = () => {
 
   const allDeleteProblem = async () => {
     try {
-      const response = await axios.delete(`${baseURL}/api/problem/v1/remove/all`, {
+      const response = await axios.delete(`${baseURL}/api/v1/admin/problems`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       alert(response.data === "Problem doesn't exist" ? response.data : "Each Problem Successfully Removed!");

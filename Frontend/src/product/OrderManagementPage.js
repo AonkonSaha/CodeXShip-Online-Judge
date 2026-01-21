@@ -42,12 +42,12 @@ const OrderManagementPage = () => {
 
   // fetch orders
   const fetchOrders = useCallback(async () => {
-    if (!hasMore || isFetchingRef.current || loading) return;
+    if (!hasMore || isFetchingRef.current ) return;
     isFetchingRef.current = true;
     setLoading(true);
     try {
       const headers = token ? { Authorization: `Bearer ${token}` } : {};
-      const res = await axios.get(`${baseURL}/api/product/v1/history/order/all`, {
+      const res = await axios.get(`${baseURL}/api/v1/admin/orders`, {
         headers,
         params: { page, size: 8, search: search.trim() },
       });
@@ -56,8 +56,12 @@ const OrderManagementPage = () => {
         setHasMore(false);
         return;
       }
-      setOrders((prev) => (page === 0 ? newOrders : [...prev, ...newOrders]));
-      setHasMore(!res.data.data?.last);
+      const isLast = res.data?.data?.last ?? true;
+      setOrders((prev) =>
+        page === 0 ? newOrders : [...prev, ...newOrders]
+      );
+      setHasMore(!isLast);
+
     } catch (err) {
       console.error("Error fetching orders:", err.message);
       setError("Failed to load orders. Please try again later.");
@@ -66,7 +70,7 @@ const OrderManagementPage = () => {
       setLoading(false);
       isFetchingRef.current = false;
     }
-  }, [baseURL, token, page, search,loading, hasMore]);
+  }, [baseURL, token, page, search, hasMore]);
 
   // reset data when search/status changes
   useEffect(() => {
@@ -99,12 +103,12 @@ const OrderManagementPage = () => {
     try {
       const headers = token ? { Authorization: `Bearer ${token}` } : {};
       if(action==="delete"){
-        await axios.delete(`${baseURL}/api/product/v1/order/delete/${id}`, { headers });
+        await axios.delete(`${baseURL}/api/v1/admin/orders/${id}`, { headers });
         if(status!=="DECLINED"){
           plusUserCoins(coins);
         }
       }else{
-      await axios.post(`${baseURL}/api/product/v1/order/${action}/${id}`, {}, { headers });
+      await axios.post(`${baseURL}/api/v1/admin/orders/${action}/${id}`, {}, { headers });
       if(action==='decline' && status!=='DECLINED'){
       plusUserCoins(coins);
       }else if(action==='ship' && status==='DECLINED'){

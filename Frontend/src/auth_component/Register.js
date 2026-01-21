@@ -1,8 +1,8 @@
-import { useState, useContext } from "react";
+import { useState, useContext, useEffect } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import NavBar from "../NavBar_Footer/NavBarCus";
-import { AuthContext } from "../auth_component/AuthContext";
 import Footer from "../NavBar_Footer/Footer";
+import { AuthContext } from "../auth_component/AuthContext";
 import toast from "react-hot-toast";
 
 const Register = () => {
@@ -17,9 +17,10 @@ const Register = () => {
 
   const [fieldErrors, setFieldErrors] = useState({});
   const [loading, setLoading] = useState(false);
-  const { darkMode } = useContext(AuthContext);
+  const { login, darkMode } = useContext(AuthContext);
   const navigate = useNavigate();
   const baseURL = process.env.REACT_APP_BACK_END_BASE_URL;
+  const googleClientId = process.env.REACT_APP_GOOGLE_CLIENT_ID;
 
   const toastStyle = {
     style: {
@@ -40,10 +41,68 @@ const Register = () => {
     position: "top-right",
   };
 
+  // 🔹 GOOGLE LOGIN: Initialize & Render Google Button
+  useEffect(() => {
+    if (window.google && googleClientId) {
+      window.google.accounts.id.initialize({
+        client_id: googleClientId,
+        callback: handleGoogleResponse,
+      });
+
+      window.google.accounts.id.renderButton(
+        document.getElementById("googleSignInDiv"),
+        {
+          theme: darkMode ? "filled_black" : "outline",
+          size: "large",
+          width: "100%",
+          text: "signup_with",
+          shape: "rectangular",
+        }
+      );
+    }
+  }, [darkMode, googleClientId]);
+
+  // 🔹 GOOGLE LOGIN CALLBACK
+  const handleGoogleResponse = async (response) => {
+    toast.dismiss();
+    const toastId = toast.loading("Signing in with Google...", toastStyle);
+    try {
+      const res = await fetch(`${baseURL}/api/v1/auth/login/google`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+           credential: response.credential,
+           is_need_register: "yes"
+          }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        login(data.jwt || data.data?.token);
+        toast.success("Google login successful! Redirecting...", {
+          id: toastId,
+          ...toastStyle,
+        });
+        navigate("/");
+      } else {
+        toast.error(data.message || "Registration Failed", {
+          id: toastId,
+          ...toastStyle,
+        });
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Google registration error. Please try again.", {
+        id: toastId,
+        ...toastStyle,
+      });
+    }
+  };
+
   const handleRegister = async (e) => {
     e.preventDefault();
     setFieldErrors({});
-
     if (user.password !== user.confirm_pass) {
       toast.error("Passwords do not match.", toastStyle);
       return;
@@ -53,7 +112,7 @@ const Register = () => {
     const toastId = toast.loading("Registering...", toastStyle);
 
     try {
-      const response = await fetch(`${baseURL}/api/auth/v1/register`, {
+      const response = await fetch(`${baseURL}/api/v1/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(user),
@@ -87,7 +146,7 @@ const Register = () => {
     }
   };
 
-  // 🔹 Spinner Loader (same as login)
+  // 🔹 Loader (same as login)
   const Loader = () => (
     <div
       className={`fixed inset-0 flex items-center justify-center z-50 ${
@@ -177,6 +236,15 @@ const Register = () => {
           >
             Join <span className="text-blue-500 font-semibold">CodeXShip</span> and start your coding journey!
           </p>
+
+          {/* 🔹 Google Sign-In Button (Top of form) */}
+          <div id="googleSignInDiv" className="flex justify-center mb-6"></div>
+            {/* Professional Divider */}
+          <div className="flex items-center text-gray-400 dark:text-gray-300">
+            <div className="flex-grow border-t border-gray-300 dark:border-gray-600"></div>
+            <span className="px-3 text-sm">OR</span>
+            <div className="flex-grow border-t border-gray-300 dark:border-gray-600"></div>
+          </div>
 
           <form onSubmit={handleRegister} className="space-y-6">
             {[

@@ -12,16 +12,12 @@ const SubmissionResult = () => {
   const { darkMode, plusUserCoins } = useContext(AuthContext);
   const location = useLocation();
   const navigate = useNavigate();
-
-  const { submission_code, language, problem_id, langKey, problemName } =
-    location.state || {};
-
+  const { submission_code, language, problem_id, langKey, problemName } = location.state || {};
   const baseURL = process.env.REACT_APP_BACK_END_BASE_URL;
-
   const [submissionId, setSubmissionId] = useState(null);
   const [executionResult, setExecutionResult] = useState(null);
   const [loading, setLoading] = useState(true);
-
+  const [initialStatus,setInitialStatus] = useState("Queue");
   const stompClientRef = useRef(null);
   const submittedRef = useRef(false);
   const [results,setResults]=useState([]);
@@ -41,7 +37,7 @@ const SubmissionResult = () => {
         const token = localStorage.getItem("token");
 
         const res = await fetch(
-          `${baseURL}/api/submission/v1/submit`,
+          `${baseURL}/api/v1/submissions`,
           {
             method: "POST",
             headers: {
@@ -62,8 +58,8 @@ const SubmissionResult = () => {
           throw new Error("Invalid submission response");
         }
         setSubmissionId(json.data);
-        
-        toast.success("Submission started");
+        setInitialStatus("Running")
+        // toast.success("Submission started");
 
       } catch (err) {
         console.error(err);
@@ -98,6 +94,7 @@ const SubmissionResult = () => {
             console.log("Received WS message Data: ",data );
 
             if(!data.completed){
+              console.log("Received Testcase Result....")
             setResults(prev => [...prev, data]);
             }
             
@@ -106,7 +103,7 @@ const SubmissionResult = () => {
               setLoading(false);
               setExecutionResult(data);
               plusUserCoins?.(data.coins || 0);
-              toast.success("Judging completed");
+              // toast.success("Judging completed");
               client.deactivate();
             }
           },
@@ -190,10 +187,10 @@ const SubmissionResult = () => {
             <tbody className={`divide-y ${darkMode ? "divide-gray-700" : "divide-gray-200"}`}>
               <tr>
                 <td className="px-3 md:px-4 py-2">{loading ?"-": new Date(executionResult.created_at).toLocaleString()}</td>
-                <td className="px-3 md:px-4 py-2">{loading?'-':executionResult.id}</td>
+                <td className="px-3 md:px-4 py-2">{loading?submissionId:executionResult.id}</td>
                 <td className="px-3 md:px-4 py-2">{problemName}</td>
                 <td className="px-3 md:px-4 py-2">{langKey}</td>
-                <td className={`px-3 md:px-4 py-2 ${getStatusColor(executionResult?.verdict)}`}>{loading ? <span className="text-blue-500 animate-pulse">Processing...</span> : executionResult?.verdict}</td>
+                <td className={`px-3 md:px-4 py-2 ${getStatusColor(executionResult?.verdict)}`}>{loading ? <span className="text-blue-500 animate-pulse">{initialStatus}</span> : executionResult?.verdict}</td>
                 <td className="px-3 md:px-4 py-2">{executionResult?.time}</td>
                 <td className="px-3 md:px-4 py-2">{executionResult?.memory}</td>
               </tr>
@@ -219,7 +216,7 @@ const SubmissionResult = () => {
                 <tr key={index} className={result.passed ? (darkMode ? "bg-green-900/20" : "bg-green-50") : (darkMode ? "bg-red-900/20" : "bg-red-50")}>
                   <td className="px-3 md:px-4 py-1">{index + 1}</td>
                   <td className={`px-3 md:px-4 py-1 ${getStatusColor(result.status)}`}>
-                    {result.status || (loading ? <span className="text-blue-500 animate-pulse">Processing...</span> : "-")}
+                    {result.status || (loading ? <span className="text-blue-500 animate-pulse">Running</span> : "Queue")}
                   </td>
                   <td className="px-3 md:px-4 py-1 font-mono relative max-w-xs">
                     <div className="overflow-y-auto">{result.expectedOutput || "-"}</div>

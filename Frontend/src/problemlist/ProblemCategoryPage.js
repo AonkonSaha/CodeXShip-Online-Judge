@@ -60,7 +60,7 @@ const ProblemCategoryPage = () => {
       try {
         const headers = token ? { Authorization: `Bearer ${token}` } : {};
         const res = await axios.get(
-          `${baseURL}/api/problem/v1/category/${category}`,
+          `${baseURL}/api/v1/problems/category/${category}`,
           {
             headers,
             params: {
@@ -150,7 +150,7 @@ const ProblemCategoryPage = () => {
   const handleDelete = async (handle) => {
     if (!window.confirm("Are you sure you want to delete this problem?")) return;
     try {
-      await axios.delete(`${baseURL}/api/problem/v1/remove/${handle}`, {
+      await axios.delete(`${baseURL}/api/v1/admin/problems/${handle}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setProblems((prev) => prev.filter((p) => p.handle !== handle));
