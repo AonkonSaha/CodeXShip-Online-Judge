@@ -5,6 +5,6 @@ import com.judge.myojudge.model.entity.Submission;
 
 public interface SubmissionMapper {
 
-    public SubmissionResponse toSubmissionResponse(Submission submission);
-    public Submission toSubmission(SubmissionResponse submissionResponse);
+    SubmissionResponse toSubmissionResponse(Submission submission);
+    Submission toSubmission(SubmissionResponse submissionResponse);
 }

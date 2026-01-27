@@ -6,28 +6,29 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class ProblemSampleTestCaseResponse {
+public class ProblemTcFileResponse {
 
     private Long id;
-    private String handle;
     private String title;
-    private String problemStatement;
-    private String explanation;
+    private String handle;
     private String difficulty;
     private String type;
+    @JsonProperty("problem_statement")
+    private String problemStatement;
+    private Map<String,String> testCaseNameWithPath = new HashMap<>();
+    private Long coins;
+    private String explanation;
     @JsonProperty("is_solved")
     private boolean isSolved=false;
-    private Long coins;
     @JsonProperty("time_limit")
     private double timeLimit;
     @JsonProperty("memory_limit")
     private double memoryLimit;
-    private List<String> sampleTestcase;
-    private List<String> sampleOutput;
 }

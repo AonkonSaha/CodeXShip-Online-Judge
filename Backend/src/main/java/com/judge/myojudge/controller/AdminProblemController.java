@@ -1,6 +1,6 @@
 package com.judge.myojudge.controller;
 
-import com.judge.myojudge.model.dto.ProblemSampleTestCaseResponse;
+import com.judge.myojudge.model.dto.ProblemSampleTcResponse;
 import com.judge.myojudge.response.ApiResponse;
 import com.judge.myojudge.service.ProblemService;
 import lombok.RequiredArgsConstructor;
@@ -35,14 +35,14 @@ public class AdminProblemController {
 
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<List<ProblemSampleTestCaseResponse>>>findAllProblem(
+    public ResponseEntity<ApiResponse<List<ProblemSampleTcResponse>>>findAllProblem(
     )  {
-        List<ProblemSampleTestCaseResponse> problemSampleTestCaseResponse = problemService.findProblemAll();
-        ApiResponse<List<ProblemSampleTestCaseResponse>> problemWithSample=ApiResponse.<List<ProblemSampleTestCaseResponse>>builder()
+        List<ProblemSampleTcResponse> problemSampleTcResponse = problemService.findProblemAll();
+        ApiResponse<List<ProblemSampleTcResponse>> problemWithSample=ApiResponse.<List<ProblemSampleTcResponse>>builder()
                 .success(true)
                 .statusCode(HttpStatus.OK.value())
                 .message("Fetching All Problems Successfully..!")
-                .data(problemSampleTestCaseResponse)
+                .data(problemSampleTcResponse)
                 .build();
         return ResponseEntity.status(HttpStatus.OK).body(problemWithSample);
     }

@@ -31,6 +31,8 @@ public class UserResponse {
 
     @JsonProperty("activity_status")
     private boolean activityStatus;
+    @JsonProperty("is_google_user")
+    private boolean isGoogleUser=false;
     @JsonProperty("image_url")
     private String imageUrl;
     private String gender;

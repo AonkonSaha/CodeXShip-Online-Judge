@@ -27,10 +27,10 @@ public class JwtHandshakeInterceptor implements HandshakeInterceptor {
         String authHeader = request.getHeaders().getFirst("Authorization");
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.replace("Bearer ", "");
-            String username = jwtUtils.extractUsername(token);  // implement this
-            if (username != null) {
+            String userEmail = jwtUtils.extractUserEmail(token);  // implement this
+            if (userEmail != null) {
                 UsernamePasswordAuthenticationToken principal =
-                        new UsernamePasswordAuthenticationToken(username, null, Collections.singletonList(new SimpleGrantedAuthority("USER")));
+                        new UsernamePasswordAuthenticationToken(userEmail, null, Collections.singletonList(new SimpleGrantedAuthority("USER")));
                 attributes.put("principal", principal);
             }
         }

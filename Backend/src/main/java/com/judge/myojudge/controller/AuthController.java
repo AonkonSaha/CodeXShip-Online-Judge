@@ -57,6 +57,7 @@ public class AuthController {
     }
     @PostMapping("/login/google")
     public ResponseEntity<ApiResponse<Map<String, String>>> googleLogin(@RequestBody Map<String, String> body) {
+
         String email = null;
         String name = null;
         String picture = null;
@@ -73,11 +74,9 @@ public class AuthController {
             email = payload.getEmail();
             name = (String) payload.get("name");
             picture = (String) payload.get("picture");
-
             if(body.containsKey("is_need_register") && body.get("is_need_register").equals("yes") && authService.isExitsUserByEmail(email)){
-                throw new InvalidLoginArgumentException("This email is already registered");
+             throw new InvalidLoginArgumentException("This email is already registered");
             }
-
             String appJwt = authService.loginByGoogle(email, name, picture);
             ApiResponse<Map<String, String>> response = ApiResponse.<Map<String, String>>builder()
                     .success(true)
@@ -86,7 +85,7 @@ public class AuthController {
                     .data(Map.of("token", appJwt))
                     .build();
             return ResponseEntity.ok(response);
-        } catch (InvalidLoginArgumentException e) {
+        }catch (InvalidLoginArgumentException e) {
             throw new InvalidLoginArgumentException(e.getMessage());
         }catch (Exception exception) {
             throw new BadCredentialsException(exception.getMessage());

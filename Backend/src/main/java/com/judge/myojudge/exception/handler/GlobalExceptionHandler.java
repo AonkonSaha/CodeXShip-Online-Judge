@@ -189,6 +189,46 @@ public class GlobalExceptionHandler {
                         request.getRequestURI()
                 ));
     }
+    @ExceptionHandler(ClassCastException.class)
+    public ResponseEntity<ErrorResponse> handleCastingException(ClassCastException exception,
+                                                                         HttpServletRequest request) {
+        log.error("Data Cast Exception: {}", exception.getMessage());
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(buildError(
+                        HttpStatus.BAD_REQUEST,
+                        exception.getMessage(),
+                        request.getRequestURI()
+                ));
+    }
+
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<ErrorResponse> handleRuntimeException(RuntimeException exception,
+                                                                HttpServletRequest request) {
+        log.error("Runtime Exception: {}", exception.fillInStackTrace());
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(buildError(
+                        HttpStatus.BAD_REQUEST,
+                        exception.getMessage(),
+                        request.getRequestURI()
+                ));
+    }
+
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<ErrorResponse> handleIllegalStateException(IllegalStateException exception,
+                                                                HttpServletRequest request) {
+        log.error("IllegalState Exception: {}", exception.getMessage());
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(buildError(
+                        HttpStatus.BAD_REQUEST,
+                        exception.getMessage(),
+                        request.getRequestURI()
+                ));
+    }
+
+
 
 
     @ExceptionHandler(Exception.class)

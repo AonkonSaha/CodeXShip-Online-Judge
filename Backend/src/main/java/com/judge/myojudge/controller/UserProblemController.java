@@ -1,9 +1,11 @@
 package com.judge.myojudge.controller;
 
 import com.judge.myojudge.model.dto.ProblemResponse;
-import com.judge.myojudge.model.dto.ProblemSampleTestCaseResponse;
+import com.judge.myojudge.model.dto.ProblemSampleTcResponse;
+import com.judge.myojudge.model.mapper.ProblemMapper;
 import com.judge.myojudge.response.ApiResponse;
 import com.judge.myojudge.service.ProblemService;
+import com.judge.myojudge.service.redis.ProblemRedisService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -22,16 +24,24 @@ import java.io.IOException;
 public class UserProblemController {
 
     private final ProblemService problemService;
+    private final ProblemRedisService problemRedisService;
+    private final ProblemMapper problemMapper;
 
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<ProblemSampleTestCaseResponse>>getProblemForPage(@PathVariable Long id
+    public ResponseEntity<ApiResponse<ProblemSampleTcResponse>>getProblemForPage(@PathVariable Long id
     , HttpServletRequest request) throws IOException {
         String mobileOrEmail = SecurityContextHolder.getContext().getAuthentication().getName();
-        ProblemSampleTestCaseResponse problemSampleTc = problemService.getProblemPerPageById(
-                id,mobileOrEmail,
-                request
-        );
-        ApiResponse<ProblemSampleTestCaseResponse> apiResponse=ApiResponse.<ProblemSampleTestCaseResponse>builder()
+        ProblemSampleTcResponse problemSampleTc=problemRedisService.findCacheProblem(id,mobileOrEmail);
+        if(problemSampleTc==null){
+            System.out.println("KKKK");
+            problemSampleTc = problemService.getProblemPerPageById(
+                    id,mobileOrEmail,
+                    request
+            );
+            problemRedisService.saveCacheProblem(problemSampleTc,mobileOrEmail);
+        }
+
+        ApiResponse<ProblemSampleTcResponse> apiResponse=ApiResponse.<ProblemSampleTcResponse>builder()
                 .success(true)
                 .statusCode(HttpStatus.OK.value())
                 .message("Problem is fetched successfully.")

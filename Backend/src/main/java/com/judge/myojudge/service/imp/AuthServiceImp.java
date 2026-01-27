@@ -1,5 +1,6 @@
 package com.judge.myojudge.service.imp;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.judge.myojudge.enums.Role;
 import com.judge.myojudge.exception.InvalidPasswordArgumentException;
 import com.judge.myojudge.exception.InvalidUserArgumentException;
@@ -9,19 +10,22 @@ import com.judge.myojudge.model.dto.LoginRequest;
 import com.judge.myojudge.model.dto.PasswordRequest;
 import com.judge.myojudge.model.dto.UserResponse;
 import com.judge.myojudge.model.dto.UserUpdateRequest;
+import com.judge.myojudge.model.dto.redis.CacheUserAuth;
 import com.judge.myojudge.model.entity.BlockedToken;
 import com.judge.myojudge.model.entity.User;
 import com.judge.myojudge.model.entity.UserRole;
+import com.judge.myojudge.model.mapper.UserMapper;
 import com.judge.myojudge.repository.BlockedTokenRepo;
 import com.judge.myojudge.repository.UserRepo;
 import com.judge.myojudge.service.AuthService;
 import com.judge.myojudge.service.CloudinaryService;
+import com.judge.myojudge.service.redis.RankRedisService;
+import com.judge.myojudge.service.redis.UserRedisService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -30,10 +34,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -43,14 +44,13 @@ public class AuthServiceImp implements AuthService {
     private final JwtUtil jwtUtil;
     private final BlockedTokenRepo blockedTokenRepo;
     private final CloudinaryService cloudinaryService;
+    private final RedisTemplate<String,Object> redisTemplate;
+    private final UserMapper userMapper;
+    private final RankRedisService rankRedisService;
+    private final ObjectMapper objectMapper;
+    private final UserRedisService userRedisService;
 
     @Override
-    public User register(User user) {
-        return userRepository.save(user);
-    }
-
-    @Override
-    @Transactional
     public String login(LoginRequest loginRequest) {
         User user = userRepository.findByMobileOrEmail(loginRequest.getMobileOrEmail())
                 .orElseThrow(() -> new BadCredentialsException("User xxx not found"));
@@ -65,9 +65,10 @@ public class AuthServiceImp implements AuthService {
             user.setNumOfDaysLogin(user.getNumOfDaysLogin()==null?1:user.getNumOfDaysLogin()+1);
         }
         user.setLastLogin(LocalDateTime.now());
-        String token = jwtUtil.generateToken(user,user.getMobileNumber(),user.getActivityStatus());
+        String token = jwtUtil.generateToken(user);
         user.setIsAdditionDailyCoin(false);
         userRepository.save(user);
+        userRedisService.updateCacheUser(userMapper.toUserResponse(user));
         return token;
     }
 
@@ -78,21 +79,34 @@ public class AuthServiceImp implements AuthService {
         user.setActivityStatus(false);
         blockedTokenRepo.save(BlockedToken.builder().token(token).build());
         userRepository.save(user);
+        userRedisService.updateCacheUser(userMapper.toUserResponse(user));
     }
 
     @Override
+    @Transactional
     public User saveUser(User user) {
         if(user.getGender().equalsIgnoreCase("Male")){
             user.setImageUrl("https://res.cloudinary.com/dagkiubxf/image/upload/v1760908494/Default_Men_ujdzoj.png");
         }else{
             user.setImageUrl("https://res.cloudinary.com/dagkiubxf/image/upload/v1760928719/default_Female_bsbwrk.png");
         }
-        return userRepository.save(user);
+        user.setIsGoogleUser(false);
+        userRepository.save(user);
+        List<String> roleNames=new ArrayList<>();
+        for(UserRole userRole:user.getUserRoles()){
+            roleNames.add(userRole.getRoleName());
+        }
+        CacheUserAuth cacheRequest=CacheUserAuth.builder()
+                .roleNames(roleNames)
+                .password(user.getPassword())
+                .email(user.getEmail())
+                .build();
+        userRedisService.saveCacheUserAuth(cacheRequest);
+        return user;
     }
 
     @Override
     @Transactional
-    @CacheEvict(cacheNames = {"users","user"}, allEntries = true)
     public User updateUserDetails(String mobileOrEmail, UserUpdateRequest userUpdateRequest) {
         User user = userRepository.findByMobileOrEmail(mobileOrEmail).orElseThrow(() -> new UserNotFoundException("User not found"));
         if(user.getMobileNumber()!=null &&
@@ -112,12 +126,12 @@ public class AuthServiceImp implements AuthService {
             }
         }
         resetUserInfo(user, userUpdateRequest);
-        return userRepository.save(user);
-
+        userRepository.save(user);
+        userRedisService.updateCacheUser(userMapper.toUserResponse(user));
+        return user;
     }
 
     @Override
-    @CacheEvict(cacheNames = {"users","user"}, allEntries = true)
     public void updateUserPassword(String mobileOrEmail, PasswordRequest passwordRequest) {
         User user = userRepository.findByMobileOrEmail(mobileOrEmail).orElseThrow(() -> new UserNotFoundException("User not found"));
         if(!passwordRequest.getNewPassword().equals(passwordRequest.getConfirmPassword())){
@@ -132,12 +146,22 @@ public class AuthServiceImp implements AuthService {
         user.setIsGoogleUserSetPassword(true);
         user.setPassword(passwordEncoder.encode(passwordRequest.getNewPassword()));
         userRepository.save(user);
+
+        List<String> roleNames=new ArrayList<>();
+        for(UserRole userRole:user.getUserRoles()){
+            roleNames.add(userRole.getRoleName());
+        }
+        CacheUserAuth cacheRequest=CacheUserAuth.builder()
+                .roleNames(roleNames)
+                .password(user.getPassword())
+                .email(user.getEmail())
+                .build();
+        userRedisService.updateCacheUserAuth(cacheRequest);
     }
 
     @Override
-    @Cacheable(value = "user",key = "#mobileOrEmail")
     public User getUserByMobileOrEmail(String mobileOrEmail) {
-      return userRepository.findByMobileOrEmail(mobileOrEmail).orElseThrow(()->new UserNotFoundException("User Not Found"));
+       return userRepository.findByMobileOrEmail(mobileOrEmail).orElseThrow(()->new UserNotFoundException("User Not Found"));
     }
 
     @Override
@@ -146,19 +170,12 @@ public class AuthServiceImp implements AuthService {
     }
 
     @Override
-    @Cacheable(value = "CoinWithImg",key = "#mobileOrEmail")
-    public User getUserCoinWithImgUrl(String mobileOrEmail) {
-        return userRepository.findByMobileOrEmail(mobileOrEmail).orElseThrow(()->new UserNotFoundException("User Not Found"));
-    }
-
-    @Override
-    @Cacheable(value = "user",key = "T(java.util.Objects).hash(#userId)")
     public User getUserById(Long userId) {
      return userRepository.findById(userId).orElseThrow(()->new UserNotFoundException("User not found"));
     }
 
     @Override
-    @CacheEvict(cacheNames = {"users","user"}, allEntries = true)
+    @Transactional
     public String updateProfileImage(MultipartFile file) throws Exception {
         String mobileOrEmail= SecurityContextHolder.getContext().getAuthentication().getName();
         User user = userRepository.findByMobileOrEmail(mobileOrEmail).orElseThrow(()->new UserNotFoundException("User Not Found"));
@@ -169,28 +186,29 @@ public class AuthServiceImp implements AuthService {
         user.setImageUrl(uploadedImage.get("secure_url").toString());
         user.setImageFileKey(uploadedImage.get("public_id").toString());
         userRepository.save(user);
+        userRedisService.updateCacheUser(userMapper.toUserResponse(user));//needs to be change
         return uploadedImage.get("secure_url").toString();
     }
 
     @Override
-    @Cacheable(value = "users",key = "T(java.util.Objects).hash(#search,#pageable.pageSize,#pageable.pageNumber)")
     public Page<User> getUsers(String search, Pageable pageable) {
         return userRepository.findAllUserByCreatedTime(search,pageable);
     }
 
     @Override
     @Transactional
-    @CacheEvict(cacheNames = {"users","user"}, allEntries = true)
     public void deleteUser(String email) {
         User user=userRepository.findByEmail(email).orElseThrow(()->new UserNotFoundException("User not found"));
         user.getProblems().forEach((problem)-> problem.setUser(null));
         user.getSubmissions().forEach((submission -> submission.setUser(null)));
         userRepository.delete(user);
+        userRedisService.deleteCacheUser(user.getEmail());
+        userRedisService.deleteCacheUserAuth(user.getEmail());
+
     }
 
     @Override
     @Transactional
-    @CacheEvict(cacheNames = {"users","user"}, allEntries = true)
     public void updateUserDetailsByAdmin(UserUpdateRequest userUpdateRequest) {
         User user = null;
         if(userUpdateRequest.getEmail()!=null && !userUpdateRequest.getEmail().isEmpty()){
@@ -200,12 +218,14 @@ public class AuthServiceImp implements AuthService {
         }
         resetUserInfo(user, userUpdateRequest);
         userRepository.save(user);
+        userRedisService.updateCacheUser(userMapper.toUserResponse(user));
     }
 
     @Override
     @Transactional
     public String loginByGoogle(String email, String name, String picture) {
         User user = userRepository.findByEmail(email).orElse(null);
+        boolean isNewUser=false;
         UserRole role = null;
         if(user==null) {
             user = new User();
@@ -219,6 +239,7 @@ public class AuthServiceImp implements AuthService {
             role.setRoleName(Role.NORMAL_USER.name());
             role.setUsers(Set.of(user));
             user.setUserRoles(Set.of(role));
+            isNewUser=true;
         }
         user.setActivityStatus(true);
         if(user.getLastLogin()==null || user.getLastLogin().toLocalDate().isBefore(LocalDate.now())) {
@@ -228,9 +249,23 @@ public class AuthServiceImp implements AuthService {
             user.setNumOfDaysLogin(user.getNumOfDaysLogin()==null?1:user.getNumOfDaysLogin()+1);
         }
         user.setLastLogin(LocalDateTime.now());
-        String token = jwtUtil.generateToken(user,user.getEmail(),user.getActivityStatus());
+        String token = jwtUtil.generateToken(user);
         user.setIsAdditionDailyCoin(false);
         userRepository.save(user);
+        if(isNewUser){
+            List<String> roleNames=new ArrayList<>();
+            for(UserRole userRole:user.getUserRoles()){
+                roleNames.add(userRole.getRoleName());
+            }
+            CacheUserAuth cacheRequest=CacheUserAuth.builder()
+                    .roleNames(roleNames)
+                    .password(user.getPassword())
+                    .email(user.getEmail())
+                    .build();
+            userRedisService.saveCacheUserAuth(cacheRequest);
+        }else{
+            userRedisService.updateCacheUser(userMapper.toUserResponse(user));
+        }
         return token;
     }
 

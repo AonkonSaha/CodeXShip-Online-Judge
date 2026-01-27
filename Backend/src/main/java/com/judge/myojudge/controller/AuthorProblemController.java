@@ -1,7 +1,7 @@
 package com.judge.myojudge.controller;
 
 import com.judge.myojudge.model.dto.ProblemRequest;
-import com.judge.myojudge.model.dto.ProblemResponse;
+import com.judge.myojudge.model.dto.ProblemTcFileResponse;
 import com.judge.myojudge.model.mapper.ProblemMapper;
 import com.judge.myojudge.response.ApiResponse;
 import com.judge.myojudge.service.ProblemService;
@@ -60,12 +60,12 @@ public class AuthorProblemController {
     @GetMapping(value="/{id}")
     @PreAuthorize("hasAnyRole('ADMIN','PROBLEM_EDITOR')")
     @Transactional
-    public ResponseEntity<ApiResponse<ProblemResponse>>getProblemForEdit(@PathVariable Long id
+    public ResponseEntity<ApiResponse<ProblemTcFileResponse>>getProblemForEdit(@PathVariable Long id
     ) throws IOException {
-        ProblemResponse problemResponse = problemMapper.toProblemResponse(
+        ProblemTcFileResponse problemResponse = problemMapper.toProblemTcFileResponse(
                 problemService.getProblemByID(id)
         );
-        ApiResponse<ProblemResponse> apiResponse= ApiResponse.<ProblemResponse>builder()
+        ApiResponse<ProblemTcFileResponse> apiResponse= ApiResponse.<ProblemTcFileResponse>builder()
                 .success(true)
                 .statusCode(HttpStatus.OK.value())
                 .message("Problem is fetched for edit.")

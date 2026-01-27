@@ -30,13 +30,9 @@ public class JwtUtil {
     }
 
     @Transactional(value = Transactional.TxType.REQUIRED)
-    public String generateToken(User user,String email, boolean isActive) {
-        String username;
-        if(user.getMobileNumber()!=null && user.getMobileNumber().length()>0){
-            username = user.getMobileNumber();
-        }else{
-            username = user.getEmail();
-        }
+    public String generateToken(User user) {
+        String email=user.getEmail();
+        boolean isActive=user.getActivityStatus();
         List<String> roles=new ArrayList<>();
         for(UserRole userRole:user.getUserRoles()){
             roles.add(userRole.getRoleName());
@@ -45,13 +41,14 @@ public class JwtUtil {
         Map<String,Object>claims=new HashMap<>();
         claims.put("active",isActive);
         claims.put("role",roles);
+        claims.put("email",user.getEmail());
         claims.put("image_url",user.getImageUrl());
         claims.put("user_id",user.getId());
         claims.put("present_coins",user.getTotalPresentCoins());
         claims.put("is_add_daily_coin", user.getIsAdditionDailyCoin());
         claims.put("daily_reward_coin",5);
         claims.put("num_of_days_login", user.getNumOfDaysLogin());
-       return createToken(claims,username);
+       return createToken(claims,email);
     }
     private String createToken(Map<String, Object> claims, String username) {
         return Jwts.builder()
@@ -63,7 +60,7 @@ public class JwtUtil {
                 .compact();
     }
 
-    public String extractUsername(String token) {
+    public String extractUserEmail(String token) {
         return extractClaim(token, Claims::getSubject);
     }
 
@@ -81,7 +78,7 @@ public class JwtUtil {
     }
 
     public boolean validateToken(String token, String username) {
-        return (username.equals(extractUsername(token))) && !isTokenExpired(token);
+        return (username.equals(extractUserEmail(token))) && !isTokenExpired(token);
     }
 
     private boolean isTokenExpired(String token) {

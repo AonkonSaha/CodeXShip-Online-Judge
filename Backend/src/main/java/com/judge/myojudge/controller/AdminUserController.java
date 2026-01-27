@@ -6,6 +6,7 @@ import com.judge.myojudge.model.entity.User;
 import com.judge.myojudge.model.mapper.UserMapper;
 import com.judge.myojudge.response.ApiResponse;
 import com.judge.myojudge.service.AuthService;
+import com.judge.myojudge.service.redis.UserRedisService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -25,7 +26,7 @@ import java.util.List;
 public class AdminUserController {
     private final AuthService authService;
     private final UserMapper userMapper;
-
+    private final UserRedisService userRedisService;
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Page<UserResponse>>> getUsers(

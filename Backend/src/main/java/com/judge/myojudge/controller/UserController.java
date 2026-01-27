@@ -9,6 +9,7 @@ import com.judge.myojudge.response.ApiResponse;
 import com.judge.myojudge.service.AuthService;
 import com.judge.myojudge.service.GoogleTokenVerifierService;
 import com.judge.myojudge.service.RankService;
+import com.judge.myojudge.service.redis.UserRedisService;
 import com.judge.myojudge.validation.ValidationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -31,26 +32,39 @@ public class UserController {
     private final ValidationService validationService;
     private final RankService rankService;
     private final GoogleTokenVerifierService googleTokenVerifierService;
+    private final UserRedisService userRedisService;
 
     @GetMapping("/me")
     @PreAuthorize("hasAnyRole('ADMIN','PROBLEM_EDITOR',NORMAL_USER')")
     public ResponseEntity<ApiResponse<UserResponse>> getProfile(){
-        String mobileOrEmail = SecurityContextHolder.getContext().getAuthentication().getName();
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        UserResponse userResponse= userRedisService.findCacheUser(email);
+        if(userResponse==null){
+            userResponse=userMapper.toUserResponse(authService.getUserByMobileOrEmail(email));
+            userRedisService.saveCacheUser(userResponse);
+        }
         ApiResponse<UserResponse> apiResponse=ApiResponse.<UserResponse>builder()
                 .success(true)
                 .statusCode(HttpStatus.OK.value())
-                .message("User Data Fetched Successfully..!")
-                .data(userMapper.toUserResponse(authService.getUserByMobileOrEmail(mobileOrEmail)))
+                .message("Successfully fetched profile information!")
+                .data(userResponse)
                 .build();
         return ResponseEntity.ok(apiResponse);
     }
 
     @PutMapping("/me")
     @PreAuthorize("hasAnyRole('ADMIN','PROBLEM_EDITOR',NORMAL_USER')")
-    public ResponseEntity<Void> updateProfile(@RequestBody @Valid UserUpdateRequest userUpdateRequest) {
+    public ResponseEntity<ApiResponse<UserResponse>> updateProfile(@RequestBody @Valid UserUpdateRequest userUpdateRequest) {
         String mobileOrEmail= SecurityContextHolder.getContext().getAuthentication().getName();
-        authService.updateUserDetails(mobileOrEmail, userUpdateRequest);
-        return ResponseEntity.noContent().build();
+        UserResponse userResponse=userMapper.toUserResponse(authService.updateUserDetails(mobileOrEmail, userUpdateRequest));
+        userRedisService.updateCacheUser(userResponse);
+        ApiResponse<UserResponse> apiResponse=ApiResponse.<UserResponse>builder()
+                .success(true)
+                .statusCode(HttpStatus.OK.value())
+                .message("Successfully updated profile information!")
+                .data(userResponse)
+                .build();
+        return ResponseEntity.status(HttpStatus.OK).body(apiResponse);
     }
 
     @PutMapping("/me/password")
@@ -81,15 +95,20 @@ public class UserController {
 
 
 
-    @GetMapping("/me/{username}/{userId}")
+    @GetMapping("/me/{username}")
     public ResponseEntity<ApiResponse<UserResponse>> getUserDetailsByUsername(
             @PathVariable String username,
-            @PathVariable Long userId){
+            @RequestParam("email") String email){
+        UserResponse userResponse= userRedisService.findCacheUser(email);
+        if(userResponse==null){
+            userResponse=userMapper.toUserResponse(authService.getUserByMobileOrEmail(email));
+            userRedisService.saveCacheUser(userResponse);
+        }
         ApiResponse<UserResponse> apiResponse=ApiResponse.<UserResponse>builder()
                 .success(true)
                 .statusCode(HttpStatus.OK.value())
-                .message("User Data Fetched Successfully..!")
-                .data(userMapper.toUserResponse(authService.getUserById(userId)))
+                .message("Successfully fetched profile information!")
+                .data(userResponse)
                 .build();
         return ResponseEntity.ok(apiResponse);
     }

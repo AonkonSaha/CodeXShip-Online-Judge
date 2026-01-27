@@ -12,6 +12,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -26,6 +27,7 @@ public class UserProductController {
    private final ProductMapper productMapper;
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('ADMIN','PROBLEM_EDITOR',NORMAL_USER')")
     public ResponseEntity<ApiResponse<Page<ProductRequest>>> getProduct(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "5") int size,

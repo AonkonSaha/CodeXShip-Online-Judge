@@ -13,8 +13,6 @@ import java.util.Optional;
 
 public interface AuthService {
 
-     User register(User user);
-
      String login(LoginRequest loginRequest);
 
      void logout(String mobileOrEmail,String token);
@@ -27,8 +25,6 @@ public interface AuthService {
      User getUserByMobileOrEmail(String mobileOrEmail);
 
      Optional<User> fetchUserByMobileNumber(String mobile);
-
-     User getUserCoinWithImgUrl(String mobileOrEmail);
 
      User getUserById(Long userId);
 

@@ -5,6 +5,8 @@ import com.judge.myojudge.model.entity.User;
 import com.judge.myojudge.model.mapper.UserMapper;
 import com.judge.myojudge.response.ApiResponse;
 import com.judge.myojudge.service.RankService;
+import com.judge.myojudge.service.redis.RankRedisService;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -24,16 +26,19 @@ import java.util.List;
 public class RankController {
     private final RankService rankService;
     private final UserMapper userMapper;
+    private final RankRedisService rankRedisService;
 
     @GetMapping
+    @Transactional
     public ResponseEntity<ApiResponse<Page<UserResponse>>> getRanking(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "5") int size,
+            @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "") String search
     ){
         Pageable pageable = PageRequest.of(page,size);
         Page<User> users = rankService.getRanking(search,pageable);
-        List<UserResponse> userResponses = userMapper.toUsersResponse(users.getContent());
+        List<UserResponse> userResponses=userMapper.toUsersResponse(users.getContent());
+
         return ResponseEntity.ok(ApiResponse.<Page<UserResponse>>builder()
                 .success(true)
                 .statusCode(200)

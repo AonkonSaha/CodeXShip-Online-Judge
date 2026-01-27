@@ -4,8 +4,9 @@ import com.cloudinary.Cloudinary;
 import com.judge.myojudge.exception.ProblemNotFoundException;
 import com.judge.myojudge.exception.TestCaseNotFoundException;
 import com.judge.myojudge.exception.UserNotFoundException;
+import com.judge.myojudge.jwt.JwtUtil;
 import com.judge.myojudge.model.dto.ProblemResponse;
-import com.judge.myojudge.model.dto.ProblemSampleTestCaseResponse;
+import com.judge.myojudge.model.dto.ProblemSampleTcResponse;
 import com.judge.myojudge.model.entity.Problem;
 import com.judge.myojudge.model.entity.TestCase;
 import com.judge.myojudge.model.entity.User;
@@ -19,8 +20,6 @@ import com.judge.myojudge.service.ProblemService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -44,11 +43,11 @@ public class ProdProblemService implements ProblemService {
     private final UserRepo userRepo;
     private final SubmissionRepo submissionRepo;
     private final ProblemMapper problemMapper;
+    private final JwtUtil jwtUtil;
 
 
     @Override
     @Transactional(value = Transactional.TxType.REQUIRES_NEW)
-    @CacheEvict(cacheNames = {"problems","singleProblemPerPage"},allEntries = true)
     public void saveProblem(String title,
                             String handle,
                             String difficulty,
@@ -81,7 +80,6 @@ public class ProdProblemService implements ProblemService {
 
     @Override
     @Transactional
-    @CacheEvict(cacheNames = {"problems","singleProblemPerPage"},allEntries = true)
     public void deleteEachProblem() {
         List<Problem> problems = problemRepo.findAll();
         if (problems.isEmpty()) {
@@ -111,8 +109,7 @@ public class ProdProblemService implements ProblemService {
 
     @Override
     @Transactional
-    @Cacheable(cacheNames = "singleProblemPerPage",key = "T(java.util.Objects).hash(#problemId,#mobileOrEmail)")
-    public ProblemSampleTestCaseResponse getProblemPerPageById(Long problemId, String mobileOrEmail, HttpServletRequest httpServletRequest) {
+    public ProblemSampleTcResponse getProblemPerPageById(Long problemId, String mobileOrEmail, HttpServletRequest httpServletRequest) {
         String token = httpServletRequest.getHeader("Authorization");
         Problem problem = null;
         Boolean is_solved = false;
@@ -125,7 +122,6 @@ public class ProdProblemService implements ProblemService {
             problem = (Problem) row[0];
             is_solved= (Boolean) row[1];
         }else{
-//            System.out.println("ss-----------");
             problem = problemRepo.findById(problemId)
                     .orElseThrow(() -> new ProblemNotFoundException("Problem not found"));
         }
@@ -137,11 +133,11 @@ public class ProdProblemService implements ProblemService {
         }
         List<String> sampleTestcaseContent = cloudinaryService.readCloudinaryFile(sampleTestcase.getFilePath());
         List<String> sampleOutputContent = cloudinaryService.readCloudinaryFile(sampleOutput.getFilePath());
-        ProblemSampleTestCaseResponse problemSampleTestCaseResponse = problemMapper.toProblemSampleTestCaseResponse(problem);
-        problemSampleTestCaseResponse.setSolved(is_solved);
-        problemSampleTestCaseResponse.setSampleTestcase(sampleTestcaseContent);
-        problemSampleTestCaseResponse.setSampleOutput(sampleOutputContent);
-        return problemSampleTestCaseResponse;
+        ProblemSampleTcResponse problemSampleTcResponse = problemMapper.toProblemSampleTestCaseResponse(problem);
+        problemSampleTcResponse.setSolved(is_solved);
+        problemSampleTcResponse.setSampleTestcase(sampleTestcaseContent);
+        problemSampleTcResponse.setSampleOutput(sampleOutputContent);
+        return problemSampleTcResponse;
     }
 
     public Problem getProblemByID(long id) {
@@ -154,7 +150,6 @@ public class ProdProblemService implements ProblemService {
 
     @Override
     @Transactional
-    @CacheEvict(cacheNames = {"problems","singleProblemPerPage"},allEntries = true)
     public void saveProblemWithId(long id, String title, String handle, String difficulty, String type,
                                   String problemStatement,String explanation ,Long coins,double timeLimit,double memoryLimit, List<MultipartFile> multipartFiles) throws IOException {
         Problem problem = problemRepo.findById(id)
@@ -224,12 +219,12 @@ public class ProdProblemService implements ProblemService {
 
     @Override
     @Transactional
-    @Cacheable(cacheNames = "problems",key ="T(java.util.Objects).hash(#mobileOrEmail,#category,#search,#difficulty,#solvedFilter,#pageable.pageSize,#pageable.pageNumber)")
     public Page<ProblemResponse> findProblemsByCategory(
             HttpServletRequest request,String mobileOrEmail,
             String category, String search, String difficulty,
             String solvedFilter, Pageable pageable
     ){
+
         String token = request.getHeader("Authorization");
         Page<?> dbResult = null;
         List<Problem> problems= null;
@@ -297,8 +292,8 @@ public class ProdProblemService implements ProblemService {
 
 
     @Override
-    public List<ProblemSampleTestCaseResponse> findProblemAll() {
-        List<ProblemSampleTestCaseResponse> problemList = new ArrayList<>();
+    public List<ProblemSampleTcResponse> findProblemAll() {
+        List<ProblemSampleTcResponse> problemList = new ArrayList<>();
         List<Problem> problems = problemRepo.findAll();
         for (Problem problem : problems) {
             TestCase sampleTestcase = getSampleInput(problem.getTestcases());
@@ -308,10 +303,10 @@ public class ProdProblemService implements ProblemService {
             }
             List<String> sampleTestcaseContent = cloudinaryService.readCloudinaryFile(sampleTestcase.getFilePath());
             List<String> sampleOutputContent = cloudinaryService.readCloudinaryFile(sampleOutput.getFilePath());
-            ProblemSampleTestCaseResponse problemSampleTestCaseResponse = problemMapper.toProblemSampleTestCaseResponse(problem);
-            problemSampleTestCaseResponse.setSampleTestcase(sampleTestcaseContent);
-            problemSampleTestCaseResponse.setSampleOutput(sampleOutputContent);
-            problemList.add(problemSampleTestCaseResponse);
+            ProblemSampleTcResponse problemSampleTcResponse = problemMapper.toProblemSampleTestCaseResponse(problem);
+            problemSampleTcResponse.setSampleTestcase(sampleTestcaseContent);
+            problemSampleTcResponse.setSampleOutput(sampleOutputContent);
+            problemList.add(problemSampleTcResponse);
         }
         return problemList;
     }

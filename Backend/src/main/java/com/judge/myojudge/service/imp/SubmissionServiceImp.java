@@ -13,13 +13,16 @@ import com.judge.myojudge.model.entity.Problem;
 import com.judge.myojudge.model.entity.Submission;
 import com.judge.myojudge.model.entity.User;
 import com.judge.myojudge.model.mapper.SubmissionMapper;
+import com.judge.myojudge.model.mapper.UserMapper;
 import com.judge.myojudge.repository.ProblemRepo;
 import com.judge.myojudge.repository.SubmissionRepo;
 import com.judge.myojudge.repository.UserRepo;
 import com.judge.myojudge.service.SubmissionQueryService;
 import com.judge.myojudge.service.SubmissionService;
 import com.judge.myojudge.service.TestCaseService;
+import com.judge.myojudge.service.redis.UserRedisService;
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -40,6 +43,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 
 @Service
+@RequiredArgsConstructor
 public class SubmissionServiceImp implements SubmissionService {
 
     private final Judge0Config config;
@@ -54,32 +58,8 @@ public class SubmissionServiceImp implements SubmissionService {
     private final ExecutorService executorService;
     private final SimpMessagingTemplate messagingTemplate;
     private final PlatformTransactionManager platformTransactionManager;
-
-    public SubmissionServiceImp(Judge0Config config,
-                                TestCaseService testCaseService,
-                                ProblemRepo problemRepo,
-                                WebClient webClient,
-                                UserRepo userRepo,
-                                SubmissionRepo submissionRepo,
-                                SubmissionMapper submissionMapper,
-                                SubmissionQueryService submissionQueryService,
-                                RestClient restClient,
-                                ExecutorService executorService,
-                                SimpMessagingTemplate messagingTemplate,
-                                PlatformTransactionManager platformTransactionManager) {
-        this.config = config;
-        this.testCaseService = testCaseService;
-        this.problemRepo = problemRepo;
-        this.webClient = webClient;
-        this.userRepo = userRepo;
-        this.submissionRepo = submissionRepo;
-        this.submissionMapper = submissionMapper;
-        this.submissionQueryService = submissionQueryService;
-        this.restClient = restClient;
-        this.executorService = executorService;
-        this.messagingTemplate = messagingTemplate;
-        this.platformTransactionManager = platformTransactionManager;
-    }
+    private final UserRedisService userRedisService;
+    private final UserMapper userMapper;
 
     @Override
     public Submission getSubmission(SubmissionRequest req,String mobileOrEmail) {
@@ -126,8 +106,8 @@ public class SubmissionServiceImp implements SubmissionService {
         List<TestCaseResponse> results = new ArrayList<>();
         for (ExecuteTestCase testcase : testcases) {
             index++;
-//            TestcaseResultDTO testcaseResultDTO = executeSingleTestcase(req.getSubmissionCode(), languageId, testcase);
-            TestCaseResponse testCaseResponse = createDummyTestcaseResult(index);
+            TestCaseResponse testCaseResponse = executeSingleTestcase(req.getSubmissionCode(), languageId, testcase);
+//            TestCaseResponse testCaseResponse = createDummyTestcaseResult(index);
             messagingTemplate.convertAndSend(
                     "/topic/submission/" + submissionId,
                     testCaseResponse
@@ -256,6 +236,7 @@ public class SubmissionServiceImp implements SubmissionService {
                 response
         );
 
+        userRedisService.updateCacheUser(userMapper.toUserResponse(user));
         System.out.println("Submission Details: "+submission);
     }
 
@@ -336,8 +317,7 @@ public class SubmissionServiceImp implements SubmissionService {
     @Transactional
     public Page<SubmissionResponse> getAllSubmissionByUser(String mobileOrEmail, String search, Sort sort, int page, int size) {
         Pageable pageable = PageRequest.of(page,size,sort);
-        Page<SubmissionResponse> submissionResponses = submissionRepo.findSubmissionsByMobileOrEmail(mobileOrEmail,search,pageable).map(submissionMapper::toSubmissionResponse);
-        return submissionResponses;
+        return submissionRepo.findSubmissionsByMobileOrEmail(mobileOrEmail,search,pageable).map(submissionMapper::toSubmissionResponse);
     }
 
     @Override

@@ -1,7 +1,7 @@
 package com.judge.myojudge.service;
 
 import com.judge.myojudge.model.dto.ProblemResponse;
-import com.judge.myojudge.model.dto.ProblemSampleTestCaseResponse;
+import com.judge.myojudge.model.dto.ProblemSampleTcResponse;
 import com.judge.myojudge.model.entity.Problem;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.data.domain.Page;
@@ -14,7 +14,7 @@ import java.util.Optional;
 
 public interface ProblemService {
 
-     List<ProblemSampleTestCaseResponse> findProblemAll();
+     List<ProblemSampleTcResponse> findProblemAll();
 
      void saveProblem(
             String title, String handle, String difficulty,String type,
@@ -29,7 +29,7 @@ public interface ProblemService {
 
      void deleteProblemByHandle(String handle) throws IOException;
 
-     ProblemSampleTestCaseResponse getProblemPerPageById(Long id, String mobileOrEmail, HttpServletRequest request);
+     ProblemSampleTcResponse getProblemPerPageById(Long id, String mobileOrEmail, HttpServletRequest request);
 
      Problem getProblemByID(long id);
 

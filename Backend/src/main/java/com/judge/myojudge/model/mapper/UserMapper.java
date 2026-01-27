@@ -10,12 +10,11 @@ import java.util.List;
 
 public interface UserMapper {
 
-    public User toUser(UserRegisterRequest userRegisterRequest);
+    User toUser(UserRegisterRequest userRegisterRequest);
 
-    public UserRegisterResponse toUserRegisterResponse(User user);
+    UserRegisterResponse toUserRegisterResponse(User user);
 
-
-    List<UserResponse> toUsersResponse(List<User> ranking);
+    List<UserResponse> toUsersResponse(List<User> users);
 
     UserCoinImageResponse toUserCoinImage(User userCoins);
 
