@@ -24,7 +24,25 @@ Designed for **competitive programming, coding contests, and practice platforms*
 ### 💻 Code Submission & Evaluation
 - Submit code in **multiple programming languages**  
 - **Secure Docker-based sandbox** for safe execution  
-- **Live Testcase Judging Feedback**  See each testcase result update in real-time as code runs, powered by WebSocket streaming. 
+- **Live Testcase Judging Feedback**
+  - Each testcase verdict is streamed **in real-time via WebSocket**
+  - Users can see execution progress instantly (`Running → Accepted / Wrong Answer / TLE`)
+
+### ⚡ Real-Time Communication (WebSocket)
+- WebSocket-powered live judging updates
+- Instant submission status notifications
+- Efficient handling of concurrent submissions
+- Eliminates polling overhead for better performance
+
+### 🧠 Redis Caching & Performance Optimization
+- Integrated **Redis** for high-performance in-memory caching
+- Cached frequently accessed data:
+  - Coding problems, testcases, and metadata
+  - Leaderboards and global ranking results
+  - Submission execution states and live judging progress
+- Reduced repetitive database queries and improved system throughput
+- Optimized response time under high concurrency and contest traffic
+- Enhanced scalability for real-time competitive environment
 
 ### 🎯 Gamification & Rewards
 - **Daily Coin Reward System**: Users earn coins once per day for logging in  
