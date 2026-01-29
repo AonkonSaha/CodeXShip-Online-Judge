@@ -100,45 +100,6 @@ public class ProblemMapperImp implements ProblemMapper {
     }
 
     @Override
-    public ProblemTcFileResponse toProblemTcFileResponse(CacheProblem cacheProblem) {
-        ProblemResponse problemResponse=cacheProblem.getProblemResponse();
-        return ProblemTcFileResponse
-                .builder()
-                .id(problemResponse.getId())
-                .handle(problemResponse.getHandle())
-                .explanation(problemResponse.getExplanation())
-                .problemStatement(problemResponse.getProblemStatement())
-                .memoryLimit(problemResponse.getMemoryLimit())
-                .timeLimit(problemResponse.getTimeLimit())
-                .title(problemResponse.getTitle())
-                .type(problemResponse.getType())
-                .coins(problemResponse.getCoins())
-                .difficulty(problemResponse.getDifficulty())
-                .testCaseNameWithPath(cacheProblem.getTestCaseNameWithPath())
-                .build();
-    }
-
-    @Override
-    public ProblemSampleTcResponse toProblemSampleTcFileResponse(CacheProblem cacheProblem) {
-        ProblemResponse problemResponse=cacheProblem.getProblemResponse();
-        return ProblemSampleTcResponse
-                .builder()
-                .id(problemResponse.getId())
-                .handle(problemResponse.getHandle())
-                .explanation(problemResponse.getExplanation())
-                .problemStatement(problemResponse.getProblemStatement())
-                .memoryLimit(problemResponse.getMemoryLimit())
-                .timeLimit(problemResponse.getTimeLimit())
-                .title(problemResponse.getTitle())
-                .type(problemResponse.getType())
-                .coins(problemResponse.getCoins())
-                .difficulty(problemResponse.getDifficulty())
-                .sampleTestcase(cacheProblem.getSampleTestcase())
-                .sampleOutput(cacheProblem.getSampleOutput())
-                .build();
-    }
-
-    @Override
     public Problem toProblem(String title, String handle, String difficulty, String type, Long coin, double timeLimit, double memoryLimit, String problemStatement, String explanation) {
         Problem problem = new Problem();
         problem.setTitle(title);

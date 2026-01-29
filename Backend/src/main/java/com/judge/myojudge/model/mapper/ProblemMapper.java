@@ -23,7 +23,5 @@ public interface ProblemMapper {
 
     ProblemTcFileResponse toProblemTcFileResponse(Problem problem);
 
-    ProblemTcFileResponse toProblemTcFileResponse(CacheProblem cacheProblem);
 
-    ProblemSampleTcResponse toProblemSampleTcFileResponse(CacheProblem cacheProblem);
 }

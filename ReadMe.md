@@ -78,9 +78,9 @@ Designed for **competitive programming, coding contests, and practice platforms*
 | Layer | Technology |
 |-------|------------|
 | Frontend | React.js, Tailwind CSS |
-| Backend | Spring Boot (Java) |
+| Backend | Spring Boot (Java), WebSocket, Redis, Judge0|
 | Database | MySQL & PostgreSQL (relational DB support) |
-| Code Execution | Docker-based sandbox |
+| Code Execution | Judge0(Docker-based sandbox) |
 | Authentication | JWT + Google OAuth 2.0 |
 | Gamification | Daily coin rewards & redemption system |
 | Build Tools | Maven, npm |

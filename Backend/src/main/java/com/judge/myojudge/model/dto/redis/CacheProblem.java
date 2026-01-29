@@ -6,17 +6,14 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
 public class CacheProblem {
-    private ProblemResponse problemResponse;
-    private Map<String,String> testCaseNameWithPath = new HashMap<>();
-    private List<String> sampleTestcase;
-    private List<String> sampleOutput;
+    private List<ProblemResponse> problemResponses=new ArrayList<>();
+    private Long totalElements;
+    private Set<String> userEmails=new HashSet<>();//who users already hit this cache
 }
