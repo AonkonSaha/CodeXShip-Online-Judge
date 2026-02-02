@@ -32,10 +32,10 @@ public class UserRedisServiceImp implements UserRedisService{
     }
 
     @Override
-    public UserResponse findCacheUser(String mobileOrEmail) {
+    public UserResponse findCacheUser(String email) {
         return objectMapper.convertValue(redisTemplate
                         .opsForValue()
-                        .get(RedisKey.PER_USER_BASE_KEY+mobileOrEmail),UserResponse.class);
+                        .get(RedisKey.PER_USER_BASE_KEY+email),UserResponse.class);
     }
 
     @Override

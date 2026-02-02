@@ -6,9 +6,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.HashMap;
-import java.util.Map;
-
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -16,18 +13,9 @@ import java.util.Map;
 public class ProblemResponse {
     private Long id;
     private String title;
-    private String handle;
     private String difficulty;
     private String type;
-    @JsonProperty("problem_statement")
-    private String problemStatement;
     private Long coins;
-    private String explanation;
     @JsonProperty("is_solved")
     private boolean isSolved=false;
-    @JsonProperty("time_limit")
-    private Double timeLimit;
-    @JsonProperty("memory_limit")
-    private Double memoryLimit;
-
 }

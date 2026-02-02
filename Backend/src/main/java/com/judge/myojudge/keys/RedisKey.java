@@ -33,5 +33,4 @@ public class RedisKey {
     public static final String PROBLEM_KEY=BASE_PROBLEM_KEY+"PROBLEM:";
     public static final String PROBLEM_PAGINATION_KEY=BASE_PROBLEM_KEY+"PAGINATION";
 
-
 }

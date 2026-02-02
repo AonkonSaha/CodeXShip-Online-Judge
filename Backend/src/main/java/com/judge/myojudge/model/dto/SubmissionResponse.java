@@ -13,7 +13,9 @@ import java.util.List;
 @NoArgsConstructor
 @Builder
 public class SubmissionResponse {
-    private Long id;
+    private Long id; //Submission ID
+    @JsonProperty("problem_id")
+    private Long problemId;
     private String problemName;
     private int total;
     private int passed;
@@ -22,6 +24,8 @@ public class SubmissionResponse {
     private float time;
     private Long memory;
     private Long coins=0L;
+    @JsonProperty("submission_code")
+    private String submissionCode;
     @JsonProperty("created_at")
     private LocalDateTime createdAt;
     List<TestCaseResponse> results;

@@ -92,16 +92,6 @@ public class AuthServiceImp implements AuthService {
         }
         user.setIsGoogleUser(false);
         userRepository.save(user);
-        List<String> roleNames=new ArrayList<>();
-        for(UserRole userRole:user.getUserRoles()){
-            roleNames.add(userRole.getRoleName());
-        }
-        CacheUserAuth cacheRequest=CacheUserAuth.builder()
-                .roleNames(roleNames)
-                .password(user.getPassword())
-                .email(user.getEmail())
-                .build();
-        userRedisService.saveCacheUserAuth(cacheRequest);
         return user;
     }
 
@@ -252,20 +242,7 @@ public class AuthServiceImp implements AuthService {
         String token = jwtUtil.generateToken(user);
         user.setIsAdditionDailyCoin(false);
         userRepository.save(user);
-        if(isNewUser){
-            List<String> roleNames=new ArrayList<>();
-            for(UserRole userRole:user.getUserRoles()){
-                roleNames.add(userRole.getRoleName());
-            }
-            CacheUserAuth cacheRequest=CacheUserAuth.builder()
-                    .roleNames(roleNames)
-                    .password(user.getPassword())
-                    .email(user.getEmail())
-                    .build();
-            userRedisService.saveCacheUserAuth(cacheRequest);
-        }else{
-            userRedisService.updateCacheUser(userMapper.toUserResponse(user));
-        }
+        userRedisService.updateCacheUser(userMapper.toUserResponse(user));
         return token;
     }
 

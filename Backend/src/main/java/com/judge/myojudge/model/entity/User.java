@@ -36,7 +36,7 @@ public class User {
     @Column(name = "image_url")
     private String imageUrl;
     private String imageFileKey;
-    private Boolean isGoogleUser;
+    private Boolean isGoogleUser=false;
     private Boolean isGoogleUserSetPassword;
     private String gender;
     private String country;
@@ -102,6 +102,5 @@ public class User {
 
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST,CascadeType.MERGE})
     private Set<Order> order = new HashSet<>();
-
 
 }

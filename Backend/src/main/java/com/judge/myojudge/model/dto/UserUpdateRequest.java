@@ -60,9 +60,6 @@ public class UserUpdateRequest {
     @JsonProperty("total_problems_ce")
     private Long totalProblemsCE = 0L;
 
-
-
-
     private String country;
     private String state;
     private String city;
@@ -74,6 +71,4 @@ public class UserUpdateRequest {
     @JsonProperty("date_of_birth")
     @Past(message = "Birthdate can't be future")
     private LocalDate birthday;
-
-
 }

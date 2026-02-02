@@ -52,10 +52,12 @@ public class UserProblemController {
                 && !email.equals("anonymousUser")
         )
         ){
+//            long dbStart=System.currentTimeMillis();
             problemSampleTc = problemService.getProblemPerPageById(
                     id,email,
                     request
             );
+//            System.out.println("DB Query Time: "+(System.currentTimeMillis()-dbStart));
             if(cacheSampleProblem==null){
                 cacheSampleProblem=new CacheSampleProblem();
             }
@@ -66,19 +68,26 @@ public class UserProblemController {
             }
             cacheSampleProblem.setProblemSampleTcResponse(problemSampleTc);
             cacheSampleProblem.getUserEmails().add(email);
+//            long cacheP=System.currentTimeMillis();
             problemRedisService.saveCacheProblem(cacheSampleProblem);
+//            System.out.println("Save Cache Problem Query: "+(System.currentTimeMillis()-cacheP));
             if(solveId!=null){
+//                long cacheSolve=System.currentTimeMillis();
                 problemRedisService.saveCacheSolvedProblem(solveId,email);
+//                System.out.println("Solve Cache Query: "+(System.currentTimeMillis()-cacheSolve));
                 problemSampleTc.setSolved(true);
             }
         }else{
+//            long solveStart=System.currentTimeMillis();
             problemSampleTc=cacheSampleProblem.getProblemSampleTcResponse();
             Boolean is_solved=null;
             if(!email.equals("anonymousUser")){
-                problemRedisService.findCacheProblemIsSolved(problemSampleTc.getId(),email);
+                is_solved=problemRedisService.findCacheProblemIsSolved(problemSampleTc.getId(),email);
             }
-            problemSampleTc.setSolved(is_solved==null?false:true);
+//            System.out.println("Solved Query: "+(System.currentTimeMillis()-solveStart));
+            problemSampleTc.setSolved(is_solved==null?false:is_solved);
         }
+//        System.out.println("Total Api Time: "+(System.currentTimeMillis()-start));
         ApiResponse<ProblemSampleTcResponse> apiResponse=ApiResponse.<ProblemSampleTcResponse>builder()
                 .success(true)
                 .statusCode(HttpStatus.OK.value())
@@ -142,12 +151,17 @@ public class UserProblemController {
                 }
             }
         }else{
+//            long elseStart=System.currentTimeMillis();
+//            System.out.println("Email: "+email);
             Set<Long> solvedSet = null;
             if(!email.equals("anonymousUser")){
                 solvedSet=problemRedisService.findCacheSolvedProblems(email);
             }
+//            System.out.println("Cache Set Query: "+(System.currentTimeMillis()-elseStart));
 
+//            long cacheProblemStart=System.currentTimeMillis();
             List<ProblemResponse> cachedProblemResponses=cacheProblem.getProblemResponses();
+//            System.out.println("Cache Problems Query: "+(System.currentTimeMillis()-cacheProblemStart));
             if(!email.equals("anonymousUser")){
                 for(ProblemResponse problemResponse: cachedProblemResponses){
                     if(solvedSet.contains(problemResponse.getId())){

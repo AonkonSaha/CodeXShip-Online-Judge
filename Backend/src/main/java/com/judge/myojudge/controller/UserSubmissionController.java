@@ -52,6 +52,22 @@ public class UserSubmissionController {
         return ResponseEntity.status(HttpStatus.OK).body(apiResponse);
     }
 
+    @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('NORMAL_USER','ADMIN','PROBLEM_EDITOR')")
+    public ResponseEntity<ApiResponse<SubmissionResponse>> getSubmission(
+            @PathVariable("id") Long id
+    ){
+        SubmissionResponse submissionResponse = submissionService.getSubmissionById(id);
+        ApiResponse<SubmissionResponse> apiResponse=ApiResponse.<SubmissionResponse>builder()
+                .success(true)
+                .statusCode(HttpStatus.OK.value())
+                .message("Successfully fetched submissions for problem "+id+" ID")
+                .data(submissionResponse)
+                .build();
+        return ResponseEntity.status(HttpStatus.OK).body(apiResponse);
+    }
+
+
     @GetMapping
     @PreAuthorize("hasAnyRole('NORMAL_USER','ADMIN','PROBLEM_EDITOR')")
     public ResponseEntity<ApiResponse<Page<SubmissionResponse>>> getSubmissions(
@@ -66,11 +82,31 @@ public class UserSubmissionController {
                 ? Sort.by(sortField).ascending()
                 : Sort.by(sortField).descending();
 
+
         Page<SubmissionResponse> submissionResponse = submissionService.getAllSubmissionByUser(mobileOrEmail,search,sort,page,size);
         ApiResponse<Page<SubmissionResponse>> apiResponse=ApiResponse.<Page<SubmissionResponse>>builder()
                 .success(true)
                 .statusCode(HttpStatus.OK.value())
                 .message("Successfully fetched submissions history")
+                .data(submissionResponse)
+                .build();
+        return ResponseEntity.status(HttpStatus.OK).body(apiResponse);
+    }
+    @GetMapping("/problems/{id}")
+    @PreAuthorize("hasAnyRole('NORMAL_USER','ADMIN','PROBLEM_EDITOR')")
+    public ResponseEntity<ApiResponse<Page<SubmissionResponse>>> getSubmissionsPerProblem(
+            @PathVariable("id") Long id,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int size,
+            @RequestParam(defaultValue = "asc") String sortBy,
+            @RequestParam(name = "search", required = false) String search
+    ){
+        String mobileOrEmail= SecurityContextHolder.getContext().getAuthentication().getName();
+        Page<SubmissionResponse> submissionResponse = submissionService.getAllSubmissionPerProblemByUser(id,mobileOrEmail,search,page,size);
+        ApiResponse<Page<SubmissionResponse>> apiResponse=ApiResponse.<Page<SubmissionResponse>>builder()
+                .success(true)
+                .statusCode(HttpStatus.OK.value())
+                .message("Successfully fetched submissions for problem "+id+" ID")
                 .data(submissionResponse)
                 .build();
         return ResponseEntity.status(HttpStatus.OK).body(apiResponse);

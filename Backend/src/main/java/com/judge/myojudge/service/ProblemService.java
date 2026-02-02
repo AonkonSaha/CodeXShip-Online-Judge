@@ -44,4 +44,5 @@ public interface ProblemService {
             String solvedFilter, Pageable pageable
     );
 
+    List<Object[]> getProblemSolveStatus(Long id, String email);
 }

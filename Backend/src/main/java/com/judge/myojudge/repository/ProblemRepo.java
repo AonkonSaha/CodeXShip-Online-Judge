@@ -1,6 +1,7 @@
 package com.judge.myojudge.repository;
 
 import com.judge.myojudge.model.entity.Problem;
+import com.judge.myojudge.model.entity.Submission;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -70,6 +71,16 @@ public interface ProblemRepo extends JpaRepository<Problem,Long> {
             "AND (s.user.mobileNumber=:mobileOrEmail OR s.user.email=:mobileOrEmail) " +
             "AND s.problem.id=:problemId " +
             "WHERE lower(s.status)='accepted') FROM Problem p WHERE p.id=:problemId")
-    List<Object[]> findProblemByStatus(@Param("problemId") Long problemId,
-                                 @Param("mobileOrEmail") String mobileOrEmail);
+    List<Object[]> findProblemByStatus(
+            @Param("problemId") Long problemId,
+            @Param("mobileOrEmail") String mobileOrEmail
+    );
+
+
+    @Query("SELECT p.submissions FROM Problem p JOIN  p.submissions s WHERE p.id=:problemId AND s.user.email=:email ORDER BY s.createdAt DESC")
+    Page<Submission> findSubmissionsByProblemId(
+            @Param("problemId") Long id,
+            @Param("email") String email,
+            Pageable pageable
+    );
 }

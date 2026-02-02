@@ -72,4 +72,5 @@ public class UserResponse {
     @JsonProperty("total_problems_ce")
     private Long totalProblemsCE;
 
+
 }

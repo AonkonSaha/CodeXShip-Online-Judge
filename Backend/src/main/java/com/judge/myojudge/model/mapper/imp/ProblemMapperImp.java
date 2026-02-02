@@ -3,13 +3,13 @@ package com.judge.myojudge.model.mapper.imp;
 import com.judge.myojudge.model.dto.ProblemResponse;
 import com.judge.myojudge.model.dto.ProblemSampleTcResponse;
 import com.judge.myojudge.model.dto.ProblemTcFileResponse;
-import com.judge.myojudge.model.dto.redis.CacheProblem;
 import com.judge.myojudge.model.entity.Problem;
 import com.judge.myojudge.model.entity.TestCase;
 import com.judge.myojudge.model.mapper.ProblemMapper;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+
 
 @Component
 @RequiredArgsConstructor
@@ -35,14 +35,9 @@ public class ProblemMapperImp implements ProblemMapper {
         return ProblemSampleTcResponse.builder()
                 .id(problem.getId())
                 .title(problem.getTitle())
-                .problemStatement(problem.getProblemStatement())
-                .explanation(problem.getExplanation())
                 .difficulty(problem.getDifficulty())
                 .type(problem.getType())
-                .handle(problem.getHandle())
                 .coins(problem.getCoins())
-                .timeLimit(problem.getTimeLimit()==null?0:problem.getTimeLimit())
-                .memoryLimit(problem.getMemoryLimit()==null?0:problem.getMemoryLimit())
                 .build();
     }
 
@@ -54,12 +49,7 @@ public class ProblemMapperImp implements ProblemMapper {
         problemResponse.setTitle(problem.getTitle());
         problemResponse.setDifficulty(problem.getDifficulty());
         problemResponse.setType(problem.getType());
-        problemResponse.setHandle(problem.getHandleName());
         problemResponse.setCoins(problem.getCoins());
-        problemResponse.setProblemStatement(problem.getProblemStatement());
-        problemResponse.setExplanation(problem.getExplanation());
-        problemResponse.setMemoryLimit(problem.getMemoryLimit() == null ? 0 : problem.getMemoryLimit());
-        problemResponse.setTimeLimit(problem.getTimeLimit() == null ? 0 : problem.getTimeLimit());
         return problemResponse;
     }
 
@@ -68,14 +58,9 @@ public class ProblemMapperImp implements ProblemMapper {
         return ProblemResponse.builder()
                 .id(problem.getId())
                 .title(problem.getTitle())
-                .problemStatement(problem.getProblemStatement())
-                .explanation(problem.getExplanation())
                 .difficulty(problem.getDifficulty())
                 .type(problem.getType())
-                .handle(problem.getHandle())
                 .coins(problem.getCoins())
-                .timeLimit(problem.getTimeLimit()==null?0:problem.getTimeLimit())
-                .memoryLimit(problem.getMemoryLimit()==null?0:problem.getMemoryLimit())
                 .build();
     }
 
@@ -98,6 +83,10 @@ public class ProblemMapperImp implements ProblemMapper {
         }
         return problemResponse;
     }
+
+
+
+
 
     @Override
     public Problem toProblem(String title, String handle, String difficulty, String type, Long coin, double timeLimit, double memoryLimit, String problemStatement, String explanation) {

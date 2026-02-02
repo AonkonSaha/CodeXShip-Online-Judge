@@ -7,4 +7,6 @@ public interface SubmissionMapper {
 
     SubmissionResponse toSubmissionResponse(Submission submission);
     Submission toSubmission(SubmissionResponse submissionResponse);
+
+    SubmissionResponse toSubmissionResponseWithCode(Submission submission);
 }

@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
 import java.util.Set;
 
 @Service
@@ -23,7 +24,12 @@ public class ProblemRedisServiceImp implements ProblemRedisService {
     private final ProblemService problemService;
     @Override
     public void saveCacheProblem(CacheSampleProblem cacheSampleProblem) {
-        redisTemplate.opsForValue().set(RedisKey.PROBLEM_KEY+cacheSampleProblem.getProblemSampleTcResponse().getId(),cacheSampleProblem);
+        redisTemplate
+                .opsForValue()
+                .set(RedisKey.PROBLEM_KEY+cacheSampleProblem.getProblemSampleTcResponse().getId(),
+                        cacheSampleProblem, Duration.ofHours(5)
+                );
+
     }
 
     @Override
@@ -34,6 +40,7 @@ public class ProblemRedisServiceImp implements ProblemRedisService {
     @Override
     public void saveCacheSolvedProblem(Long id, String email) {
         redisTemplate.opsForSet().add(RedisKey.USER_SOLVED_PROBLEMS+email,id);
+        redisTemplate.expire(RedisKey.USER_SOLVED_PROBLEMS+email,Duration.ofHours(5));
     }
 
     @Override
@@ -51,7 +58,7 @@ public class ProblemRedisServiceImp implements ProblemRedisService {
                 size+
                 search+
                 difficulty+
-                solvedFilter,cacheProblem);
+                solvedFilter,cacheProblem,Duration.ofHours(5));
     }
 
 
@@ -88,5 +95,6 @@ public class ProblemRedisServiceImp implements ProblemRedisService {
     @Override
     public void saveCacheSolvedProblems(Set<Long> solvedIds, String email) {
          redisTemplate.opsForSet().add(RedisKey.USER_SOLVED_PROBLEMS+email,solvedIds.toArray(new Long[0]));
+         redisTemplate.expire(RedisKey.USER_SOLVED_PROBLEMS+email,Duration.ofHours(5));
     }
 }

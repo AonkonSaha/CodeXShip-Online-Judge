@@ -28,7 +28,7 @@ public class CoinController {
     public ResponseEntity<ApiResponse<UserCoinImageResponse>> getCoinsWithImageUrl(){
         String email= SecurityContextHolder.getContext().getAuthentication().getName();
         UserResponse userResponse=userRedisService.findCacheUser(email);
-        UserCoinImageResponse userCoinImageResponse;
+        UserCoinImageResponse userCoinImageResponse=null;
         if(userResponse==null){
              userCoinImageResponse=userMapper
                     .toUserCoinImage(authService.getUserByMobileOrEmail(email));

@@ -3,7 +3,6 @@ package com.judge.myojudge.model.mapper;
 import com.judge.myojudge.model.dto.ProblemResponse;
 import com.judge.myojudge.model.dto.ProblemSampleTcResponse;
 import com.judge.myojudge.model.dto.ProblemTcFileResponse;
-import com.judge.myojudge.model.dto.redis.CacheProblem;
 import com.judge.myojudge.model.entity.Problem;
 
 public interface ProblemMapper {
@@ -22,6 +21,5 @@ public interface ProblemMapper {
                       String explanation);
 
     ProblemTcFileResponse toProblemTcFileResponse(Problem problem);
-
 
 }

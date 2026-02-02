@@ -6,7 +6,10 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 @Data
 @AllArgsConstructor
@@ -15,5 +18,5 @@ import java.util.*;
 public class CacheProblem {
     private List<ProblemResponse> problemResponses=new ArrayList<>();
     private Long totalElements;
-    private Set<String> userEmails=new HashSet<>();//who users already hit this cache
+    private Set<String> userEmails=new HashSet<>();//who user this cache hit
 }

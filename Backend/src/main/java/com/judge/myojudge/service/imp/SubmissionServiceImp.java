@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.judge.myojudge.config.Judge0Config;
 import com.judge.myojudge.exception.ProblemNotFoundException;
+import com.judge.myojudge.exception.SubmissionNotFoundException;
 import com.judge.myojudge.exception.UserNotFoundException;
 import com.judge.myojudge.model.dto.ExecuteTestCase;
 import com.judge.myojudge.model.dto.SubmissionRequest;
@@ -11,8 +12,10 @@ import com.judge.myojudge.model.dto.SubmissionResponse;
 import com.judge.myojudge.model.dto.TestCaseResponse;
 import com.judge.myojudge.model.entity.Problem;
 import com.judge.myojudge.model.entity.Submission;
+import com.judge.myojudge.model.entity.TestCaseResult;
 import com.judge.myojudge.model.entity.User;
 import com.judge.myojudge.model.mapper.SubmissionMapper;
+import com.judge.myojudge.model.mapper.TestCaseMapper;
 import com.judge.myojudge.model.mapper.UserMapper;
 import com.judge.myojudge.repository.ProblemRepo;
 import com.judge.myojudge.repository.SubmissionRepo;
@@ -20,14 +23,12 @@ import com.judge.myojudge.repository.UserRepo;
 import com.judge.myojudge.service.SubmissionQueryService;
 import com.judge.myojudge.service.SubmissionService;
 import com.judge.myojudge.service.TestCaseService;
+import com.judge.myojudge.service.redis.ProblemRedisService;
 import com.judge.myojudge.service.redis.UserRedisService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.*;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -41,6 +42,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -60,7 +62,8 @@ public class SubmissionServiceImp implements SubmissionService {
     private final PlatformTransactionManager platformTransactionManager;
     private final UserRedisService userRedisService;
     private final UserMapper userMapper;
-
+    private final ProblemRedisService problemRedisService;
+    private final TestCaseMapper testCaseMapper;
     @Override
     public Submission getSubmission(SubmissionRequest req,String mobileOrEmail) {
         System.out.println("Get Submission Function Thread Name: "+Thread.currentThread().getName());
@@ -229,6 +232,20 @@ public class SubmissionServiceImp implements SubmissionService {
         }
 
         response.setCompleted(true);
+        Set<TestCaseResult> testCaseResults=passedTestcases.stream().map(testCaseResponse -> {
+            return TestCaseResult.builder()
+                    .submission(submission)
+                    .expectedOutput(testCaseResponse.getExpectedOutput())
+                    .compileOutput(testCaseResponse.getCompileOutput())
+                    .stderr(testCaseResponse.getStderr())
+                    .stdout(testCaseResponse.getStdout())
+                    .status(testCaseResponse.getStatus())
+                    .time(testCaseResponse.getTime())
+                    .memory(testCaseResponse.getMemory())
+                    .passed(testCaseResponse.isPassed())
+                    .build();
+        }).collect(Collectors.toSet());
+        submission.setTestCaseResults(testCaseResults);
         submissionRepo.save(submission);
 
         messagingTemplate.convertAndSend(
@@ -237,6 +254,9 @@ public class SubmissionServiceImp implements SubmissionService {
         );
 
         userRedisService.updateCacheUser(userMapper.toUserResponse(user));
+        if(verdict.equals("Accepted")){
+            problemRedisService.saveCacheSolvedProblem(problem.getId(),mobileOrEmail);
+        }
         System.out.println("Submission Details: "+submission);
     }
 
@@ -328,6 +348,27 @@ public class SubmissionServiceImp implements SubmissionService {
         submissionRepo.deleteAll(submissions);
         user.setSubmissions(null);
         userRepo.save(user);
+    }
+
+    @Override
+    public Page<SubmissionResponse> getAllSubmissionPerProblemByUser(
+            Long id,
+            String email,
+            String search,
+            int page, int size) {
+        Pageable pageable=PageRequest.of(page,size);
+        Page<Submission> submissions = problemRepo.findSubmissionsByProblemId(id,email,pageable);
+        List<SubmissionResponse> submissionResponses=submissions.getContent().stream().map(submissionMapper::toSubmissionResponse).toList();
+        return new PageImpl<>(submissionResponses,pageable,submissions.getTotalElements());
+    }
+
+    @Override
+    @Transactional
+    public SubmissionResponse getSubmissionById(Long id) {
+        Submission submission=submissionRepo
+                .findById(id)
+                .orElseThrow(()->new SubmissionNotFoundException("Submission Not Found By "+id+" ID"));
+        return submissionMapper.toSubmissionResponseWithCode(submission);
     }
 
 

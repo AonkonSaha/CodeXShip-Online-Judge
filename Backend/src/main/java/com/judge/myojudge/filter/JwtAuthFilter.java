@@ -1,7 +1,7 @@
-package com.judge.myojudge.jwt;
+package com.judge.myojudge.filter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.judge.myojudge.controller.AuthController;
+import com.judge.myojudge.jwt.JwtUtil;
 import com.judge.myojudge.repository.UserRepo;
 import com.judge.myojudge.service.imp.CustomUserDetailsService;
 import io.jsonwebtoken.ExpiredJwtException;
@@ -25,13 +25,12 @@ import java.util.Map;
 public class JwtAuthFilter extends OncePerRequestFilter {
 
     @Autowired
-    private  JwtUtil jwtUtil;
+    private JwtUtil jwtUtil;
     @Autowired
     private CustomUserDetailsService customUserDetailsService;
     @Autowired
     private UserRepo userRepo;
-    @Autowired
-    private AuthController authController;
+
 
     public JwtAuthFilter() {
     }

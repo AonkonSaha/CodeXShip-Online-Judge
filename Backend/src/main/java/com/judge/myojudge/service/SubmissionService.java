@@ -15,4 +15,14 @@ public interface SubmissionService {
     Page<SubmissionResponse> getAllSubmissionByUser(String mobileOrEmail,String search, Sort sort, int page, int size);
 
     void deleteAllSubmissionByUser(String mobileOrEmail);
+
+    Page<SubmissionResponse> getAllSubmissionPerProblemByUser(
+            Long id,
+            String email,
+            String search,
+            int page,
+            int size
+    );
+
+    SubmissionResponse getSubmissionById(Long id);
 }

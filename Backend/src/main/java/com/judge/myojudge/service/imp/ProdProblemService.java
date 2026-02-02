@@ -202,9 +202,9 @@ public class ProdProblemService implements ProblemService {
 
     @Transactional(value = Transactional.TxType.REQUIRED)
     protected void resetProblemInfo(Problem problem, String title, String handle, String difficulty,
-                                 String type, Long coins, double timeLimit,
-                                 double memoryLimit, String problemStatement,
-                                 String explanation) {
+                                    String type, Long coins, double timeLimit,
+                                    double memoryLimit, String problemStatement,
+                                    String explanation) {
         problem.setTitle(title);
         problem.setHandleName(handle);
         problem.setDifficulty(difficulty);
@@ -255,26 +255,38 @@ public class ProdProblemService implements ProblemService {
 
         }
         else{
-            dbResult = problemRepo.findByCategoryWithFilter(category.trim().toLowerCase(),
-                    search.trim().toLowerCase(),
-                    difficulty.trim().toLowerCase(),
-                    solvedFilter.trim().toLowerCase(),
-                    pageable
-            );
-            problems = (List<Problem>) dbResult.getContent();
+            if(!solvedFilter.trim().toLowerCase().equals("solved")){
+                dbResult = problemRepo.findByCategoryWithFilter(category.trim().toLowerCase(),
+                        search.trim().toLowerCase(),
+                        difficulty.trim().toLowerCase(),
+                        solvedFilter.trim().toLowerCase(),
+                        pageable
+                );
+                problems = (List<Problem>) dbResult.getContent();
+            }
+
         }
         List<ProblemResponse> problemResponses = new ArrayList<>();
-        for (int i=0;i<problems.size();i++) {
-            ProblemResponse tempProblemResponse = problemMapper.toProblemResponse(problems.get(i));
-            if(userSolved!=null && !userSolved.isEmpty()) tempProblemResponse.setSolved(userSolved.get(i).equals("solved"));
-            problemResponses.add(tempProblemResponse);
+        if(problems!=null){
+            for (int i=0;i<problems.size();i++) {
+                ProblemResponse tempProblemResponse = problemMapper.toProblemResponse(problems.get(i));
+                if(userSolved!=null && !userSolved.isEmpty()) tempProblemResponse.setSolved(userSolved.get(i).equals("solved"));
+                problemResponses.add(tempProblemResponse);
+            }
         }
-        return new PageImpl<>(problemResponses, pageable, dbResult.getTotalElements());
+
+        return new PageImpl<>(problemResponses, pageable,dbResult==null?0:dbResult.getTotalElements());
+    }
+
+    @Override
+    public List<Object[]> getProblemSolveStatus(Long id, String email) {
+        return problemRepo.findProblemByStatus(id,email);
+
     }
 
     private TestCase getSampleOutput(List<TestCase> testcases) {
         for (TestCase testCase : testcases) {
-         if (testCase.getFileName().equals("1.out")) {
+            if (testCase.getFileName().equals("1.out")) {
                 return testCase;
             }
         }
@@ -313,5 +325,4 @@ public class ProdProblemService implements ProblemService {
 
 
 }
-
 

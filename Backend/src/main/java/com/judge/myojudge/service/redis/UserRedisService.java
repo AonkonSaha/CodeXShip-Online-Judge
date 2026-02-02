@@ -5,7 +5,7 @@ import com.judge.myojudge.model.dto.redis.CacheUserAuth;
 
 public interface UserRedisService {
     void saveCacheUser(UserResponse userResponse);
-    UserResponse findCacheUser(String mobileOrEmail);
+    UserResponse findCacheUser(String email);
     void updateCacheUser(UserResponse userResponse);
     void deleteCacheUser(String email);
     void saveCacheUserAuth(CacheUserAuth requestCache);
