@@ -3,11 +3,15 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { AuthContext } from "./AuthContext";
 import NavBar from "../NavBar_Footer/NavBarCus";
 import toast from "react-hot-toast";
+import { Eye, EyeOff } from "lucide-react";
+
 
 const Login = () => {
   const [credentials, setCredentials] = useState({ mobile: "", password: "" });
   const { login, darkMode } = useContext(AuthContext);
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+
   const navigate = useNavigate();
   const baseURL = process.env.REACT_APP_BACK_END_BASE_URL;
   const googleClientId = process.env.REACT_APP_GOOGLE_CLIENT_ID;
@@ -33,7 +37,7 @@ const Login = () => {
   // 🔹 GOOGLE LOGIN: Initialize & Render Google Button
   useEffect(() => {
     if (window.google && googleClientId) {
-        window.google.accounts.id.initialize({
+      window.google.accounts.id.initialize({
         client_id: googleClientId,
         callback: handleGoogleResponse,
       });
@@ -109,9 +113,8 @@ const Login = () => {
 
   const Loader = () => (
     <div
-      className={`fixed inset-0 flex items-center justify-center z-50 ${
-        darkMode ? "bg-gray-900/90" : "bg-white/80"
-      } backdrop-blur-md`}
+      className={`fixed inset-0 flex items-center justify-center z-50 ${darkMode ? "bg-gray-900/90" : "bg-white/80"
+        } backdrop-blur-md`}
     >
       <div className="flex flex-col items-center space-y-6">
         <div className="relative flex items-center justify-center">
@@ -136,9 +139,8 @@ const Login = () => {
             }}
           ></div>
           <div
-            className={`absolute w-10 h-10 rounded-full ${
-              darkMode ? "bg-gray-900/80" : "bg-white/70"
-            } backdrop-blur-md border border-gray-400/30`}
+            className={`absolute w-10 h-10 rounded-full ${darkMode ? "bg-gray-900/80" : "bg-white/70"
+              } backdrop-blur-md border border-gray-400/30`}
             style={{
               boxShadow: darkMode
                 ? "inset 0 0 10px rgba(96,165,250,0.3)"
@@ -169,14 +171,12 @@ const Login = () => {
       <NavBar />
       {loading && <Loader />}
       <div
-        className={`min-h-screen flex items-center justify-center px-4 ${
-          darkMode ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-900"
-        }`}
+        className={`min-h-screen flex items-center justify-center px-4 ${darkMode ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-900"
+          }`}
       >
         <div
-          className={`max-w-md w-full p-8 rounded-2xl shadow-lg ${
-            darkMode ? "bg-gray-800/80 backdrop-blur-lg" : "bg-white/90"
-          }`}
+          className={`max-w-md w-full p-8 rounded-2xl shadow-lg ${darkMode ? "bg-gray-800/80 backdrop-blur-lg" : "bg-white/90"
+            }`}
           style={{
             boxShadow: darkMode
               ? "0 8px 40px rgba(59,130,246,0.2)"
@@ -189,37 +189,63 @@ const Login = () => {
           </p>
 
           <form onSubmit={handleLogin} className="space-y-6">
-            {["mobile", "password"].map((field) => (
-              <div key={field}>
-                <label htmlFor={field} className="block text-sm font-medium mb-1">
-                  {field === "mobile" ? "" : ""}
-                </label>
-                <input
-                  type={field === "mobile" ? "text" : "password"}
-                  id={field}
-                  value={credentials[field]}
-                  onChange={(e) => setCredentials({ ...credentials, [field]: e.target.value })}
-                  required
-                  placeholder={field === "mobile" ? "Enter your email or mobile" : "Enter your password"}
-                  className={`w-full px-4 py-3 border rounded-lg shadow-sm focus:outline-none focus:ring-2 ${
-                    darkMode
-                      ? "bg-gray-700 border-gray-600 text-white focus:ring-blue-400"
-                      : "bg-white border-gray-300 text-gray-900 focus:ring-blue-500"
+
+            {/* Mobile / Email */}
+            <div>
+              <input
+                type="text"
+                id="mobile"
+                value={credentials.mobile}
+                onChange={(e) =>
+                  setCredentials({ ...credentials, mobile: e.target.value })
+                }
+                required
+                placeholder="Enter your email or mobile"
+                className={`w-full px-4 py-3 border rounded-lg shadow-sm focus:outline-none focus:ring-2 ${darkMode
+                    ? "bg-gray-700 border-gray-600 text-white focus:ring-blue-400"
+                    : "bg-white border-gray-300 text-gray-900 focus:ring-blue-500"
                   }`}
-                />
-              </div>
-            ))}
+              />
+            </div>
+
+            {/* Password with Eye Icon */}
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                id="password"
+                value={credentials.password}
+                onChange={(e) =>
+                  setCredentials({ ...credentials, password: e.target.value })
+                }
+                required
+                placeholder="Enter your password"
+                className={`w-full px-4 py-3 pr-12 border rounded-lg shadow-sm focus:outline-none focus:ring-2 ${darkMode
+                    ? "bg-gray-700 border-gray-600 text-white focus:ring-blue-400"
+                    : "bg-white border-gray-300 text-gray-900 focus:ring-blue-500"
+                  }`}
+              />
+
+              {/* Eye Icon */}
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-blue-500 transition"
+              >
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
+            </div>
 
             <button
               type="submit"
               disabled={loading}
-              className={`w-full py-3 text-white font-semibold rounded-lg transition duration-300 ${
-                loading ? "bg-gray-500 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"
-              }`}
+              className={`w-full py-3 text-white font-semibold rounded-lg transition duration-300 ${loading ? "bg-gray-500 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"
+                }`}
             >
               {loading ? "Logging in..." : "Login"}
             </button>
+
           </form>
+
 
           {/* 🔹 Google Sign-In Button */}
           <div className="my-6 flex items-center justify-center">
@@ -234,7 +260,7 @@ const Login = () => {
             <p className="text-sm">
               Don’t have an account?{" "}
               <NavLink to="/register" className="font-medium text-blue-500 hover:text-blue-600">
-                Register here      
+                Register here
               </NavLink>
             </p>
           </div>

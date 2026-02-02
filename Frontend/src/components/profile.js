@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useRef, useState } from "react";
 import axios from "axios";
-import { useParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import NavBar from "../NavBar_Footer/NavBarCus";
 import Footer from "../NavBar_Footer/Footer";
 import Button from "./button";
@@ -21,6 +21,8 @@ import {
   FaGithub,
   FaFacebook,
   FaRegCopy,
+  FaEyeSlash,
+  FaEye
 } from "react-icons/fa";
 import { motion } from "framer-motion";
 import { AuthContext } from "../auth_component/AuthContext";
@@ -36,12 +38,12 @@ const createAxiosInstance = () => {
 
 const Profile = () => {
   const auth = useContext(AuthContext);
-  const {updateUserImage}=useContext(AuthContext);
+  const { updateUserImage } = useContext(AuthContext);
   const user = auth?.user;
   const setUser = auth?.setUser;
   const darkMode = auth?.darkMode;
 
-  const { username, userId } = useParams();
+  const { username } = useParams();
   const [profileUser, setProfileUser] = useState(null);
   const [formData, setFormData] = useState({});
   const [file, setFile] = useState(null);
@@ -56,20 +58,30 @@ const Profile = () => {
   const [uploading, setUploading] = useState(false);
   const [showPicModal, setShowPicModal] = useState(false);
   const [showCoverModal, setShowCoverModal] = useState(false);
-
+  const [showOldPassword, setShowOldPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [searchParams] = useSearchParams();
+  const email = searchParams.get("email");
   const axiosInstance = createAxiosInstance();
   const didFetch = useRef(false);
-  const isOwnProfile = !username || !userId || (user && Number(user.userId) === Number(userId));
+
+  const isOwnProfile = React.useMemo(() => {
+  if (!username && !email) return true;      // /profile
+  if (!user) return false;                   // wait for auth
+  return user.email === email;
+}, [username, email, user]);
 
   // Fetch profile
   useEffect(() => {
-    if (didFetch.current) return;
-    didFetch.current = true;
+  // if (!user && !isOwnProfile) return; // wait until auth loads
+  if(didFetch.current)return;
+  didFetch.current=true;
     const fetchProfile = async () => {
       try {
         const endpoint = isOwnProfile
           ? `/api/v1/users/me`
-          : `/api/v1/users/me/${username}/${userId}`;
+          : `/api/v1/users/me/${username}?email=${email}`;
         const { data } = await axiosInstance.get(endpoint);
         const profileData = data.data || data;
 
@@ -87,7 +99,7 @@ const Profile = () => {
     };
 
     fetchProfile();
-  }, [username, profileUser]);
+}, [isOwnProfile, username, email, user]);
 
   const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
@@ -114,8 +126,8 @@ const Profile = () => {
         updateUserImage(imageUrl);
         toast.success("Profile picture updated!");
       }
-      else{
-          toast.error(data.message);
+      else {
+        toast.error(data.message);
       }
 
       setFile(null);
@@ -154,7 +166,7 @@ const Profile = () => {
   const handleSavePassword = async () => {
     if (newPassword !== confirmPassword) return toast.error("Passwords do not match!");
     try {
-      await axiosInstance.put(`/api/v1/users/me/password`, { newPassword, oldPassword,confirmPassword});
+      await axiosInstance.put(`/api/v1/users/me/password`, { newPassword, oldPassword, confirmPassword });
       toast.success("Password updated successfully!");
       setIsChangingPassword(false);
       setNewPassword("");
@@ -169,9 +181,8 @@ const Profile = () => {
   if (loading || !profileUser) {
     return (
       <div
-        className={`min-h-screen flex flex-col justify-center items-center ${
-          darkMode ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-800"
-        }`}
+        className={`min-h-screen flex flex-col justify-center items-center ${darkMode ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-800"
+          }`}
       >
         <div className="relative w-14 h-14">
           <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-blue-500 animate-spin"></div>
@@ -193,14 +204,12 @@ const Profile = () => {
       icon: (
         <div className="relative flex items-center justify-center">
           <span
-            className={`absolute inline-flex h-5 w-5 rounded-full ${
-              profileUser?.activity_status ? "bg-green-400 opacity-75 animate-ping" : "bg-gray-400 opacity-75"
-            }`}
+            className={`absolute inline-flex h-5 w-5 rounded-full ${profileUser?.activity_status ? "bg-green-400 opacity-75 animate-ping" : "bg-gray-400 opacity-75"
+              }`}
           ></span>
           <span
-            className={`relative inline-flex rounded-full h-5 w-5 ${
-              profileUser?.activity_status ? "bg-green-500" : "bg-gray-500"
-            }`}
+            className={`relative inline-flex rounded-full h-5 w-5 ${profileUser?.activity_status ? "bg-green-500" : "bg-gray-500"
+              }`}
           ></span>
         </div>
       ),
@@ -234,9 +243,8 @@ const Profile = () => {
 
       <main className="flex-grow p-6 overflow-y-auto scrollbar-thin scrollbar-thumb-indigo-400 scrollbar-track-gray-300">
         <div
-          className={`max-w-6xl mx-auto rounded-3xl shadow-2xl overflow-hidden border-0 ${
-            darkMode ? "bg-gray-800" : "bg-white"
-          }`}
+          className={`max-w-6xl mx-auto rounded-3xl shadow-2xl overflow-hidden border-0 ${darkMode ? "bg-gray-800" : "bg-white"
+            }`}
         >
           {/* Header with cover and profile */}
           <div className="relative h-52 border-b-0">
@@ -285,9 +293,8 @@ const Profile = () => {
             {stats.map((s, i) => (
               <div
                 key={i}
-                className={`p-5 rounded-2xl shadow-md text-center border-0 ${
-                  darkMode ? "bg-gray-700" : "bg-gray-100"
-                }`}
+                className={`p-5 rounded-2xl shadow-md text-center border-0 ${darkMode ? "bg-gray-700" : "bg-gray-100"
+                  }`}
               >
                 <div className="text-blue-500 text-2xl mb-2">{s.icon}</div>
                 <h3 className="text-sm font-semibold opacity-70">{s.label}</h3>
@@ -295,120 +302,115 @@ const Profile = () => {
               </div>
             ))}
           </div>
-{/* Redesigned Personal Information - Single Card with Location Row */}
-<section className="px-6 py-6 border-t border-gray-600/20">
-  <h2 className={`text-2xl font-bold mb-4 ${darkMode ? "text-white" : "text-gray-900"}`}>
-    Personal Information
-  </h2>
+          {/* Redesigned Personal Information - Single Card with Location Row */}
+          <section className="px-6 py-6 border-t border-gray-600/20">
+            <h2 className={`text-2xl font-bold mb-4 ${darkMode ? "text-white" : "text-gray-900"}`}>
+              Personal Information
+            </h2>
 
-  <div
-    className={`p-6 rounded-2xl shadow-md transition-transform transform hover:-translate-y-1 hover:shadow-lg ${
-      darkMode ? "bg-gray-800 text-white" : "bg-white text-gray-900"
-    }`}
-  >
-    {/* Upper Info Fields (Username, Email, Mobile, DOB, Gender, Social Links) */}
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-      {infoFields
-        .filter((f) => !["City", "State", "Country", "Postal Code"].includes(f.label))
-        .map(
-          (field, idx) =>
-            field.value && (
-              <div
-                key={idx}
-                className={`flex items-center gap-3 p-3 rounded-lg shadow-sm transition-shadow hover:shadow-md ${
-                  darkMode ? "bg-gray-700 text-white" : "bg-gray-100 text-gray-900"
-                }`}
-              >
-                <div
-                  className={`flex items-center justify-center w-10 h-10 rounded-full text-white ${
-                    darkMode ? "bg-blue-500" : "bg-blue-600"
-                  }`}
-                >
-                  {field.icon}
-                </div>
-                <div className="flex flex-col w-full">
-                  <span className="font-semibold text-sm">{field.label}</span>
-                  <div className="flex items-center justify-between mt-1 break-words">
-                    {field.label === "Email" ? (
-                      <a
-                        href={`mailto:${field.value}`}
-                        className="text-blue-500 hover:underline break-words"
-                      >
-                        {field.value}
-                      </a>
-                    ) : field.label === "Mobile" ? (
-                      <a
-                        href={`tel:${field.value}`}
-                        className="text-blue-500 hover:underline break-words"
-                      >
-                        {field.value}
-                      </a>
-                    ) : ["LinkedIn", "GitHub", "Facebook"].includes(field.label) ? (
-                      <a
-                        href={field.value}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-2 text-blue-500 hover:underline break-words"
-                      >
-                        {field.label === "LinkedIn" && <FaLinkedin />}
-                        {field.label === "GitHub" && <FaGithub />}
-                        {field.label === "Facebook" && <FaFacebook />}
-                        <span className="truncate max-w-[200px]">{field.value}</span>
-                      </a>
-                    ) : (
-                      <span>{field.value}</span>
-                    )}
-
-                    {["Email", "Mobile", "LinkedIn", "GitHub", "Facebook"].includes(field.label) && (
-                      <button
-                        onClick={() => copyToClipboard(field.value)}
-                        className="ml-2 p-1 text-gray-400 hover:text-gray-200 dark:hover:text-white transition-colors"
-                        title="Copy"
-                      >
-                        <FaRegCopy />
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )
-        )}
-    </div>
-
-    {/* Divider */}
-    <div className={`my-4 border-b ${darkMode ? "border-gray-500/30" : "border-gray-400/30"}`}></div>
-
-    {/* Location Row */}
-    <h3 className={`text-lg font-semibold mb-3 ${darkMode ? "text-white" : "text-gray-900"}`}>
-      Location
-    </h3>
-    <div className="flex flex-wrap gap-4">
-      {["City", "State", "Country", "Postal Code"].map((label) => {
-        const field = infoFields.find((f) => f.label === label);
-        return field && field.value ? (
-          <div
-            key={label}
-            className={`flex-1 min-w-[120px] flex items-center gap-2 p-3 rounded-lg shadow-sm transition-shadow hover:shadow-md ${
-              darkMode ? "bg-gray-700 text-white" : "bg-gray-100 text-gray-900"
-            }`}
-          >
             <div
-              className={`flex items-center justify-center w-8 h-8 rounded-full text-white ${
-                darkMode ? "bg-blue-500" : "bg-blue-600"
-              }`}
+              className={`p-6 rounded-2xl shadow-md transition-transform transform hover:-translate-y-1 hover:shadow-lg ${darkMode ? "bg-gray-800 text-white" : "bg-white text-gray-900"
+                }`}
             >
-              {field.icon}
+              {/* Upper Info Fields (Username, Email, Mobile, DOB, Gender, Social Links) */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {infoFields
+                  .filter((f) => !["City", "State", "Country", "Postal Code"].includes(f.label))
+                  .map(
+                    (field, idx) =>
+                      field.value && (
+                        <div
+                          key={idx}
+                          className={`flex items-center gap-3 p-3 rounded-lg shadow-sm transition-shadow hover:shadow-md ${darkMode ? "bg-gray-700 text-white" : "bg-gray-100 text-gray-900"
+                            }`}
+                        >
+                          <div
+                            className={`flex items-center justify-center w-10 h-10 rounded-full text-white ${darkMode ? "bg-blue-500" : "bg-blue-600"
+                              }`}
+                          >
+                            {field.icon}
+                          </div>
+                          <div className="flex flex-col w-full">
+                            <span className="font-semibold text-sm">{field.label}</span>
+                            <div className="flex items-center justify-between mt-1 break-words">
+                              {field.label === "Email" ? (
+                                <a
+                                  href={`mailto:${field.value}`}
+                                  className="text-blue-500 hover:underline break-words"
+                                >
+                                  {field.value}
+                                </a>
+                              ) : field.label === "Mobile" ? (
+                                <a
+                                  href={`tel:${field.value}`}
+                                  className="text-blue-500 hover:underline break-words"
+                                >
+                                  {field.value}
+                                </a>
+                              ) : ["LinkedIn", "GitHub", "Facebook"].includes(field.label) ? (
+                                <a
+                                  href={field.value}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex items-center gap-2 text-blue-500 hover:underline break-words"
+                                >
+                                  {field.label === "LinkedIn" && <FaLinkedin />}
+                                  {field.label === "GitHub" && <FaGithub />}
+                                  {field.label === "Facebook" && <FaFacebook />}
+                                  <span className="truncate max-w-[200px]">{field.value}</span>
+                                </a>
+                              ) : (
+                                <span>{field.value}</span>
+                              )}
+
+                              {["Email", "Mobile", "LinkedIn", "GitHub", "Facebook"].includes(field.label) && (
+                                <button
+                                  onClick={() => copyToClipboard(field.value)}
+                                  className="ml-2 p-1 text-gray-400 hover:text-gray-200 dark:hover:text-white transition-colors"
+                                  title="Copy"
+                                >
+                                  <FaRegCopy />
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      )
+                  )}
+              </div>
+
+              {/* Divider */}
+              <div className={`my-4 border-b ${darkMode ? "border-gray-500/30" : "border-gray-400/30"}`}></div>
+
+              {/* Location Row */}
+              <h3 className={`text-lg font-semibold mb-3 ${darkMode ? "text-white" : "text-gray-900"}`}>
+                Location
+              </h3>
+              <div className="flex flex-wrap gap-4">
+                {["City", "State", "Country", "Postal Code"].map((label) => {
+                  const field = infoFields.find((f) => f.label === label);
+                  return field && field.value ? (
+                    <div
+                      key={label}
+                      className={`flex-1 min-w-[120px] flex items-center gap-2 p-3 rounded-lg shadow-sm transition-shadow hover:shadow-md ${darkMode ? "bg-gray-700 text-white" : "bg-gray-100 text-gray-900"
+                        }`}
+                    >
+                      <div
+                        className={`flex items-center justify-center w-8 h-8 rounded-full text-white ${darkMode ? "bg-blue-500" : "bg-blue-600"
+                          }`}
+                      >
+                        {field.icon}
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-sm font-semibold">{field.label}</span>
+                        <span className="text-base break-words">{field.value}</span>
+                      </div>
+                    </div>
+                  ) : null;
+                })}
+              </div>
             </div>
-            <div className="flex flex-col">
-              <span className="text-sm font-semibold">{field.label}</span>
-              <span className="text-base break-words">{field.value}</span>
-            </div>
-          </div>
-        ) : null;
-      })}
-    </div>
-  </div>
-</section>
+          </section>
 
           {/* Buttons */}
           {isOwnProfile && (
@@ -417,9 +419,9 @@ const Profile = () => {
                 <FaEdit className="inline mr-2" /> Edit Profile
               </Button>
               {!profileUser.is_google_user && (
-              <Button onClick={() => setIsChangingPassword(true)} className="bg-purple-600 text-white">
-                <FaLock className="inline mr-2" /> Change Password
-              </Button>
+                <Button onClick={() => setIsChangingPassword(true)} className="bg-purple-600 text-white">
+                  <FaLock className="inline mr-2" /> Change Password
+                </Button>
               )}
 
               {file && (
@@ -507,27 +509,61 @@ const Profile = () => {
 
       {isChangingPassword && (
         <Modal darkMode={darkMode} title="Change Password" onClose={() => setIsChangingPassword(false)}>
-          <input
-            type="password"
-            placeholder="Old Password"
-            value={oldPassword}
-            onChange={(e) => setOldPassword(e.target.value)}
-            className="w-full p-3 mb-3 border-none rounded-lg bg-gray-100 dark:bg-gray-700 text-black dark:text-white"
-          />
-          <input
-            type="password"
-            placeholder="New Password"
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-            className="w-full p-3 mb-3 border-none rounded-lg bg-gray-100 dark:bg-gray-700 text-black dark:text-white"
-          />
-          <input
-            type="password"
-            placeholder="Confirm Password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            className="w-full p-3 mb-3 border-none rounded-lg bg-gray-100 dark:bg-gray-700 text-black dark:text-white"
-          />
+
+          {/* Old Password */}
+          <div className="relative mb-3">
+            <input
+              type={showOldPassword ? "text" : "password"}
+              placeholder="Old Password"
+              value={oldPassword}
+              onChange={(e) => setOldPassword(e.target.value)}
+              className="w-full p-3 pr-12 border-none rounded-lg bg-gray-100 dark:bg-gray-700 text-black dark:text-white"
+            />
+            <button
+              type="button"
+              onClick={() => setShowOldPassword(!showOldPassword)}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-blue-500"
+            >
+              {showOldPassword ? <FaEyeSlash /> : <FaEye />}
+            </button>
+          </div>
+
+          {/* New Password */}
+          <div className="relative mb-3">
+            <input
+              type={showNewPassword ? "text" : "password"}
+              placeholder="New Password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              className="w-full p-3 pr-12 border-none rounded-lg bg-gray-100 dark:bg-gray-700 text-black dark:text-white"
+            />
+            <button
+              type="button"
+              onClick={() => setShowNewPassword(!showNewPassword)}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-blue-500"
+            >
+              {showNewPassword ? <FaEyeSlash /> : <FaEye />}
+            </button>
+          </div>
+
+          {/* Confirm Password */}
+          <div className="relative mb-3">
+            <input
+              type={showConfirmPassword ? "text" : "password"}
+              placeholder="Confirm Password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              className="w-full p-3 pr-12 border-none rounded-lg bg-gray-100 dark:bg-gray-700 text-black dark:text-white"
+            />
+            <button
+              type="button"
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-blue-500"
+            >
+              {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
+            </button>
+          </div>
+
           <div className="flex justify-end gap-3">
             <Button onClick={() => setIsChangingPassword(false)} className="bg-gray-400 text-white">
               Cancel
@@ -536,8 +572,10 @@ const Profile = () => {
               Save
             </Button>
           </div>
+
         </Modal>
       )}
+
     </div>
   );
 };
@@ -557,9 +595,8 @@ const Modal = ({ darkMode, title, children, onClose }) => (
     onClick={onClose}
   >
     <div
-      className={`${
-        darkMode ? "bg-gray-800 text-white" : "bg-white text-gray-900"
-      } w-full max-w-lg p-6 rounded-2xl shadow-2xl`}
+      className={`${darkMode ? "bg-gray-800 text-white" : "bg-white text-gray-900"
+        } w-full max-w-lg p-6 rounded-2xl shadow-2xl`}
       onClick={(e) => e.stopPropagation()}
     >
       <h2 className="text-2xl font-bold mb-4">{title}</h2>

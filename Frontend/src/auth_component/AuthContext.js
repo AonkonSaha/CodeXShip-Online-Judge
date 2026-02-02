@@ -116,7 +116,7 @@ export const AuthProvider = ({ children }) => {
           } else {
             const roles = normalizeRoles(decoded);
             const userData = { username: decoded.sub, roles,userId:decoded.user_id,
-              image_url: decoded.image_url};
+              image_url: decoded.image_url,email:decoded.email};
             setUser(userData);
             // setCoins(decoded.present_coins);      
 
@@ -150,6 +150,7 @@ export const AuthProvider = ({ children }) => {
         roles,
         image_url: decoded.image_url,
         userId:decoded.user_id,
+        email:decoded.email
       };
 
       setIsAddDailyCoin(decoded.is_add_daily_coin || false);

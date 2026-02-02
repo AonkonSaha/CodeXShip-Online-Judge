@@ -26,6 +26,7 @@ import UsersPage from './components/UsersPage';
 import AddProductPage from './product/AddProductPage';
 import OrderManagementPage from './product/OrderManagementPage';
 import MyOrderPage from './product/MyOrder';
+import SubmissionInfo from './problem_page_code_editor/SubmissionInfo';
 
 function App() {
   return (
@@ -55,8 +56,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/verify-email" element={<VerifyEmail />} />
           <Route path="/leaderboard" element={<RankPage/>} />
-          <Route path="/profile/:username/:userId" element={<Profile />} />
-
+          <Route path="/profile/:username" element={<Profile />} />
 
 
           {/* ================= Protected Routes ================= */}
@@ -68,6 +68,8 @@ function App() {
             <Route path="/gift-dock" element={<CoinRewardPage/>} />
             <Route path="/history/my-order" element={<MyOrderPage/>} />
             <Route path="/logout" element={<Logout/>} />
+           <Route path="/submission/:id" element={<SubmissionInfo/>} />
+
           </Route>
 
           {/* Contest users + Admin can later share contest-only routes */}

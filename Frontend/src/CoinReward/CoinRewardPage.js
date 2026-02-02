@@ -25,11 +25,10 @@ export default function CoinRewardPage() {
   const [size, setSize] = useState(6);
   const [totalPages, setTotalPages] = useState(1);
   const [search, setSearch] = useState("");
+  const [searchInput, setSearchInput] = useState("");
   const [toasts, setToasts] = useState([]);
-
   const observerRef = useRef();
   const lastProductRef = useRef(null);
-
   const baseURL = process.env.REACT_APP_BACK_END_BASE_URL;
   const token = localStorage.getItem("token");
   const headers = token ? { Authorization: `Bearer ${token}` } : {};
@@ -61,7 +60,7 @@ export default function CoinRewardPage() {
       console.error("Failed to fetch products:", err);
       showToast("Failed to fetch products.", "error");
     }
-  }, [baseURL, page, size, search]);
+  }, [baseURL, page, size,search]);
 
   // 🔹 Reset products when search changes
   useEffect(() => {
@@ -69,7 +68,7 @@ export default function CoinRewardPage() {
       setPage(0);
       fetchProducts(true);
     }
-  }, [search, token, fetchProducts]);
+  }, [ search,token, fetchProducts]);
 
   // 🔹 Infinite scroll IntersectionObserver
   useEffect(() => {
@@ -245,19 +244,36 @@ export default function CoinRewardPage() {
 
         {/* 🔹 Filter/Search */}
         <div className="flex flex-col sm:flex-row items-center gap-4 mb-6">
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search products..."
-            className="p-2 rounded border w-full sm:w-1/3 text-black"
-          />
+        <input
+          type="text"
+          value={searchInput}
+          onChange={(e) => {
+            const value = e.target.value;
+            setSearchInput(value);
+
+            if (value.trim() === "") {
+              setPage(0);
+              setProducts([]);
+              setSearch(""); // backend gets empty search
+            }
+          }}
+          placeholder="Search products..."
+          className="p-2 rounded border w-full sm:w-1/3 text-black"
+        />
+
           <button
-            onClick={() => { setPage(0); fetchProducts(true); }}
+            onClick={() => {
+              setPage(0);
+              setProducts([]);       // optional but recommended
+              fetchProducts(true); // directly call backend
+              setSearch(searchInput); // 🔥 apply search
+              
+            }}
             className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700"
           >
             Search
           </button>
+
         </div>
 
         {/* 🔹 Product Grid */}

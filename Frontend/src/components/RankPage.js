@@ -80,7 +80,11 @@ const RankPage = () => {
 
   // Navigate to user profile
   const handleUserClick = (user) => {
-     if (user?.username) navigate(`/profile/${user.username}/${user.userId}`);
+     if (user?.username) 
+      {
+        navigate(`/profile/${user.username}?email=${encodeURIComponent(user.email)}`);
+      }
+
   };
   return (
     <div

@@ -4,6 +4,8 @@ import NavBar from "../NavBar_Footer/NavBarCus";
 import Footer from "../NavBar_Footer/Footer";
 import { AuthContext } from "../auth_component/AuthContext";
 import toast from "react-hot-toast";
+import { Eye, EyeOff } from "lucide-react";
+
 
 const Register = () => {
   const [user, setUser] = useState({
@@ -21,6 +23,9 @@ const Register = () => {
   const navigate = useNavigate();
   const baseURL = process.env.REACT_APP_BACK_END_BASE_URL;
   const googleClientId = process.env.REACT_APP_GOOGLE_CLIENT_ID;
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
 
   const toastStyle = {
     style: {
@@ -71,9 +76,9 @@ const Register = () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-           credential: response.credential,
-           is_need_register: "yes"
-          }),
+          credential: response.credential,
+          is_need_register: "yes"
+        }),
       });
 
       const data = await res.json();
@@ -149,9 +154,8 @@ const Register = () => {
   // 🔹 Loader (same as login)
   const Loader = () => (
     <div
-      className={`fixed inset-0 flex items-center justify-center z-50 ${
-        darkMode ? "bg-gray-900/90" : "bg-white/80"
-      } backdrop-blur-md`}
+      className={`fixed inset-0 flex items-center justify-center z-50 ${darkMode ? "bg-gray-900/90" : "bg-white/80"
+        } backdrop-blur-md`}
     >
       <div className="flex flex-col items-center space-y-6">
         <div className="relative flex items-center justify-center">
@@ -176,9 +180,8 @@ const Register = () => {
             }}
           ></div>
           <div
-            className={`absolute w-10 h-10 rounded-full ${
-              darkMode ? "bg-gray-900/80" : "bg-white/70"
-            } backdrop-blur-md border border-gray-400/30`}
+            className={`absolute w-10 h-10 rounded-full ${darkMode ? "bg-gray-900/80" : "bg-white/70"
+              } backdrop-blur-md border border-gray-400/30`}
             style={{
               boxShadow: darkMode
                 ? "inset 0 0 10px rgba(96,165,250,0.3)"
@@ -206,20 +209,18 @@ const Register = () => {
 
   return (
     <div
-      className={`flex flex-col min-h-screen transition-all duration-500 ${
-        darkMode ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-900"
-      }`}
+      className={`flex flex-col min-h-screen transition-all duration-500 ${darkMode ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-900"
+        }`}
     >
       <NavBar />
       {loading && <Loader />}
 
       <main className="flex-grow flex items-center justify-center px-4 mt-4">
         <div
-          className={`w-full max-w-md p-8 rounded-2xl shadow-2xl backdrop-blur-lg transform transition-all duration-300 ${
-            darkMode
+          className={`w-full max-w-md p-8 rounded-2xl shadow-2xl backdrop-blur-lg transform transition-all duration-300 ${darkMode
               ? "bg-gray-800/80 text-white"
               : "bg-white/90 text-gray-900"
-          }`}
+            }`}
           style={{
             boxShadow: darkMode
               ? "0 8px 40px rgba(59,130,246,0.2)"
@@ -230,16 +231,15 @@ const Register = () => {
             Create Your Account
           </h2>
           <p
-            className={`text-center mb-6 ${
-              darkMode ? "text-gray-400" : "text-gray-600"
-            }`}
+            className={`text-center mb-6 ${darkMode ? "text-gray-400" : "text-gray-600"
+              }`}
           >
             Join <span className="text-blue-500 font-semibold">CodeXShip</span> and start your coding journey!
           </p>
 
           {/* 🔹 Google Sign-In Button (Top of form) */}
           <div id="googleSignInDiv" className="flex justify-center mb-6"></div>
-            {/* Professional Divider */}
+          {/* Professional Divider */}
           <div className="flex items-center text-gray-400 dark:text-gray-300">
             <div className="flex-grow border-t border-gray-300 dark:border-gray-600"></div>
             <span className="px-3 text-sm">OR</span>
@@ -256,21 +256,56 @@ const Register = () => {
             ].map(({ label, key, type }) => (
               <div key={key}>
                 <label className="block text-sm font-medium mb-1">{label}</label>
-                <input
-                  type={type}
-                  value={user[key]}
-                  onChange={(e) => setUser({ ...user, [key]: e.target.value })}
-                  required
-                  placeholder={`Enter your ${label.toLowerCase()}`}
-                  className={`w-full px-4 py-3 border rounded-lg shadow-sm focus:outline-none focus:ring-2 transition-all ${
-                    darkMode
-                      ? "bg-gray-700 border-gray-600 text-white focus:ring-blue-400"
-                      : "bg-white border-gray-300 text-gray-900 focus:ring-blue-500"
-                  } ${fieldErrors[key] ? "border-red-500 focus:ring-red-400" : ""}`}
-                />
+                {(key === "password" || key === "confirm_pass") ? (
+                  <div className="relative">
+                    <input
+                      type={
+                        key === "password"
+                          ? showPassword ? "text" : "password"
+                          : showConfirmPassword ? "text" : "password"
+                      }
+                      value={user[key]}
+                      onChange={(e) =>
+                        setUser({ ...user, [key]: e.target.value })
+                      }
+                      required
+                      className={`w-full px-4 py-3 pr-12 border rounded-lg ${darkMode
+                          ? "bg-gray-700 border-gray-600"
+                          : "bg-white border-gray-300"
+                        }`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() =>
+                        key === "password"
+                          ? setShowPassword(!showPassword)
+                          : setShowConfirmPassword(!showConfirmPassword)
+                      }
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-blue-500 transition"
+                      aria-label="Toggle password visibility"
+                    >
+                      {key === "password"
+                        ? showPassword ? <EyeOff size={20} /> : <Eye size={20} />
+                        : showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                    </button>
+                  </div>
+                ) :
+                  (<input
+                    type={type}
+                    value={user[key]}
+                    onChange={(e) => setUser({ ...user, [key]: e.target.value })}
+                    required
+                    placeholder={`Enter your ${label.toLowerCase()}`}
+                    className={`w-full px-4 py-3 border rounded-lg shadow-sm focus:outline-none focus:ring-2 transition-all ${darkMode
+                        ? "bg-gray-700 border-gray-600 text-white focus:ring-blue-400"
+                        : "bg-white border-gray-300 text-gray-900 focus:ring-blue-500"
+                      } ${fieldErrors[key] ? "border-red-500 focus:ring-red-400" : ""}`}
+                  />
+                  )}
                 {fieldErrors[key] && (
                   <p className="text-red-500 text-sm mt-1">{fieldErrors[key]}</p>
                 )}
+
               </div>
             ))}
 
@@ -283,15 +318,14 @@ const Register = () => {
                     key={g}
                     type="button"
                     onClick={() => setUser({ ...user, gender: g })}
-                    className={`flex-1 py-3 rounded-lg font-medium border transition-all duration-300 ${
-                      user.gender === g
+                    className={`flex-1 py-3 rounded-lg font-medium border transition-all duration-300 ${user.gender === g
                         ? darkMode
                           ? "bg-blue-500 border-blue-500 text-white"
                           : "bg-blue-600 border-blue-600 text-white"
                         : darkMode
-                        ? "bg-gray-700 border-gray-600 hover:bg-gray-600 text-white"
-                        : "bg-white border-gray-300 hover:bg-gray-100 text-gray-900"
-                    }`}
+                          ? "bg-gray-700 border-gray-600 hover:bg-gray-600 text-white"
+                          : "bg-white border-gray-300 hover:bg-gray-100 text-gray-900"
+                      }`}
                   >
                     {g.charAt(0).toUpperCase() + g.slice(1)}
                   </button>
@@ -306,11 +340,10 @@ const Register = () => {
             <button
               type="submit"
               disabled={loading}
-              className={`w-full py-3 text-white font-semibold rounded-lg transition-all duration-300 shadow-md ${
-                loading
+              className={`w-full py-3 text-white font-semibold rounded-lg transition-all duration-300 shadow-md ${loading
                   ? "bg-gray-500 cursor-not-allowed"
                   : "bg-blue-600 hover:bg-blue-700"
-              }`}
+                }`}
             >
               {loading ? "Registering..." : "Register"}
             </button>

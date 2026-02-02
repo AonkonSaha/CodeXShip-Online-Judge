@@ -41,7 +41,7 @@ const Footer = () => {
         <p className={`text-xs ${darkMode ? "text-gray-400" : "text-gray-700"}`}>
           &copy; 2024 YourCompany. All rights reserved. |{" "}
           <a
-            href="https://web.facebook.com/aonkon.saha.12/"
+            href="https://www.linkedin.com/in/aonkonsaha/"
             className="text-blue-400  hover:text-blue-600 transition duration-300"
           >
             Developed By Aonkon Saha
